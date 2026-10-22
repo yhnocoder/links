@@ -666,16 +666,21 @@ function resolve(L0, cols, forced){
   return list;
 }
 // sections push each other down on the canvas (and pull up when something above shrinks)
-function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null){
+function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null, hold = false){
   const d = forcedId ? secs.find(s => s.id === forcedId) : null;
   const placed = d ? [d] : [];
   const G = cfg.secGap;
   const grow = r => ({x:r.x - G, y:r.y - G, w:r.w + G, h:r.h + G});
+  const over = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  // while a Section is held, a neighbour only steps aside once the held frame really sits on it (a third of it covered, or its centre inside)
+  const pushedBy = (s, p) => (hold && p === d)
+    ? over(s, p) > .33 * Math.min(s.w * s.h, p.w * p.h) || (p.x + p.w / 2 > s.x && p.x + p.w / 2 < s.x + s.w && p.y + p.h / 2 > s.y && p.y + p.h / 2 < s.y + s.h)
+    : hit(grow(s), p);
   const others = secs.filter(s => s !== d).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const s of others) {
     let guard = 0;
-    while (placed.some(p => hit(grow(s), p)) && guard++ < 100) {
-      const hs = placed.filter(p => hit(grow(s), p));
+    while (placed.some(p => pushedBy(s, p)) && guard++ < 100) {
+      const hs = placed.filter(p => pushedBy(s, p));
       s.y = Math.max(...hs.map(p => p.y + p.h)) + G;
     }
     placed.push(s);
@@ -719,7 +724,7 @@ function layoutFrom(base, f, opts = {}){
   }
   if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; }
   // while a Section is held, the others only step out of its way; gaps close once it is dropped
-  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null, (f && f.kind === 'sec') || opts.noCompact ? false : cfg.secCompact, opts.skip || null);
+  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null, (f && f.kind === 'sec') || opts.noCompact ? false : cfg.secCompact, opts.skip || null, !!(f && f.kind === 'sec' && f.hold));
   return {lists, secs};
 }
 function commit(lay){
@@ -1139,7 +1144,7 @@ function move(p){
     // a Section is big: it sticks to the hand 1:1 and lands on the grid only when dropped
     d.px = p.x - d.offX; d.py = p.y - d.offY;
     d.sn.x = d.px; d.sn.y = d.py;
-    if (!d.layout || Math.abs(d.px - d.tx) > 6 || Math.abs(d.py - d.ty) > 6) { d.tx = d.px; d.ty = d.py; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:d.px, y:d.py}); applyLayout(d.layout, false, null); }
+    if (!d.layout || Math.abs(d.px - d.tx) > 6 || Math.abs(d.py - d.ty) > 6) { d.tx = d.px; d.ty = d.py; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:d.px, y:d.py, hold:true}); applyLayout(d.layout, false, null); }
     return;
   }
   const n = d.n;
