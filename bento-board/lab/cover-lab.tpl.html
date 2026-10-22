@@ -62,7 +62,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none}
 .sizer .peek .sec-lbl{display:none}
 .sizer .peek .sec-frame{opacity:0}
-.sizer .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,var(--surface) 96%)}
+.sizer .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 62%,var(--surface) 97%)}
 .morph{position:absolute;left:0;top:0;border-radius:26px;background:var(--surface);box-shadow:var(--shadow-lift);pointer-events:none;transform-origin:0 0}
 
 /* ---------- sub-whiteboard covers ---------- */
@@ -164,7 +164,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
   </header>
 
   <h2>尺寸由用户定</h2>
-  <p class="sub">拖右下角改封面大小，格子吸附。封面按尺寸决定显示什么：小只有名字，中等看第一个 Section 的前几行，大能看到整个子画布怎么摆。</p>
+  <p class="sub">拖右下角改封面大小，格子吸附。1 到 2 列只有名字；3 列起显示整个子画布，缩放随宽度连续变化，拉高只是多露出一些。</p>
   <div id="sizer"></div>
 
   <h2>密度试验</h2>
@@ -289,19 +289,20 @@ function sizerStage(){
   function render(){
     const W = secW(cols), H = secH(rows);
     cover.style.width = W + 'px'; cover.style.height = H + 'px';
-    const mode = cols <= 2 ? 'tiny' : (cols >= 5 && rows >= 2) ? 'large' : 'mid';
+    const mode = cols <= 2 ? 'tiny' : 'peek';
     cover.classList.toggle('tiny', mode === 'tiny');
     const meta = `${board.count} 个链接 · ${board.secs.length} 个 Section`;
     if (mode === 'tiny') body.innerHTML = `<div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span></div>`;
     else {
-      const secs = mode === 'large' ? board.secs : [board.secs[0]];
+      // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
+      const secs = board.secs;
       body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div>`;
       const pk = $('.peek', body); for (const sx of secs) pk.appendChild(secEl(sx));
       const bw = Math.max(...secs.map(sx => sx.x + secW(sx.cols))), bh = Math.max(...secs.map(sx => sx.y + secH(rowsOf(sx.blocks))));
-      const k = Math.min(1, (W - 28) / bw, mode === 'large' ? (H - LBL - 24) / (bh - LBL) : 1);
+      const k = Math.min(1, (W - 28) / bw);
       pk.style.transform = `scale(${k})`;
     }
-    lod.textContent = `${cols} 列 × ${rows} 行 · ${mode === 'tiny' ? '小：只有名字' : mode === 'mid' ? '中：第一个 Section 的前几行' : '大：整个子画布'}`;
+    lod.textContent = `${cols} 列 × ${rows} 行 · ${mode === 'tiny' ? '只有名字' : `整个子画布，缩放 ${Math.round(Math.min(1, (W - 28) / Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)))) * 100)}%`}`;
   }
   render();
   // drag the corner: size snaps to whole cells
@@ -500,7 +501,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行。1 到 2 列只剩名字；3 到 4 列是第一个 Section 的前几行；5 列以上且 2 行以上是整个子画布。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行。1 到 2 列只剩名字；3 列起始终是整个子画布，按宽度缩放，拉高只是多露出一些，没有档位跳变。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
