@@ -92,9 +92,11 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .sec.ghost .sec-frame{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);border-style:dashed}
 .sec.ghost .sec-lbl b{color:var(--accent)}
 .sec.lift{z-index:10}
+.sec.sel .sec-frame{box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 4px var(--accent-soft)}
+.sec.sel .sec-lbl b{color:var(--accent)}
 .card.ride{z-index:20}
-.card.stack{z-index:29}
-.card.stack .in{scale:.96;box-shadow:var(--shadow-lift),var(--hl);transition:scale .18s cubic-bezier(.2,.8,.2,1)}
+.card.stack{z-index:29;pointer-events:none}
+.card.stack .in{scale:.9;opacity:0;box-shadow:var(--shadow-lift),var(--hl);transition:scale .28s cubic-bezier(.2,.8,.2,1),opacity .22s}
 .gbadge{position:absolute;right:-7px;top:-7px;z-index:8;min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700;display:grid;place-items:center;box-shadow:0 2px 6px oklch(0 0 0 / .2)}
 .marquee{position:fixed;z-index:38;border:1.5px solid var(--accent);background:var(--accent-soft);border-radius:4px;pointer-events:none}
 .marquee[hidden]{display:none}
@@ -133,7 +135,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .card.settling{z-index:20}
 .card.dim{opacity:.22;transition:opacity .25s}
 .card .in{position:absolute;inset:0;border-radius:var(--r-card);background:var(--surface);box-shadow:var(--shadow),var(--hl);overflow:hidden;
-  display:flex;flex-direction:column;transform-origin:50% 50%;transition:scale .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;corner-shape:squircle}
+  display:flex;flex-direction:column;transform-origin:50% 50%;transition:scale .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,opacity .22s;corner-shape:squircle}
 .card:hover .in{box-shadow:var(--shadow-hover),var(--hl)}
 .card.sel .in{box-shadow:0 0 0 2px var(--accent),var(--shadow-hover)}
 .card.lift .in{scale:1.035;box-shadow:var(--shadow-lift),var(--hl);transition:scale .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
@@ -435,7 +437,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
   <div class="hud"><button id="zOut" aria-label="缩小"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h8"/></svg></button><button class="z" id="zLbl" title="双击：显示全部">100%</button><button id="zIn" aria-label="放大"><svg class="ic" viewBox="0 0 16 16"><path d="M8 4v8M4 8h8"/></svg></button></div>
 </div>
 <button class="fab" id="addBtn" aria-label="添加链接" aria-expanded="false"><svg class="ic" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></button>
-<div class="tips glass" id="tips"><span><b>Bento Canvas</b> · 拖动卡片到任意格子，挡路的卡片会让开；也可以拖到别的 Section 或空白处新建 Section。拖右下角改大小，<kbd>⌘</kbd> 滚轮缩放，拖空白处平移，<kbd>⇧</kbd> 拖空白处框选多张一起拖。</span><button class="xb" id="tipsX" aria-label="关闭"><svg class="ic" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></div>
+<div class="tips glass" id="tips"><span><b>Bento Canvas</b> · 拖动卡片到任意格子，挡路的卡片会让开；也可以拖到别的 Section 或空白处新建 Section。拖右下角改大小，<kbd>⌘</kbd> 滚轮缩放，拖空白处平移，<kbd>⇧</kbd> 框选 / 点选多张卡片或多个 Section 一起拖。</span><button class="xb" id="tipsX" aria-label="关闭"><svg class="ic" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></div>
 
 <aside class="inbox glass" id="inbox" hidden>
   <header><b>Inbox</b><span class="n" id="inboxN2"></span><button class="xb" id="inboxX" aria-label="关闭"><svg class="ic" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></header>
@@ -679,16 +681,17 @@ function resolve(L0, cols, forced, pinned = []){
 }
 // sections push each other down on the canvas (and pull up when something above shrinks)
 function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null, hold = false){
-  const d = forcedId ? secs.find(s => s.id === forcedId) : null;
-  const placed = d ? [d] : [];
+  const F = new Set(Array.isArray(forcedId) ? forcedId : forcedId ? [forcedId] : []), K = new Set(Array.isArray(skipId) ? skipId : skipId ? [skipId] : []);
+  const d = null;
+  const placed = secs.filter(s => F.has(s.id));
   const G = cfg.secGap;
   const grow = r => ({x:r.x - G, y:r.y - G, w:r.w + G, h:r.h + G});
   const over = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
   // while a Section is held, a neighbour only steps aside once the held frame really sits on it (a third of it covered, or its centre inside)
-  const pushedBy = (s, p) => (hold && p === d)
+  const pushedBy = (s, p) => (hold && F.has(p.id))
     ? over(s, p) > .33 * Math.min(s.w * s.h, p.w * p.h) || (p.x + p.w / 2 > s.x && p.x + p.w / 2 < s.x + s.w && p.y + p.h / 2 > s.y && p.y + p.h / 2 < s.y + s.h)
     : hit(grow(s), p);
-  const others = secs.filter(s => s !== d).sort((a, b) => a.y - b.y || a.x - b.x);
+  const others = secs.filter(s => !F.has(s.id)).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const s of others) {
     let guard = 0;
     while (placed.some(p => pushedBy(s, p)) && guard++ < 100) {
@@ -701,7 +704,7 @@ function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null
     // close the gap to the Section directly above; a Section with nothing above it stays where it is
     const fixed = [];
     for (const s of secs.slice().sort((a, b) => a.y - b.y || a.x - b.x)) {
-      if (s !== d && s.id !== skipId) {
+      if (!F.has(s.id) && !K.has(s.id)) {
         let top = -Infinity;
         for (const p of fixed) if (p.x < s.x + s.w && p.x + p.w > s.x && p.y + p.h <= s.y) top = Math.max(top, p.y + p.h + G);
         if (top !== -Infinity && top < s.y) s.y = top;
@@ -748,9 +751,9 @@ function layoutFrom(base, f, opts = {}){
     // while a card is held, frames keep their size (the target may grow) and nothing else moves: a stable floor to drag over
     if (holding && !s.ghost) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
   }
-  if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; }
+  if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; for (const g of f.group || []) { const t = secs.find(x => x.id === g.id); if (t) { t.x = g.x; t.y = g.y; } } }
   // while a Section is held, the others only step out of its way; gaps close once it is dropped
-  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null, (f && f.kind === 'sec') || opts.noCompact ? false : cfg.secCompact, opts.skip || null, !!(f && f.kind === 'sec' && f.hold));
+  if (!holding && !(f && f.kind === 'sec')) resolveSections(secs, null, (f && f.kind === 'sec') || opts.noCompact ? false : cfg.secCompact, opts.skip || null, !!(f && f.kind === 'sec' && f.hold));
   return {lists, secs};
 }
 function commit(lay){
@@ -784,10 +787,10 @@ const nodes = new Map(), snodes = new Map();
 const IC_ALERT = '<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5.2v3.3M8 10.8h.01"/></svg>';
 const siteOf = l => SITES[l.site] || {n:l.site, t:'#777', g:'?'};
 const fav = l => `<span class="fav" style="--tint:${siteOf(l).t}">${esc(siteOf(l).g)}</span>`;
-function metaLine(l){
+function metaLine(l, withState = true){
   let chip = '';
   if (l.unclear) chip = `<span class="chip warn">Unclear</span>`;
-  else if (l.state === 'Open') chip = `<span class="chip ok">Open</span>`;
+  else if (l.state === 'Open' && withState) chip = `<span class="chip ok">Open</span>`;
   return `<div class="meta">${fav(l)}<span>${esc(l.meta || siteOf(l).n)}</span>${chip}</div>`;
 }
 // kinds whose cover is "the page itself" (a photo, a frame, a screenshot) — these keep native pixels and are cropped, never scaled
@@ -847,11 +850,11 @@ function cardHTML(it, W, H){
   const title = `<div class="ttl">${esc(l.title)}</div>`;
   if (mode === 'tiny') return `<div class="txt">${fav(l)}${title}</div>`;
   // the title appears exactly once: in the text block, or (tall cards of text-only pages) as typography in the cover
-  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); const a = IMG_KINDS.has(l.kind) || l.kind === 'brand' || l.kind === 'unclear' ? art(l, `width:${aw}px`) : l.kind === 'gh' || l.kind === 'paper' ? art(l, `width:${aw}px`, true) : tile(l, `width:${aw}px`); return `${a}<div class="txt">${title}${metaLine(l)}</div>`; }
-  if (mode === 'hero') return `${art(l, '', true)}<div class="txt">${title}${metaLine(l)}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
+  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); const a = IMG_KINDS.has(l.kind) || l.kind === 'brand' || l.kind === 'unclear' ? art(l, `width:${aw}px`) : l.kind === 'gh' || l.kind === 'paper' ? art(l, `width:${aw}px`, true) : tile(l, `width:${aw}px`); return `${a}<div class="txt">${title}${metaLine(l, l.kind !== 'gh')}</div>`; }
+  if (mode === 'hero') return `${art(l, '', true)}<div class="txt">${title}${metaLine(l, l.kind !== 'gh')}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
   if (mode === 'media') return `${art(l)}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm">${metaLine(l)}${l.dur ? `<span class="mdu">${esc(l.dur)}</span>` : ''}</div></div>`;
   const big = W >= 260 && H >= 260, showNote = l.note && H >= 230;
-  if (TITLE_KINDS.has(l.kind)) return `${art(l)}<div class="txt">${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
+  if (TITLE_KINDS.has(l.kind)) return `${art(l)}<div class="txt">${metaLine(l, l.kind !== 'gh')}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
   return `${art(l)}<div class="txt">${title.replace('class="ttl"', `class="ttl${big ? ' big' : ''}"`)}${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
 }
 const KEBAB = '<button class="kebab" aria-label="更多" tabindex="-1"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button>';
@@ -970,9 +973,14 @@ function tick(now){
     if (busy) n.painted = 0;
   }
   for (const n of nodes.values()) {
-    if (drag && drag.kind === 'sec' && n.it.sec === drag.sid) continue;
+    if (drag && drag.kind === 'sec' && drag.sids.has(n.it.sec)) continue;
     if (n.free) {
-      if (n.follow && drag) { const L = drag.n; n.x = L.x + 8 * n.follow; n.y = L.y + 8 * n.follow; paint(n); busy = true; continue; }
+      if (n.follow && drag) {
+        // followers slide into the card in hand and wait there (invisible), then scatter to their cells on drop
+        const L = drag.n, tx = L.x + (L.w - n.w) / 2, ty = L.y + (L.h - n.h) / 2;
+        [n.x, n.vx] = spring(n.x, n.vx, tx, 900, 50, dt); [n.y, n.vy] = spring(n.y, n.vy, ty, 900, 50, dt);
+        paint(n); busy = true; continue;
+      }
       if (drag && !drag.rs && cfg.follow && !reduceMotion.matches) {
         [n.x, n.vx] = spring(n.x, n.vx, drag.px, cfg.fk, cfg.fc, dt);
         [n.y, n.vy] = spring(n.y, n.vy, drag.py, cfg.fk, cfg.fc, dt);
@@ -989,7 +997,7 @@ function tick(now){
     if (moving) busy = true; else if (n.el.classList.contains('settling')) n.el.classList.remove('settling');
   }
   if (drag) {
-    if (drag.kind !== 'sec') {
+    {
       [phs.x, phs.vx] = spring(phs.x, phs.vx, phs.tx, 700, 42, dt);
       [phs.y, phs.vy] = spring(phs.y, phs.vy, phs.ty, 700, 42, dt);
       [phs.w, phs.vw] = spring(phs.w, phs.vw, phs.tw, 700, 42, dt);
@@ -1128,6 +1136,7 @@ const endPtr = e => {
       if (press.open && !(e.shiftKey || e.metaKey || e.ctrlKey)) window.open(LINKS[press.n.it.link].url, '_blank', 'noopener');
       else (e.shiftKey || e.metaKey || e.ctrlKey) ? toggleSel(press.n.it.id) : selectOnly(press.n.it.id);
     }
+    if (press.kind === 'sec' && e.type === 'pointerup') (e.shiftKey || e.metaKey || e.ctrlKey) ? toggleSelSec(press.sn.s.id) : selectOnlySec(press.sn.s.id);
     release();
   }
 };
@@ -1172,9 +1181,14 @@ function beginSec(pr, p){
   clearTimeout(pr.timer);
   const sn = pr.sn;
   sn.free = true; sn.vx = sn.vy = 0;
-  drag = {kind:'sec', sn, sid:sn.s.id, base:snapshot(), offX:p.x - sn.x, offY:p.y - sn.y, px:sn.x, py:sn.y, tx:sn.s.x, ty:sn.s.y, last:p, layout:null, client:{x:p.cx, y:p.cy}};
+  // other selected Sections move as one rigid group with this one
+  const group = selSec.has(sn.s.id) ? [...selSec].filter(id => id !== sn.s.id && snodes.has(id)).map(id => { const g = snodes.get(id); g.free = true; g.gdx = g.x - sn.x; g.gdy = g.y - sn.y; g.el.classList.add('lift'); return g; }) : [];
+  drag = {kind:'sec', sn, sid:sn.s.id, sids:new Set([sn.s.id, ...group.map(g => g.s.id)]), gsecs:group, base:snapshot(), offX:p.x - sn.x, offY:p.y - sn.y, px:sn.x, py:sn.y, tx:sn.s.x, ty:sn.s.y, last:p, layout:null, client:{x:p.cx, y:p.cy}};
+  drag.ox = sn.x; drag.oy = sn.y; drag.spot = null;
   sn.el.classList.add('lift'); stage.classList.add('dragging');
-  for (const c of nodes.values()) if (c.it.sec === sn.s.id) c.el.classList.add('ride');
+  Object.assign(phs, {x:sn.x, y:sn.y + LBL, w:sn.w, h:sn.h - LBL, tx:sn.x, ty:sn.y + LBL, tw:sn.w, th:sn.h - LBL, vx:0, vy:0, vw:0, vh:0});
+  ph.className = 'ph sec';
+  for (const c of nodes.values()) if (drag.sids.has(c.it.sec)) c.el.classList.add('ride');
   move(p); kick();
 }
 // hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
@@ -1200,7 +1214,13 @@ function move(p){
     // a Section is big: it sticks to the hand 1:1 and lands on the grid only when dropped
     d.px = p.x - d.offX; d.py = p.y - d.offY;
     d.sn.x = d.px; d.sn.y = d.py;
-    if (!d.layout || Math.abs(d.px - d.tx) > 6 || Math.abs(d.py - d.ty) > 6) { d.tx = d.px; d.ty = d.py; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:d.px, y:d.py, hold:true}); applyLayout(d.layout, false, null); }
+    for (const g of d.gsecs) { g.x = d.px + g.gdx; g.y = d.py + g.gdy; }
+    // nobody moves for a Section: it will land on the nearest free spot (an outline shows it when that differs from the hand)
+    const spot = freeSpot(d), snapped = Math.round(d.px / st) * st === spot.x && Math.round(d.py / st) * st === spot.y;
+    d.spot = spot;
+    phs.tx = spot.x; phs.ty = spot.y + LBL; phs.tw = d.sn.w; phs.th = d.sn.h - LBL;
+    if (snapped) { Object.assign(phs, {x:phs.tx, y:phs.ty, w:phs.tw, h:phs.th, vx:0, vy:0}); }
+    ph.classList.toggle('on', !snapped);
     return;
   }
   const n = d.n;
@@ -1232,6 +1252,21 @@ function move(p){
     if (nw !== d.tw || nh !== d.th || !d.layout) { d.tw = nw; d.th = nh; n.key = ''; fill(n, {...n.it, w:nw, h:nh}, nw, nh); preview(); }
   }
 }
+// the nearest grid spot where the held Section(s) fit without touching anyone, else where it came from
+function freeSpot(d){
+  const st = step(), G = cfg.secGap, R = 8;
+  const sx = Math.round(d.px / st) * st, sy = Math.round(d.py / st) * st;
+  const members = [{n:d.sn, dx:0, dy:0}, ...d.gsecs.map(g => ({n:g, dx:g.gdx, dy:g.gdy}))];
+  const others = [...snodes.values()].filter(n => !d.sids.has(n.s.id) && !n.s.ghost).map(n => ({x:n.tx, y:n.ty, w:n.tw, h:n.th}));
+  const ok = (x, y) => members.every(m => !others.some(o => hit({x:x + m.dx - G, y:y + m.dy - G, w:m.n.w + 2 * G, h:m.n.h + 2 * G}, o)));
+  if (ok(sx, sy)) return {x:sx, y:sy};
+  let best = null, bd = Infinity;
+  for (let i = -R; i <= R; i++) for (let j = -R; j <= R; j++) {
+    const x = sx + i * st, y = sy + j * st, dd = (x - d.px) ** 2 + (y - d.py) ** 2;
+    if (dd < bd && ok(x, y)) { best = {x, y}; bd = dd; }
+  }
+  return best || {x:d.ox, y:d.oy};
+}
 function preview(){
   const d = drag;
   const f = {kind:'card', item:d.item, sec:d.sec, group:d.gitems, x:d.tx, y:d.ty, w:d.tw, h:d.th, cols:Math.max(2, Math.min(4, d.tw)), nx:d.nx, ny:d.ny};
@@ -1262,9 +1297,10 @@ function land(lay){
   for (const n of snodes.values()) n.el.classList.remove('target');
   if (d.kind === 'sec') {
     d.sn.free = false; d.sn.el.classList.remove('lift');
+    for (const g of d.gsecs) { g.free = false; g.vx = g.vy = 0; g.el.classList.remove('lift'); }
     for (const c of nodes.values()) c.el.classList.remove('ride');
-    if (lay) { pushUndo(d.base); commit(lay); commit(layoutFrom(S, null, {skip:d.sid, noCompact:true})); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; }
-    for (const n of nodes.values()) if (n.it.sec === d.sid) { n.vx = n.vy = 0; }
+    if (lay) { pushUndo(d.base); commit(lay); commit(layoutFrom(S, null, {skip:[...d.sids], noCompact:true})); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; }
+    for (const n of nodes.values()) if (d.sids.has(n.it.sec)) { n.vx = n.vy = 0; }
     syncAll(false); save(); return;
   }
   const n = d.n;
@@ -1288,7 +1324,7 @@ function land(lay){
 function drop(){
   const d = drag;
   if (d.kind === 'card' && d.sec === '__new') { const st = step(); d.nx = Math.round(d.nx / st) * st; d.ny = Math.round(d.ny / st) * st; preview(); }
-  if (d.kind === 'sec') { const st = step(); d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:Math.round(d.px / st) * st, y:Math.round(d.py / st) * st}); }
+  if (d.kind === 'sec') { const sp = d.spot || freeSpot(d); d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:sp.x, y:sp.y, group:d.gsecs.map(g => ({id:g.s.id, x:sp.x + g.gdx, y:sp.y + g.gdy}))}); }
   land(d.layout);
 }
 function cancel(){ land(null); toast('已取消'); }
@@ -1307,11 +1343,16 @@ addEventListener('keydown', e => {
 });
 
 /* ============ selection, undo, block actions ============ */
-const sel = new Set();
-function syncSel(){ for (const id of sel) if (!nodes.has(id)) sel.delete(id); for (const n of nodes.values()) n.el.classList.toggle('sel', sel.has(n.it.id)); }
+const sel = new Set(), selSec = new Set();
+function syncSel(){
+  for (const id of sel) if (!nodes.has(id)) sel.delete(id); for (const n of nodes.values()) n.el.classList.toggle('sel', sel.has(n.it.id));
+  for (const id of selSec) if (!snodes.has(id)) selSec.delete(id); for (const n of snodes.values()) n.el.classList.toggle('sel', selSec.has(n.s.id));
+}
+function toggleSelSec(id){ selSec.has(id) ? selSec.delete(id) : selSec.add(id); syncSel(); }
+function selectOnlySec(id){ const was = selSec.size === 1 && selSec.has(id); selSec.clear(); sel.clear(); if (!was) selSec.add(id); syncSel(); }
 function toggleSel(id){ sel.has(id) ? sel.delete(id) : sel.add(id); syncSel(); }
-function selectOnly(id){ const was = sel.size === 1 && sel.has(id); sel.clear(); if (!was) sel.add(id); syncSel(); }
-function clearSel(){ if (sel.size) { sel.clear(); syncSel(); } }
+function selectOnly(id){ const was = sel.size === 1 && sel.has(id); sel.clear(); selSec.clear(); if (!was) sel.add(id); syncSel(); }
+function clearSel(){ if (sel.size || selSec.size) { sel.clear(); selSec.clear(); syncSel(); } }
 const selIds = () => [...sel].filter(id => nodes.has(id));
 const undoStack = [];
 function pushUndo(base){ undoStack.push(base || snapshot()); if (undoStack.length > 40) undoStack.shift(); }
