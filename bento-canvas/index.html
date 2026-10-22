@@ -123,82 +123,119 @@ svg{-webkit-user-drag:none;display:block}
 .card:hover .rz{opacity:1}
 .sec.dragging .rz{opacity:0}
 
-/* link card */
-.k-link .in{flex-direction:column;padding:14px;gap:10px}
-.tile{flex:none;width:34px;height:34px;border-radius:10px;background:var(--t);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;
-  font-family:var(--ui);box-shadow:inset 0 0 0 .5px oklch(0 0 0 / .12)}
-.k-link .txt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.ttl{font-weight:600;font-size:13.5px;line-height:1.3;letter-spacing:-.005em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.meta{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.desc{margin:4px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
-.nq{margin-top:auto;padding:7px 9px;border-radius:9px;background:var(--note);color:var(--note-ink);font-size:12px;line-height:1.35}
-.badge{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border-radius:999px;background:var(--line);font-size:11px;font-weight:550;color:var(--ink-2);width:max-content}
-/* size variants */
-.k-link.w-1 .in{padding:12px;gap:8px}
-.k-link.w-1 .meta,.k-link.w-1 .desc,.k-link.w-1 .nq,.k-link.w-1 .badge{display:none}
-.k-link.w-1 .ttl{font-size:12px;-webkit-line-clamp:3}
-.k-link.w-1 .tile{width:30px;height:30px;border-radius:9px;font-size:13px}
-.k-link.h-1:not(.w-1) .in{flex-direction:row;align-items:flex-start;padding:13px 14px}
-.k-link.h-1 .desc,.k-link.h-1 .nq{display:none}
-.k-link.h-1:not(.w-1) .ttl{-webkit-line-clamp:2}
-.k-link.h-1.w-3 .ttl,.k-link.h-1.w-4 .ttl{-webkit-line-clamp:2;font-size:14px}
-.k-link.h-2.w-2 .tile,.k-link.h-3 .tile{width:40px;height:40px;border-radius:12px;font-size:17px}
-.k-link.h-2.w-2 .ttl,.k-link.h-3 .ttl,.k-link.h-2.w-3 .ttl,.k-link.h-2.w-4 .ttl{font-size:15px;-webkit-line-clamp:3}
-.k-link.h-2.w-3 .in,.k-link.h-2.w-4 .in{flex-direction:row;gap:16px}
-.k-link.h-2.w-3 .tile,.k-link.h-2.w-4 .tile{width:48px;height:48px;border-radius:14px;font-size:20px}
-.k-link.h-1 .nq{display:none}
+/* card content (ported from the Links design: art + txt, modes tiny / wide / hero / tall / media) */
+.card .in{flex-direction:column}
+.art{position:relative;flex:1;min-height:0;margin:6px 6px 0;border-radius:12px;overflow:hidden;background:var(--tint);container-type:size;color:#fff;display:block}
+@supports (corner-shape:squircle){.art{border-radius:16px;corner-shape:squircle}}
+.txt{flex:none;padding:9px 12px 11px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.ttl{--ln:2;font-size:13.5px;font-weight:600;letter-spacing:-.008em;line-height:1.28;display:block;max-height:calc(var(--ln) * 1lh);overflow:hidden;overflow-wrap:anywhere;word-break:normal}
+.meta{display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:11.5px;min-width:0;white-space:nowrap;overflow:hidden}
+.meta > span:not(.chip):not(.fav){flex:0 1 auto;min-width:0;overflow:hidden}
+.chip{flex:none;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--line);color:var(--ink-2)}
+.chip.warn{background:oklch(0.8 0.12 75 / .22);color:oklch(0.5 0.12 65)}
+.chip.ok{background:oklch(0.7 0.15 150 / .16);color:oklch(0.5 0.13 150)}
+.fav{width:16px;height:16px;border-radius:4.5px;display:grid;place-items:center;font-size:9.5px;font-weight:700;color:#fff;background:var(--tint);flex:none;box-shadow:inset 0 0 0 .5px oklch(0 0 0 / .14);font-family:var(--ui)}
+.note-q{--ln:2;font-size:12.5px;color:var(--ink-2);line-height:1.45;max-height:calc(var(--ln) * 1lh);overflow:hidden}
+.note-q:before{content:"";display:inline-block;width:3px;height:.9em;margin-right:6px;border-radius:2px;background:var(--note-ink);opacity:.35;vertical-align:-1px}
+.m-tiny .txt{flex:1;padding:10px 11px;justify-content:space-between}
+.m-tiny .ttl{font-size:12.5px;--ln:3}
+.m-tiny .fav{width:20px;height:20px;border-radius:6px;font-size:11px}
+.in.m-wide{flex-direction:row}
+.m-wide .art{flex:none;margin:6px 0 6px 6px}
+.m-wide .txt{flex:1;justify-content:center;padding:8px 12px}
+.in.m-hero{flex-direction:row}
+.m-hero .art{flex:none;width:58%;margin:6px 0 6px 6px}
+.m-hero .txt{flex:1;justify-content:flex-end;padding:14px 16px 16px;gap:6px}
+.m-hero .ttl{font-size:19px;letter-spacing:-.02em;--ln:4;line-height:1.2}
+.m-tall .ttl.big{font-size:17px;letter-spacing:-.016em;line-height:1.22}
+.m-tall .txt{gap:4px}
+/* covers */
+.a-gh{background:#0D1117;color:#E6EDF3;padding:12px 14px;display:flex;flex-direction:column;gap:7px;font-family:var(--mono)}
+.a-gh .r{display:flex;align-items:center;gap:6px;font-size:clamp(9px,6cqw,13px);color:#9198A1;white-space:nowrap;overflow:hidden}
+.a-gh .r i{width:clamp(10px,7cqw,16px);height:clamp(10px,7cqw,16px);border-radius:50%;background:#E6EDF3;flex:none;box-shadow:inset 0 0 0 3px #0D1117,0 0 0 1px #E6EDF3}
+.a-gh .t{font-family:var(--ui);font-size:clamp(10px,8.4cqw,22px);font-weight:600;line-height:1.22;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.a-gh .s{margin-top:auto;display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;background:#238636;color:#fff;font-family:var(--ui);font-size:clamp(9px,5cqw,12px);font-weight:600}
+.a-gh .s.merged{background:#8957E5}
+@container (max-height:130px){.a-gh .t{-webkit-line-clamp:2}.a-gh .r{display:none}}
+.a-paper{background:#FBFAF6;color:#1B1B1B;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.a-paper .id{font-family:var(--mono);font-size:clamp(8px,4.6cqw,11px);color:#B31B1B;letter-spacing:.02em}
+.a-paper .t{font-family:var(--serif);font-size:clamp(12px,11cqw,30px);font-weight:500;line-height:1.08;letter-spacing:-.01em}
+.a-paper .au{font-family:var(--serif);font-style:italic;font-size:clamp(8px,4.8cqw,12px);color:#5A5A5A;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.a-paper .ln{margin-top:auto;display:flex;flex-direction:column;gap:3cqh}
+.a-paper .ln i{height:max(2px,1.4cqh);border-radius:2px;background:#E7E3DA}
+.a-paper .ln i:nth-child(2){width:86%}.a-paper .ln i:nth-child(3){width:64%}
+.a-video{background:radial-gradient(120% 90% at 20% 15%,color-mix(in oklch,var(--tint) 85%,#fff),transparent 60%),linear-gradient(160deg,color-mix(in oklch,var(--tint) 70%,#000),#141414)}
+.a-video .orb{position:absolute;border-radius:50%;filter:blur(18px);opacity:.55;pointer-events:none}
+.a-video .orb.a{width:70cqw;height:70cqw;left:-12cqw;top:-24cqw;background:color-mix(in oklch,var(--tint) 70%,#fff)}
+.a-video .orb.b{width:60cqw;height:60cqw;right:-18cqw;bottom:-30cqw;background:color-mix(in oklch,var(--tint) 55%,#000);opacity:.7}
+.a-video .pl{position:absolute;left:7cqw;bottom:8cqh;width:clamp(22px,16cqw,40px);height:clamp(22px,16cqw,40px);border-radius:50%;display:grid;place-items:center;background:oklch(0 0 0 / .45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.a-video .pl:after{content:"";margin-left:12%;border-left:clamp(7px,4.6cqw,12px) solid #fff;border-top:clamp(5px,3cqw,8px) solid transparent;border-bottom:clamp(5px,3cqw,8px) solid transparent}
+.a-video .du{position:absolute;right:6cqw;bottom:8cqh;padding:2px 6px;border-radius:5px;background:oklch(0 0 0 / .6);font-size:clamp(9px,5cqw,12px);font-weight:600;font-variant-numeric:tabular-nums}
+.a-video .pt{position:absolute;right:6cqw;top:7cqh;padding:2px 6px;border-radius:5px;background:oklch(1 0 0 / .9);color:#111;font-size:clamp(8px,4.4cqw,11px);font-weight:700}
+.a-photo{background:radial-gradient(60% 50% at 78% 22%,#FFE9C2 0,#FFD7A0 18%,transparent 60%),radial-gradient(90% 70% at 10% 100%,#5B3A2A,transparent 70%),linear-gradient(180deg,#E7B88A,#A9724C 70%,#6E4430)}
+.a-photo:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 14%,oklch(0.2 0.03 50 / .22) 14% 19%,transparent 19% 30%);mix-blend-mode:multiply}
+.a-photo:after{content:"";position:absolute;left:18%;right:30%;bottom:9%;height:26%;border-radius:50% 50% 10% 10%;background:radial-gradient(60% 80% at 50% 30%,#F3E6D4,#CDB79B);box-shadow:0 8px 18px oklch(0.2 0.05 50 / .45)}
+.a-photo .xh{position:absolute;left:6cqw;bottom:5cqh;z-index:1;font-size:clamp(9px,5cqw,12px);font-weight:600;color:#fff;text-shadow:0 1px 6px oklch(0 0 0 / .4);display:flex;align-items:center;gap:4px}
+.a-shot{background:#F2F2F4;color:#111;display:flex;flex-direction:column}
+.a-shot .ch{height:max(14px,9cqh);display:flex;align-items:center;gap:4px;padding:0 5cqw;background:#E4E4E8;flex:none}
+.a-shot .ch i{width:max(5px,2.2cqw);height:max(5px,2.2cqw);border-radius:50%;background:#C9C9CE}
+.a-shot .ch span{margin-left:3cqw;flex:1;height:58%;border-radius:4px;background:#F7F7F9;font-size:clamp(7px,3cqw,10px);color:#8A8A90;display:flex;align-items:center;padding:0 2cqw;overflow:hidden;white-space:nowrap}
+.a-shot .pg{flex:1;padding:6cqh 6cqw;display:grid;grid-template-columns:1.1fr .9fr;gap:4cqw;align-items:center}
+.a-shot .h{font-size:clamp(10px,5.6cqw,26px);font-weight:750;letter-spacing:-.03em;line-height:1.05}
+.a-shot .h em{font-style:normal;color:#7C5CFF}
+.a-shot .sub{margin-top:3cqh;display:flex;flex-direction:column;gap:2cqh}
+.a-shot .sub i{height:max(3px,1.6cqh);border-radius:3px;background:#D9D9DE}
+.a-shot .sub i:last-child{width:70%}
+.a-shot .cta{margin-top:4cqh;width:44%;height:max(10px,7cqh);border-radius:99px;background:#111}
+.a-shot .mock{height:78%;border-radius:8px;background:linear-gradient(180deg,#fff,#EDEAFF);box-shadow:0 6px 18px -6px oklch(0.3 0.1 290 / .35),inset 0 0 0 1px #E2DEFF;display:flex;gap:4%;padding:5%}
+.a-shot .mock b{width:28%;border-radius:5px;background:#EFEDFB;display:block}
+.a-shot .mock u{flex:1;border-radius:5px;background:repeating-linear-gradient(to bottom,#F6F5FE 0 16%,#fff 16% 22%);display:block}
+.a-chat{background:#F7F7F8;padding:12px 12px;display:flex;flex-direction:column;gap:7px;color:#111}
+.a-chat .u{align-self:flex-end;max-width:78%;padding:3cqh 4cqw;border-radius:12px;background:#E9E9EB;font-size:clamp(8px,5cqw,13px);line-height:1.3}
+.a-chat .b{display:flex;gap:3cqw;font-size:clamp(8px,4.6cqw,12px);line-height:1.4;color:#333}
+.a-chat .b i{flex:none;width:clamp(12px,7cqw,20px);height:clamp(12px,7cqw,20px);border-radius:50%;background:#10A37F}
+.a-chat .b span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+.a-stock{background:radial-gradient(70% 60% at 30% 40%,#A9B8C9,transparent 70%),radial-gradient(60% 60% at 75% 70%,#58677A,transparent 70%),linear-gradient(135deg,#C9D2DC,#7E8B9B)}
+.a-stock:after{content:"";position:absolute;left:26%;top:22%;width:30%;height:58%;border-radius:40% 40% 8% 8%;background:linear-gradient(180deg,#2D3440,#465061);filter:blur(1.5px);opacity:.75}
+.a-stock .wm{position:absolute;right:5cqw;bottom:5cqh;font-size:clamp(8px,4cqw,11px);font-weight:700;color:#fff;opacity:.8;letter-spacing:.04em}
+.a-type{background:color-mix(in oklch,var(--tint) 10%,var(--surface));color:var(--ink);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
+.a-type .t{font-size:clamp(12px,10.5cqw,30px);font-weight:700;letter-spacing:-.025em;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
+.a-type .d{font-size:clamp(8px,4.6cqw,12px);color:color-mix(in oklch,var(--tint) 70%,var(--ink));font-weight:600;display:flex;align-items:center;gap:5px}
+.a-brand{background:linear-gradient(150deg,color-mix(in oklch,var(--tint) 88%,#fff),var(--tint) 60%,color-mix(in oklch,var(--tint) 75%,#000));display:grid;place-items:center}
+.a-brand .g{font-size:clamp(18px,24cqmin,64px);font-weight:800;letter-spacing:-.04em;color:#fff;text-shadow:0 4px 18px oklch(0 0 0 / .18)}
+.a-unclear{background:repeating-linear-gradient(-45deg,transparent 0 7px,oklch(0.5 0 0 / .07) 7px 8px),color-mix(in oklch,var(--tint) 7%,var(--surface));display:grid;place-items:center;color:var(--ink-3)}
+.a-unclear div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:clamp(9px,4.6cqw,12px);text-align:center;padding:0 8%}
+.a-unclear .ic{width:clamp(16px,10cqw,26px);height:clamp(16px,10cqw,26px)}
+/* media mode: the cover fills the card, the title sits once on a scrim */
+.in.m-media{padding:0}
+.m-media > .art{position:absolute;inset:0;margin:0;border-radius:0}
+.m-media > .art:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 38%,oklch(0.12 0.01 265 / .78));pointer-events:none}
+.m-media .a-video .pl{left:50%;top:40%;bottom:auto;translate:-50% -50%;width:clamp(36px,17cqw,58px);height:clamp(36px,17cqw,58px);background:oklch(1 0 0 / .16);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .28);transition:scale .3s cubic-bezier(.2,.8,.2,1),background .2s}
+.card:hover .m-media .a-video .pl{scale:1.07;background:oklch(1 0 0 / .24)}
+.m-media .a-video .du,.m-media .a-video .pt{display:none}
+.mo{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:0 16px 13px;display:flex;flex-direction:column;gap:6px;color:#fff;pointer-events:none}
+.mo .mt{font-size:15px;font-weight:650;line-height:1.28;letter-spacing:-.01em;text-shadow:0 1px 10px oklch(0 0 0 / .35);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mo .mm{display:flex;align-items:center;gap:8px;min-width:0}
+.mo .meta{color:oklch(1 0 0 / .8)}
+.mo .mdu{flex:none;padding:1px 6px;border-radius:5px;background:oklch(1 0 0 / .18);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
 
-/* media card: cover fills the card, title sits on a scrim */
-.k-media .in{background:var(--t)}
-.cover{position:absolute;inset:0;background:
-  radial-gradient(120% 90% at 20% 0%,oklch(1 0 0 / .32),transparent 55%),
-  radial-gradient(90% 70% at 100% 100%,oklch(0 0 0 / .32),transparent 60%),
-  var(--t)}
-.cover .play{position:absolute;left:50%;top:50%;translate:-50% -50%;width:44px;height:44px;border-radius:50%;background:oklch(1 0 0 / .22);backdrop-filter:blur(8px);
-  display:grid;place-items:center;color:#fff;transition:scale .25s cubic-bezier(.2,.8,.2,1)}
-.card:hover .cover .play{scale:1.08}
-.cover .play svg{width:18px;height:18px;fill:#fff;margin-left:2px}
-.frame{position:absolute;left:10%;right:0;top:14%;bottom:0;border-radius:10px 0 0 0;background:oklch(1 0 0 / .92);box-shadow:0 8px 28px -8px oklch(0 0 0 / .4);overflow:hidden}
-.frame::before{content:"";position:absolute;left:10px;top:9px;width:8px;height:8px;border-radius:50%;background:oklch(0.8 0.02 265);box-shadow:14px 0 0 oklch(0.8 0.02 265),28px 0 0 oklch(0.8 0.02 265)}
-.frame i{position:absolute;left:12px;height:7px;border-radius:4px;background:oklch(0.88 0.01 265)}
-.frame i:nth-child(1){top:36px;width:46%;height:12px;background:oklch(0.78 0.02 265)}
-.frame i:nth-child(2){top:58px;width:72%}
-.frame i:nth-child(3){top:72px;width:64%}
-.frame i:nth-child(4){top:86px;width:40%}
-.frame i:nth-child(5){top:108px;width:88%;height:80px;border-radius:8px;background:var(--t);opacity:.35}
-.photo{position:absolute;inset:0;background:
-  radial-gradient(60% 50% at 30% 35%,oklch(0.98 0.06 80 / .9),transparent 70%),
-  radial-gradient(50% 40% at 75% 70%,oklch(0.55 0.1 40 / .6),transparent 70%),
-  linear-gradient(180deg,oklch(0.85 0.08 70),oklch(0.5 0.1 45))}
-.mo{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;background:linear-gradient(180deg,transparent,var(--scrim));color:#fff}
-.mt{font-weight:600;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-shadow:0 1px 2px oklch(0 0 0 / .3)}
-.mm{font-size:11.5px;opacity:.85;margin-top:2px;display:flex;gap:8px;white-space:nowrap;overflow:hidden}
-.mm .dur{margin-left:auto;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11px}
-.k-media.h-1 .mo{padding-top:18px}
-.k-media.h-1 .mt{-webkit-line-clamp:1;font-size:12.5px}
-.k-media.w-1 .mm{display:none}
-.k-media.w-1 .cover .play{width:34px;height:34px}
-.k-media.w-1 .mt{font-size:11.5px}
+/* note */
+.k-note .in{background:var(--note);padding:12px 14px;gap:6px}
+.note-l{font-size:10.5px;font-weight:650;color:var(--note-ink);opacity:.7;letter-spacing:.03em;text-transform:uppercase}
+.note-t{font-size:14px;line-height:1.5;color:var(--note-ink);overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
 
-/* list card */
-.k-list .in{flex-direction:column;padding:10px 10px 8px}
-.lh{display:flex;align-items:center;gap:7px;padding:4px 6px 8px;font-weight:650;font-size:13.5px}
-.lh .ic{color:var(--ink-3)}
-.lh .n{color:var(--ink-3);font-weight:500;font-size:12px;font-variant-numeric:tabular-nums}
-.rows{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
-.row{display:flex;align-items:center;gap:9px;height:30px;flex:none;padding:0 6px;border-radius:8px;min-width:0}
-.row:hover{background:var(--line)}
-.row .fv{flex:none;width:16px;height:16px;border-radius:5px;background:var(--t);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center}
-.row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
-.row .s{color:var(--ink-3);font-size:11px;white-space:nowrap}
-.k-list.w-1 .row .s,.k-list.w-2 .row .s{display:none}
-.more{padding:5px 6px 2px;font-size:11.5px;color:var(--ink-3);text-align:left}
-
-/* note card */
-.k-note .in{background:var(--note);color:var(--note-ink);flex-direction:column;padding:13px 14px;gap:6px}
-.k-note .nl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;font-weight:600}
-.k-note .nt{font-family:var(--serif);font-size:16px;line-height:1.35;font-weight:500;overflow:hidden}
-.k-note.h-2 .nt{font-size:19px}
+/* list */
+.k-list .in{padding:6px 6px 4px}
+.lh{flex:none;display:flex;align-items:center;gap:7px;height:32px;width:100%;padding:0 6px 0 8px;border-radius:9px;color:var(--ink-3);text-align:left}
+.lh b{color:var(--ink);font-size:13px;font-weight:650;letter-spacing:-.005em;white-space:nowrap;overflow:hidden}
+.lh .n{font-size:12px;font-variant-numeric:tabular-nums}
+.rows{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.row{flex:none;display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:9px;min-width:0;transition:background .2s}
+.row:hover{background:var(--accent-soft)}
+.row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;font-weight:500;font-size:12.5px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+.row .s{flex:none;font-size:11px;color:var(--ink-3);max-width:34%;overflow:hidden;white-space:nowrap}
+.k-list.w-1 .row .s{display:none}
+.more{flex:none;height:24px;padding:0 10px;display:flex;align-items:center;font-size:11.5px;color:var(--ink-3)}
 
 /* ---------- tuning panel ---------- */
 .panel{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;width:290px;max-width:calc(100vw - 32px);
@@ -326,60 +363,60 @@ const SITES = {
   apple:{n:'developer.apple.com',t:'#1D1D1F',g:'A'}, hn:{n:'news.ycombinator.com',t:'#FF6600',g:'Y'}, solid:{n:'solidjs.com',t:'#2C4F7C',g:'S'}
 };
 const L = {
-  l1:{site:'github',url:'https://github.com/vercel/next.js/discussions/35773',title:'Hydration failed because the initial UI does not match what was rendered on the server',meta:'vercel/next.js · Discussion',badge:'Open',desc:'Long-running discussion: mismatched markup between server render and the first client render, usually from Date, locale or browser-only APIs.'},
-  l2:{site:'github',url:'https://github.com/yhnocoder/tongtu',title:'可选裁掉中文 PDF 的页边白边',meta:'yhnocoder/tongtu · PR #168'},
-  l3:{site:'github',url:'https://github.com/yhnocoder/tongtu',title:'tongtu/CLAUDE.md',meta:'github · File'},
-  l4:{site:'nextjs',url:'https://nextjs.org/docs/app/guides/upgrading/version-15',title:'Upgrading: Version 15 | Next.js',meta:'nextjs.org · Docs',desc:'Async request APIs, new caching defaults, React 19.'},
-  l5:{site:'vercel',url:'https://www.vercel-status.com',title:'Vercel Status',meta:'vercel-status.com',desc:'All systems operational.'},
-  l6:{site:'sentry',url:'https://sentry.io',title:'Issues · tongtu-web · Sentry',meta:'sentry.io'},
-  l7:{site:'geekbang',url:'https://time.geekbang.org',title:'极客时间-学 AI ，用极客时间',meta:'time.geekbang.org',badge:'标题待确认',desc:'页面标题是站点口号，文章本身要登录。'},
-  l8:{site:'bilibili',url:'https://www.bilibili.com',title:'产品经理面试重点问题解析（下）',meta:'bilibili · P81/99',dur:'20:08',media:'video'},
-  l9:{site:'ifanr',url:'https://www.ifanr.com',title:'看完这 5 点，才知道产品经理这么难做',meta:'爱范儿'},
-  l10:{site:'arxiv',url:'https://arxiv.org/abs/1706.03762',title:'Attention Is All You Need',meta:'arXiv · 2017',desc:'The Transformer: a sequence model based solely on attention.'},
-  l13:{site:'pg',url:'https://paulgraham.com/greatwork.html',title:'How to Do Great Work',meta:'paulgraham.com',note:'读完写 3 条自己的结论',desc:'A long essay on choosing what to work on and how to do it well.'},
-  l15:{site:'supasidebar',url:'https://supasidebar.com',title:'Supa Sidebar',meta:'supasidebar.com · 截图',media:'shot'},
-  l16:{site:'xhs',url:'https://www.xiaohongshu.com',title:'武康路这家咖啡店，下午三点的光太好了',meta:'小红书 · 2.3k 赞',media:'photo'},
-  l17:{site:'linear',url:'https://linear.app/changelog',title:'Changelog – Linear',meta:'linear.app',desc:'Weekly product updates, each with a short video.'},
-  l18:{site:'rauno',url:'https://rauno.me/craft/interaction-design',title:'Invisible Details of Interaction Design',meta:'rauno.me',note:'拖拽、惯性、可中断动画，全是我们要的',desc:'Why great interactions feel right: metaphors, kinetics, interruptibility.'},
-  l23:{site:'youtube',url:'https://www.youtube.com/watch?v=aircAruvnKk',title:'But what is a neural network? | Deep learning chapter 1',meta:'YouTube · 3Blue1Brown',dur:'18:40',media:'video'},
-  l24:{site:'chatgpt',url:'https://chatgpt.com',title:'CRDT 和 OT 的区别，用一个协同编辑的例子讲清楚',meta:'ChatGPT · 分享的对话',desc:'OT 依赖中心服务器给操作排序并做变换；CRDT 让每个副本独立合并，最终一致。'},
-  l25:{site:'raycast',url:'https://www.raycast.com',title:'Raycast',meta:'raycast.com'},
-  l26:{site:'excalidraw',url:'https://excalidraw.com',title:'Excalidraw',meta:'excalidraw.com'},
-  l27:{site:'dropover',url:'https://dropoverapp.com',title:'Dropover - Easier Drag and Drop on your Mac.',meta:'dropoverapp.com',note:'Shelf 的交互参考',desc:'A floating shelf for dragging files around macOS.'},
-  l28:{site:'cloudflare',url:'https://developers.cloudflare.com/cloudflare-one/policies/access/',title:'Access policies · Cloudflare Zero Trust docs',meta:'developers.cloudflare.com'},
-  l11:{site:'secretlives',url:'https://thesecretlivesofdata.com/raft/',title:'Raft: Understandable Distributed Consensus',meta:'thesecretlivesofdata.com'},
-  l12:{site:'incomplete',url:'http://www.incompleteideas.net/IncIdeas/BitterLesson.html',title:'The Bitter Lesson',meta:'incompleteideas.net'},
-  l14:{site:'mcfunley',url:'https://mcfunley.com/choose-boring-technology',title:'Choose Boring Technology',meta:'mcfunley.com'},
-  l34:{site:'zhihu',url:'https://www.zhihu.com',title:'为什么很多人收藏了，却从来不看？',meta:'知乎 · 问题'},
-  l19:{site:'mit',url:'https://pdos.csail.mit.edu/6.824/',title:'6.5840: Distributed Systems',meta:'pdos.csail.mit.edu'},
-  l20:{site:'raft',url:'https://raft.github.io/raft.pdf',title:'In Search of an Understandable Consensus Algorithm',meta:'raft.github.io · PDF'},
-  l21:{site:'ddia',url:'https://dataintensive.net',title:'Designing Data-Intensive Applications',meta:'dataintensive.net'},
-  l22:{site:'jepsen',url:'https://jepsen.io/analyses',title:'Jepsen: Analyses',meta:'jepsen.io'},
-  l32:{site:'apple',url:'https://developer.apple.com/documentation/technologyoverviews/liquid-glass',title:'Liquid Glass | Apple Developer Documentation',meta:'developer.apple.com'},
-  l31:{site:'hn',url:'https://news.ycombinator.com',title:'Hacker News',meta:'news.ycombinator.com'},
-  l29:{site:'solid',url:'https://www.solidjs.com',title:'SolidJS · Reactive Javascript Library',meta:'solidjs.com'}
+  l1:{site:'github',kind:'gh',repo:'vercel/next.js',state:'Open',url:'https://github.com/vercel/next.js/discussions/35773',title:'Hydration failed because the initial UI does not match what was rendered on the server',meta:'vercel/next.js · Discussion',desc:'Long-running discussion: mismatched markup between server render and the first client render.'},
+  l2:{site:'github',kind:'gh',repo:'yhnocoder/tongtu',state:'Merged',url:'https://github.com/yhnocoder/tongtu',title:'可选裁掉中文 PDF 的页边白边',meta:'yhnocoder/tongtu · PR #168'},
+  l3:{site:'github',kind:'gh',repo:'yhnocoder/tongtu',state:'File',url:'https://github.com/yhnocoder/tongtu',title:'tongtu/CLAUDE.md',meta:'github · File',note:'项目约定'},
+  l4:{site:'nextjs',kind:'type',url:'https://nextjs.org/docs/app/guides/upgrading/version-15',title:'Upgrading: Version 15 | Next.js',meta:'nextjs.org · Docs'},
+  l5:{site:'vercel',kind:'brand',url:'https://www.vercel-status.com',title:'Vercel Status',meta:'vercel-status.com'},
+  l6:{site:'sentry',kind:'brand',url:'https://sentry.io',title:'Issues · tongtu-web · Sentry',meta:'sentry.io'},
+  l7:{site:'geekbang',kind:'unclear',unclear:true,url:'https://time.geekbang.org',title:'极客时间-学 AI ，用极客时间',meta:'time.geekbang.org'},
+  l8:{site:'bilibili',kind:'video',url:'https://www.bilibili.com',title:'产品经理面试重点问题解析（下）',meta:'bilibili · P81/99',dur:'20:08',part:'P81'},
+  l9:{site:'ifanr',kind:'stock',url:'https://www.ifanr.com',title:'看完这 5 点，才知道产品经理这么难做',meta:'爱范儿'},
+  l10:{site:'arxiv',kind:'paper',url:'https://arxiv.org/abs/1706.03762',title:'Attention Is All You Need',meta:'arXiv · 2017',authors:'Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin'},
+  l11:{site:'secretlives',kind:'type',url:'https://thesecretlivesofdata.com/raft/',title:'Raft: Understandable Distributed Consensus',meta:'thesecretlivesofdata.com'},
+  l12:{site:'incomplete',kind:'type',url:'http://www.incompleteideas.net/IncIdeas/BitterLesson.html',title:'The Bitter Lesson',meta:'incompleteideas.net · Rich Sutton'},
+  l13:{site:'pg',kind:'type',url:'https://paulgraham.com/greatwork.html',title:'How to Do Great Work',meta:'paulgraham.com',note:'读完写 3 条自己的结论'},
+  l14:{site:'mcfunley',kind:'type',url:'https://mcfunley.com/choose-boring-technology',title:'Choose Boring Technology',meta:'mcfunley.com'},
+  l15:{site:'supasidebar',kind:'shot',url:'https://supasidebar.com',title:'Supa Sidebar',meta:'supasidebar.com · Screenshot'},
+  l16:{site:'xhs',kind:'photo',url:'https://www.xiaohongshu.com',title:'武康路这家咖啡店，下午三点的光太好了',meta:'小红书 · 2.3k likes'},
+  l17:{site:'linear',kind:'brand',url:'https://linear.app/changelog',title:'Changelog – Linear',meta:'linear.app'},
+  l18:{site:'rauno',kind:'type',url:'https://rauno.me/craft/interaction-design',title:'Invisible Details of Interaction Design',meta:'rauno.me',note:'拖拽、惯性、可中断动画，全是我们要的'},
+  l19:{site:'mit',kind:'type',url:'https://pdos.csail.mit.edu/6.824/',title:'6.5840: Distributed Systems',meta:'pdos.csail.mit.edu'},
+  l20:{site:'raft',kind:'paper',url:'https://raft.github.io/raft.pdf',title:'In Search of an Understandable Consensus Algorithm (Extended Version)',meta:'raft.github.io · PDF',authors:'Diego Ongaro, John Ousterhout'},
+  l21:{site:'ddia',kind:'type',url:'https://dataintensive.net',title:'Designing Data-Intensive Applications',meta:'dataintensive.net'},
+  l22:{site:'jepsen',kind:'type',url:'https://jepsen.io/analyses',title:'Jepsen: Analyses',meta:'jepsen.io'},
+  l23:{site:'youtube',kind:'video',url:'https://www.youtube.com/watch?v=aircAruvnKk',title:'But what is a neural network? | Deep learning chapter 1',meta:'YouTube · 3Blue1Brown',dur:'18:40'},
+  l24:{site:'chatgpt',kind:'chat',url:'https://chatgpt.com',title:'CRDT 和 OT 的区别，用一个协同编辑的例子讲清楚',meta:'ChatGPT · Shared chat',q:'CRDT 和 OT 的区别？',a:'OT 依赖一个中心服务器给操作排序并做变换；CRDT 让每个副本独立合并，最终一致……'},
+  l25:{site:'raycast',kind:'brand',url:'https://www.raycast.com',title:'Raycast',meta:'raycast.com'},
+  l26:{site:'excalidraw',kind:'brand',url:'https://excalidraw.com',title:'Excalidraw',meta:'excalidraw.com'},
+  l27:{site:'dropover',kind:'brand',url:'https://dropoverapp.com',title:'Dropover - Easier Drag and Drop on your Mac.',meta:'dropoverapp.com',note:'Shelf 的交互参考'},
+  l28:{site:'cloudflare',kind:'type',url:'https://developers.cloudflare.com/cloudflare-one/policies/access/',title:'Access policies · Cloudflare Zero Trust docs',meta:'developers.cloudflare.com'},
+  l29:{site:'solid',kind:'brand',url:'https://www.solidjs.com',title:'SolidJS · Reactive Javascript Library',meta:'solidjs.com'},
+  l31:{site:'hn',kind:'unclear',unclear:true,url:'https://news.ycombinator.com',title:'Hacker News',meta:'news.ycombinator.com'},
+  l32:{site:'apple',kind:'type',url:'https://developer.apple.com/documentation/technologyoverviews/liquid-glass',title:'Liquid Glass | Apple Developer Documentation',meta:'developer.apple.com'},
+  l34:{site:'zhihu',kind:'type',url:'https://www.zhihu.com',title:'为什么很多人收藏了，却从来不看？',meta:'知乎 · Question'}
 };
 // 8-column seed. x,y,w,h in cells.
 const SEED = [
-  {id:'b1', kind:'link', link:'l1',  x:0,y:0,w:2,h:2},
+  {id:'b1', kind:'card', link:'l1',  x:0,y:0,w:2,h:2},
   {id:'b2', kind:'list', title:'PRs this week', rows:['l2','l3','l4','l6'], x:2,y:0,w:2,h:2},
   {id:'b3', kind:'note', text:'周五前把 #167、#168 都合掉', x:4,y:0,w:2,h:1},
-  {id:'b4', kind:'link', link:'l7',  x:4,y:1,w:2,h:1},
-  {id:'b5', kind:'link', link:'l5',  x:6,y:0,w:1,h:1},
-  {id:'b6', kind:'link', link:'l6',  x:7,y:0,w:1,h:1},
-  {id:'b7', kind:'link', link:'l17', x:6,y:1,w:2,h:1},
-  {id:'b8', kind:'media',link:'l8',  x:0,y:2,w:2,h:2},
-  {id:'b9', kind:'link', link:'l9',  x:2,y:2,w:2,h:1},
-  {id:'b10',kind:'link', link:'l10', x:2,y:3,w:2,h:1},
-  {id:'b11',kind:'media',link:'l15', x:4,y:2,w:4,h:2},
-  {id:'b12',kind:'media',link:'l16', x:0,y:4,w:2,h:3},
-  {id:'b13',kind:'link', link:'l18', x:2,y:4,w:2,h:2},
+  {id:'b4', kind:'card', link:'l7',  x:4,y:1,w:2,h:1},
+  {id:'b5', kind:'card', link:'l5',  x:6,y:0,w:1,h:1},
+  {id:'b6', kind:'card', link:'l6',  x:7,y:0,w:1,h:1},
+  {id:'b7', kind:'card', link:'l17', x:6,y:1,w:2,h:1},
+  {id:'b8', kind:'card',link:'l8',  x:0,y:2,w:2,h:2},
+  {id:'b9', kind:'card', link:'l9',  x:2,y:2,w:2,h:1},
+  {id:'b10',kind:'card', link:'l10', x:2,y:3,w:2,h:1},
+  {id:'b11',kind:'card',link:'l15', x:4,y:2,w:4,h:2},
+  {id:'b12',kind:'card',link:'l16', x:0,y:4,w:2,h:3},
+  {id:'b13',kind:'card', link:'l18', x:2,y:4,w:2,h:2},
   {id:'b14',kind:'list', title:'To read this weekend', rows:['l11','l12','l13','l14','l34'], x:4,y:4,w:2,h:2},
-  {id:'b15',kind:'media',link:'l23', x:6,y:4,w:2,h:2},
-  {id:'b16',kind:'link', link:'l25', x:2,y:6,w:1,h:1},
-  {id:'b17',kind:'link', link:'l26', x:3,y:6,w:1,h:1},
-  {id:'b18',kind:'link', link:'l24', x:4,y:6,w:2,h:1},
-  {id:'b19',kind:'link', link:'l27', x:6,y:6,w:2,h:1}
+  {id:'b15',kind:'card',link:'l23', x:6,y:4,w:2,h:2},
+  {id:'b16',kind:'card', link:'l25', x:2,y:6,w:1,h:1},
+  {id:'b17',kind:'card', link:'l26', x:3,y:6,w:1,h:1},
+  {id:'b18',kind:'card', link:'l24', x:4,y:6,w:2,h:1},
+  {id:'b19',kind:'card', link:'l27', x:6,y:6,w:2,h:1}
 ];
 const EXTRA = ['l13','l28','l19','l20','l21','l22','l32','l31','l29'];
 
@@ -466,22 +503,68 @@ function settleAll(){ items = resolve(items, null); }
 
 /* ============ cards ============ */
 const nodes = new Map();
-function cardHTML(it){
-  if (it.kind === 'note') return `<div class="nl">Note</div><div class="nt">${esc(it.text)}</div>`;
+const IC_ALERT = '<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5.2v3.3M8 10.8h.01"/></svg>';
+const siteOf = l => SITES[l.site];
+const fav = l => `<span class="fav" style="--tint:${siteOf(l).t}">${esc(siteOf(l).g)}</span>`;
+function metaLine(l){
+  let chip = '';
+  if (l.unclear) chip = `<span class="chip warn">Unclear</span>`;
+  else if (l.state === 'Open') chip = `<span class="chip ok">Open</span>`;
+  return `<div class="meta">${fav(l)}<span>${esc(l.meta || siteOf(l).n)}</span>${chip}</div>`;
+}
+// the cover: a small rendition of the page itself, per link kind
+function art(l, style = ''){
+  const s = siteOf(l), t = esc(l.title), st = style ? ` style="${style}"` : '';
+  switch (l.kind) {
+    case 'gh': return `<div class="art a-gh"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="t">${t}</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`;
+    case 'paper': return `<div class="art a-paper"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="t">${t}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`;
+    case 'video': return `<div class="art a-video"${st}><i class="orb a"></i><i class="orb b"></i>${l.part ? `<div class="pt">${esc(l.part)}</div>` : ''}<div class="pl"></div><div class="du">${esc(l.dur || '')}</div></div>`;
+    case 'photo': return `<div class="art a-photo"${st}><div class="xh">♡ 2.3k</div></div>`;
+    case 'shot': return `<div class="art a-shot"${st}><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div>`;
+    case 'chat': return `<div class="art a-chat"${st}><div class="u">${esc(l.q || l.title)}</div><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`;
+    case 'stock': return `<div class="art a-stock"${st}><div class="wm">ifanr</div></div>`;
+    case 'brand': return `<div class="art a-brand"${st}><div class="g">${esc(s.g)}</div></div>`;
+    case 'unclear': return `<div class="art a-unclear"${st}><div>${IC_ALERT}<span>Unclear title</span></div></div>`;
+    default: return `<div class="art a-type"${st}><div class="t">${t}</div><div class="d"><span class="fav">${esc(s.g)}</span>${esc(s.n)}</div></div>`;
+  }
+}
+// pick the card's mode from its pixel size, same thresholds as the Links design
+function modeOf(it, W, H){
+  if (it.kind !== 'card') return it.kind;
+  const l = L[it.link];
+  if (W < 150 || H < 72) return 'tiny';
+  if (H < 150) return 'wide';
+  if (W >= 1.6 * H && W >= 320) return 'hero';
+  if (l.kind === 'video') return 'media';
+  return 'tall';
+}
+function cardHTML(it, W, H){
+  if (it.kind === 'note') return `<div class="note-l">Note</div><div class="note-t">${esc(it.text)}</div>`;
   if (it.kind === 'list') {
-    const max = Math.max(1, Math.floor((Wpx(it.h) - 52) / 30));
-    const rows = it.rows.slice(0, max).map(id => { const l = L[id], s = SITES[l.site]; return `<a class="row" href="${esc(l.url)}" target="_blank" rel="noopener" draggable="false"><span class="fv" style="--t:${s.t}">${esc(s.g)}</span><span class="t">${esc(l.title)}</span><span class="s">${esc(s.n)}</span></a>`; }).join('');
-    const more = it.rows.length - Math.min(max, it.rows.length);
-    return `<div class="lh"><svg class="ic" viewBox="0 0 16 16"><path d="M6 4.5h7M6 8h7M6 11.5h7M3 4.5h.01M3 8h.01M3 11.5h.01"/></svg><b>${esc(it.title)}</b><span class="n">${it.rows.length}</span></div><div class="rows">${rows}</div>${more > 0 ? `<div class="more">还有 ${more} 条</div>` : ''}`;
+    let used = 6 + 32 + 4, shown = 0; const rows = [];
+    for (const id of it.rows) {
+      if (used + 30 > H - (shown < it.rows.length - 1 ? 24 : 0) && shown > 0) break;
+      used += 30; shown++;
+      const l = L[id], s = SITES[l.site];
+      rows.push(`<a class="row" href="${esc(l.url)}" target="_blank" rel="noopener" draggable="false">${fav(l)}<span class="t">${esc(l.title)}</span><span class="s">${esc(s.n)}</span></a>`);
+    }
+    const more = it.rows.length - shown;
+    return `<div class="lh"><svg class="ic" viewBox="0 0 16 16"><path d="M6 4.5h7M6 8h7M6 11.5h7M3 4.5h.01M3 8h.01M3 11.5h.01"/></svg><b>${esc(it.title)}</b><span class="n">${it.rows.length}</span></div><div class="rows">${rows.join('')}</div>${more > 0 ? `<div class="more">${more} more</div>` : ''}`;
   }
-  const l = L[it.link], s = SITES[l.site];
-  if (it.kind === 'media') {
-    const art = l.media === 'video' ? `<div class="cover" style="--t:${s.t}"><div class="play"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></div></div>`
-      : l.media === 'shot' ? `<div class="cover" style="--t:${s.t}"><div class="frame"><i></i><i></i><i></i><i></i><i></i></div></div>`
-      : `<div class="photo"></div>`;
-    return `${art}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm"><span>${esc(l.meta)}</span>${l.dur ? `<span class="dur">${esc(l.dur)}</span>` : ''}</div></div>`;
-  }
-  return `<div class="tile" style="--t:${s.t}">${esc(s.g)}</div><div class="txt"><div class="ttl">${esc(l.title)}</div><div class="meta">${esc(l.meta)}</div>${l.badge ? `<span class="badge">${esc(l.badge)}</span>` : ''}${l.desc ? `<p class="desc">${esc(l.desc)}</p>` : ''}${l.note ? `<div class="nq">${esc(l.note)}</div>` : ''}</div>`;
+  const l = L[it.link], mode = modeOf(it, W, H);
+  const title = `<div class="ttl">${esc(l.title)}</div>`;
+  if (mode === 'tiny') return `<div class="txt">${fav(l)}${title}</div>`;
+  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); return `${art(l, `width:${aw}px`)}<div class="txt">${title}${metaLine(l)}</div>`; }
+  if (mode === 'hero') return `${art(l)}<div class="txt">${title}${metaLine(l)}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
+  if (mode === 'media') return `${art(l)}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm">${metaLine(l)}${l.dur ? `<span class="mdu">${esc(l.dur)}</span>` : ''}</div></div>`;
+  const big = W >= 260 && H >= 260, showNote = l.note && H >= 230;
+  return `${art(l)}<div class="txt">${title.replace('class="ttl"', `class="ttl${big ? ' big' : ''}"`)}${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
+}
+function fill(n, it, w, h){
+  const W = Wpx(w), H = Wpx(h);
+  sizeClass(n.el, w, h);
+  n.inn.className = 'in m-' + modeOf(it, W, H);
+  n.inn.innerHTML = cardHTML(it, W, H) + '<div class="rz" aria-hidden="true"></div>';
 }
 function sizeClass(el, w, h){
   el.className = el.className.replace(/\b[wh]-\d+\b/g, '').replace(/\s+/g, ' ').trim();
@@ -493,15 +576,15 @@ function ensureNode(it){
   if (!n) {
     const el = document.createElement('div');
     el.className = 'card k-' + it.kind; el.dataset.id = it.id;
-    el.style.setProperty('--t', tintOf(it));
+    el.style.setProperty('--tint', tintOf(it));
     el.innerHTML = '<div class="in"></div>';
     layer.appendChild(el);
     n = {it, el, inn:$('.in', el), key:'', x:X(it.x), y:X(it.y), w:Wpx(it.w), h:Wpx(it.h), vx:0, vy:0, vw:0, vh:0, tx:0, ty:0, tw:0, th:0, r:0, vr:0, tr:0, free:false};
     nodes.set(it.id, n);
   }
   n.it = it;
-  const key = it.kind + '|' + it.w + '|' + it.h + '|' + cfg.cols;
-  if (n.key !== key) { n.key = key; sizeClass(n.el, it.w, it.h); n.inn.innerHTML = cardHTML(it) + '<div class="rz" aria-hidden="true"></div>'; }
+  const key = it.kind + '|' + it.w + '|' + it.h + '|' + Math.round(cell) + '|' + cfg.gap;
+  if (n.key !== key) { n.key = key; fill(n, it, it.w, it.h); }
   return n;
 }
 function paint(n){
@@ -657,7 +740,7 @@ function move(p){
     n.w = Math.max(cell * .55, d.w0 + (p.x - d.x0)); n.h = Math.max(cell * .55, d.h0 + (p.y - d.y0));
     paint(n);
     const nw = clamp(pick((n.w + cfg.gap) / step, d.tw), 1, cfg.cols - d.tx), nh = Math.max(1, pick((n.h + cfg.gap) / step, d.th));
-    if (nw !== d.tw || nh !== d.th || !d.layout) { d.tw = nw; d.th = nh; n.key = ''; sizeClass(n.el, nw, nh); n.inn.innerHTML = cardHTML({...n.it, w:nw, h:nh}) + '<div class="rz" aria-hidden="true"></div>'; preview(); }
+    if (nw !== d.tw || nh !== d.th || !d.layout) { d.tw = nw; d.th = nh; n.key = ''; fill(n, n.it, nw, nh); preview(); }
   }
 }
 function preview(){
@@ -723,7 +806,7 @@ $('#shuffleBtn').addEventListener('click', () => {
 $('#addBtn').addEventListener('click', () => {
   const used = new Set(items.map(i => i.link)); const free = EXTRA.filter(l => !used.has(l)); if (!free.length) return toast('样例链接用完了');
   const link = free[Math.floor(Math.random() * free.length)]; const sizes = [[1,1],[2,1],[2,2]]; const [w, h] = sizes[Math.floor(Math.random() * sizes.length)];
-  const it = {id:'n' + Math.random().toString(36).slice(2, 7), kind:'link', link, x:0, y:rowsOf(items) + 2, w, h};
+  const it = {id:'n' + Math.random().toString(36).slice(2, 7), kind:'card', link, x:0, y:rowsOf(items) + 2, w, h};
   // find the first free slot in reading order
   outer: for (let y = 0; y < 400; y++) for (let x = 0; x + w <= cfg.cols; x++) { const r = {...it, x, y}; if (!items.some(o => hit(r, o))) { it.x = x; it.y = y; break outer; } }
   items.push(it); settleAll();
