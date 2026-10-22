@@ -59,9 +59,8 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .sizer .nmx b{font-family:var(--serif);font-size:24px;font-weight:500;letter-spacing:-.015em;line-height:1}
 .sizer .nmx span{font-size:12px;color:var(--ink-3)}
 .sizer .foot{position:absolute;left:18px;right:18px;bottom:10px;font-size:12px;color:var(--ink-3)}
-.sizer{transition:width .5s var(--spring),height .5s var(--spring)}
-.sizer.resizing,.sizer.resizing .peek{transition:none}
-.sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:transform .5s var(--spring),opacity .25s}
+.sizer{will-change:width,height}
+.sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:opacity .25s;will-change:transform}
 .sizer .fade,.sizer .foot{transition:opacity .25s}
 .sizer .nmx{opacity:0;transition:opacity .25s;pointer-events:none}
 .sizer.tiny .nmx{opacity:1;transition-delay:.1s}
@@ -171,7 +170,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
   </header>
 
   <h2>尺寸由用户定</h2>
-  <p class="sub">拖右下角改封面大小，跟手、松手吸格子。任何尺寸都显示整个子画布，缩放随宽度连续变化，拉高只是多露出一些。</p>
+  <p class="sub">拖右下角改封面大小，弹簧跟手、松手吸格子。1×1 和 1×2 只有名字，其余尺寸都显示整个子画布，缩放随宽度连续变化。</p>
   <div id="sizer"></div>
 
   <h2>密度试验</h2>
@@ -298,24 +297,37 @@ function sizerStage(){
   const pk = $('.peek', body); for (const sx of board.secs) pk.appendChild(secEl(sx));
   const bw = Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)));
   let cols = 3, rows = 1;
-  // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
-  function render(W, H){
-    cover.style.width = W + 'px'; cover.style.height = H + 'px';
-    const k = Math.min(1, (W - 28) / bw);
-    pk.style.transform = `scale(${k})`;
-    lod.textContent = `${cols} 列 × ${rows} 行 · 缩放 ${Math.round(k * 100)}%`;
+  // the frame never takes the hand's position directly: a critically damped spring follows it, which smooths a shaky hand
+  // and is the same motion that snaps to whole cells on release. One rule for every size: the whole board scaled to the width.
+  const sp = {w:secW(cols), h:secH(rows), vw:0, vh:0, tw:secW(cols), th:secH(rows)};
+  let raf = 0, last = 0;
+  function paint(){
+    cover.style.width = sp.w + 'px'; cover.style.height = sp.h + 'px';
+    const k = Math.min(1, (sp.w - 28) / bw);
+    pk.style.transform = `scale(${k.toFixed(4)})`;
+    const tiny = rows === 1 && cols <= 2;
+    cover.classList.toggle('tiny', tiny);
+    lod.textContent = `${cols} 列 × ${rows} 行 · ${tiny ? '只有名字' : `缩放 ${Math.round(k * 100)}%`}`;
   }
-  render(secW(cols), secH(rows));
-  // the corner follows the hand 1:1 (frame and thumbnail together); the size snaps to whole cells on release
+  function tick(now){
+    const dt = Math.min(.05, (now - last) / 1000) || .016; last = now;
+    const K = 520, C = 2 * Math.sqrt(K);
+    for (const [p, v, t] of [['w', 'vw', 'tw'], ['h', 'vh', 'th']]) { const a = K * (sp[t] - sp[p]) - C * sp[v]; sp[v] += a * dt; sp[p] += sp[v] * dt; }
+    paint();
+    const done = Math.abs(sp.tw - sp.w) < .3 && Math.abs(sp.th - sp.h) < .3 && Math.abs(sp.vw) < 3 && Math.abs(sp.vh) < 3;
+    if (done && !st0) { sp.w = sp.tw; sp.h = sp.th; sp.vw = sp.vh = 0; paint(); raf = 0; } else raf = requestAnimationFrame(tick);
+  }
+  const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } };
+  paint();
   const rz = $('.rz', cover); let st0 = null;
-  rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, w:secW(cols), h:secH(rows)}; cover.classList.add('resizing'); });
+  rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, w:sp.tw, h:sp.th}; cover.classList.add('resizing'); });
   rz.addEventListener('pointermove', e => {
     if (!st0) return; const s = stObj.s, stp = CELL + GAP;
-    const W = clamp(st0.w + (e.clientX - st0.x) / s, secW(1), secW(MAXC)), H = clamp(st0.h + (e.clientY - st0.y) / s, secH(1), secH(MAXR));
-    cols = clamp(Math.round((W - PAD * 2 + GAP) / stp), 1, MAXC); rows = clamp(Math.round((H - LBL - PAD * 2 + GAP) / stp), 1, MAXR);
-    render(W, H);
+    sp.tw = clamp(st0.w + (e.clientX - st0.x) / s, secW(1), secW(MAXC)); sp.th = clamp(st0.h + (e.clientY - st0.y) / s, secH(1), secH(MAXR));
+    cols = clamp(Math.round((sp.tw - PAD * 2 + GAP) / stp), 1, MAXC); rows = clamp(Math.round((sp.th - LBL - PAD * 2 + GAP) / stp), 1, MAXR);
+    kick();
   });
-  const end = () => { if (!st0) return; st0 = null; cover.classList.remove('resizing'); render(secW(cols), secH(rows)); };
+  const end = () => { if (!st0) return; st0 = null; cover.classList.remove('resizing'); sp.tw = secW(cols); sp.th = secH(rows); kick(); };
   rz.addEventListener('pointerup', end); rz.addEventListener('pointercancel', end);
   const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '拖右下角'; el.appendChild(hint);
   const stObj = {el, w:secW(MAXC), h:secH(MAXR) + 26, s:1, inner:false}; stages.push(stObj);
@@ -503,7 +515,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。任何尺寸都显示整个子画布，按宽度缩放，拉高只是多露出一些。拖的时候框和缩略图跟手，松手吸到整格。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1×1 和 1 行 2 列只有名字，其余尺寸都显示整个子画布，按宽度缩放。拖的时候框和缩略图用弹簧跟手，手抖被滤掉；松手吸到整格。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
