@@ -311,7 +311,9 @@ function sizerStage(){
   }
   function tick(now){
     const dt = Math.min(.05, (now - last) / 1000) || .016; last = now;
-    const K = 520, C = 2 * Math.sqrt(K);
+    // while the hand holds the corner the spring is stiff (same as a dragged card in the board: it only takes the shake out);
+    // once released, the softer spring carries the frame onto the grid
+    const K = st0 ? 1600 : 420, C = st0 ? 2 * Math.sqrt(K) * .85 : 30;
     for (const [p, v, t] of [['w', 'vw', 'tw'], ['h', 'vh', 'th']]) { const a = K * (sp[t] - sp[p]) - C * sp[v]; sp[v] += a * dt; sp[p] += sp[v] * dt; }
     paint();
     const done = Math.abs(sp.tw - sp.w) < .3 && Math.abs(sp.th - sp.h) < .3 && Math.abs(sp.vw) < 3 && Math.abs(sp.vh) < 3;
@@ -515,7 +517,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1×1 和 1 行 2 列只有名字，其余尺寸都显示整个子画布，按宽度缩放。拖的时候框和缩略图用弹簧跟手，手抖被滤掉；松手吸到整格。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1×1 和 1 行 2 列只有名字，其余尺寸都显示整个子画布，按宽度缩放。拖的时候框和缩略图用一根硬弹簧跟手，只滤掉手抖；松手换软弹簧吸到整格。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
