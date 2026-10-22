@@ -490,6 +490,11 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .sizer .nmx{position:absolute;left:18px;top:16px;right:18px;display:flex;flex-direction:column;gap:5px}
 .sizer .nmx b{font-family:var(--serif);font-size:24px;font-weight:500;letter-spacing:-.015em;line-height:1}
 .sizer .nmx span{font-size:12px;color:var(--ink-3)}
+.sizer .nmx .toc{display:none;flex-direction:column;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sizer.tall .nmx .toc{display:flex}
+.sizer .nmx .toc span{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.sizer .nmx .toc span i{font-style:normal;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.sizer .foot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sizer .foot{position:absolute;left:18px;right:18px;bottom:10px;font-size:12px;color:var(--ink-3)}
 .sizer{will-change:width,height}
 .sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:opacity .25s;will-change:transform}
@@ -853,7 +858,7 @@ function sizerStage(){
   const body = $('.body', cover), lod = $('.lod', cover);
   const meta = `${board.count} 个链接 · ${board.secs.length} 个 Section`;
   // both faces are built once; resizing only moves and scales them, so every change is a transition, never a redraw
-  body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div><div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span></div>`;
+  body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div><div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span><div class="toc">${board.secs.map(sx => `<span>${esc(sx.name)}<i>${countOf(sx.blocks)}</i></span>`).join('')}</div></div>`;
   const pk = $('.peek', body); for (const sx of board.secs) pk.appendChild(secEl(sx));
   const bw = Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)));
   let cols = 3, rows = 1;
@@ -865,8 +870,10 @@ function sizerStage(){
     cover.style.width = sp.w + 'px'; cover.style.height = sp.h + 'px';
     const k = Math.min(1, (sp.w - 28) / bw);
     pk.style.transform = `scale(${k.toFixed(4)})`;
-    const tiny = rows === 1 && cols <= 2;
-    cover.classList.toggle('tiny', tiny);
+    // too narrow for a thumbnail to mean anything (under a quarter scale), or a one-row strip: the name takes over,
+    // and a tall name-only cover lists the Sections inside instead of leaving the space empty
+    const tiny = k < .25 || (rows === 1 && cols <= 2);
+    cover.classList.toggle('tiny', tiny); cover.classList.toggle('tall', tiny && rows >= 2);
     lod.textContent = `${cols} 列 × ${rows} 行 · ${tiny ? '只有名字' : `缩放 ${Math.round(k * 100)}%`}`;
   }
   function tick(now){
@@ -1080,7 +1087,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1×1 和 1 行 2 列只有名字，其余尺寸都显示整个子画布，按宽度缩放。拖的时候框和缩略图用一根硬弹簧跟手，只滤掉手抖；松手换软弹簧吸到整格。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。缩放会低于 25% 的（1 列）和 1 行 2 列只有名字，高了就列出里面的 Section；其余尺寸都显示整个子画布，按宽度缩放。拖的时候框和缩略图用一根硬弹簧跟手，只滤掉手抖；松手换软弹簧吸到整格。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
