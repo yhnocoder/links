@@ -117,6 +117,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 /* placeholder: where the lifted card will land */
 .ph{position:absolute;left:0;top:0;z-index:2;border-radius:var(--r-card);background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);opacity:0;transition:opacity .18s;pointer-events:none;will-change:transform}
 .ph.on{opacity:1}
+.ph.sec{border-radius:var(--r-sec);background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent);opacity:.7}
 
 /* ---------- cards ---------- */
 .cards{position:absolute;left:0;top:0;z-index:3;transition:opacity .25s}
@@ -224,6 +225,18 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .a-type{background:color-mix(in oklch,var(--tint) 10%,var(--surface));color:var(--ink);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
 .a-type .t{font-size:clamp(12px,10.5cqw,30px);font-weight:700;letter-spacing:-.025em;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
 .a-type .d{font-size:clamp(8px,4.6cqw,12px);color:color-mix(in oklch,var(--tint) 70%,var(--ink));font-weight:600;display:flex;align-items:center;gap:5px}
+/* covers without a title: used where the title already sits in the text block (hero), or the cover is small (wide) */
+.a-tile{background:linear-gradient(150deg,color-mix(in oklch,var(--tint) 14%,var(--surface)),color-mix(in oklch,var(--tint) 34%,var(--surface)));display:grid;place-items:center;color:var(--tint)}
+.a-tile .g{font-size:clamp(16px,36cqmin,44px);font-weight:800;letter-spacing:-.04em;line-height:1}
+.a-tile .fav{position:absolute;left:8%;bottom:8%;width:clamp(14px,12cqmin,22px);height:clamp(14px,12cqmin,22px);border-radius:28%;font-size:clamp(8px,6cqmin,11px)}
+.a-gh.nt{justify-content:space-between}
+.a-gh .big{font-size:clamp(18px,28cqmin,48px);font-weight:800;letter-spacing:-.05em;line-height:1;font-family:var(--ui)}
+.a-paper.nt .au{-webkit-line-clamp:3;margin-top:2cqh;font-size:clamp(9px,5.4cqw,14px)}
+.a-type.nt{justify-content:center;align-items:center;gap:4cqh;text-align:center}
+.a-type.nt .g{font-size:clamp(18px,30cqmin,56px);font-weight:800;letter-spacing:-.05em;line-height:1;color:var(--tint)}
+.art img.cv{display:block;object-fit:none;max-width:none;pointer-events:none}
+.art.a-photo-bg{background:linear-gradient(180deg,#E7B88A,#A9724C 70%,#6E4430)}
+.art.a-stock-bg{background:linear-gradient(135deg,#C9D2DC,#7E8B9B)}
 .a-brand{background:linear-gradient(150deg,color-mix(in oklch,var(--tint) 88%,#fff),var(--tint) 60%,color-mix(in oklch,var(--tint) 75%,#000));display:grid;place-items:center}
 .a-brand .g{font-size:clamp(18px,24cqmin,64px);font-weight:800;letter-spacing:-.04em;color:#fff;text-shadow:0 4px 18px oklch(0 0 0 / .18)}
 .a-unclear{background:repeating-linear-gradient(-45deg,transparent 0 7px,oklch(0.5 0 0 / .07) 7px 8px),color-mix(in oklch,var(--tint) 7%,var(--surface));display:grid;place-items:center;color:var(--ink-3)}
@@ -653,7 +666,7 @@ function resolve(L0, cols, forced){
   return list;
 }
 // sections push each other down on the canvas (and pull up when something above shrinks)
-function resolveSections(secs, forcedId){
+function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null){
   const d = forcedId ? secs.find(s => s.id === forcedId) : null;
   const placed = d ? [d] : [];
   const G = cfg.secGap;
@@ -667,25 +680,23 @@ function resolveSections(secs, forcedId){
     }
     placed.push(s);
   }
-  if (cfg.secCompact) {
+  if (compact) {
+    // close the gap to the Section directly above; a Section with nothing above it stays where it is
     const fixed = [];
     for (const s of secs.slice().sort((a, b) => a.y - b.y || a.x - b.x)) {
-      if (s !== d) {
-        // pull up to the nearest obstacle above (or the top of the canvas)
+      if (s !== d && s.id !== skipId) {
         let top = -Infinity;
         for (const p of fixed) if (p.x < s.x + s.w && p.x + p.w > s.x && p.y + p.h <= s.y) top = Math.max(top, p.y + p.h + G);
-        if (top === -Infinity) top = Math.min(s.y, minTop(secs));
-        s.y = Math.max(top, Math.min(s.y, top));
+        if (top !== -Infinity && top < s.y) s.y = top;
       }
       fixed.push(s);
     }
   }
   return secs;
 }
-const minTop = secs => Math.min(...secs.map(s => s.y));
 
 // Full layout from a base state with an optional forced move. Returns {lists: Map secId→blocks, secs:[rects]}.
-function layoutFrom(base, f){
+function layoutFrom(base, f, opts = {}){
   const lists = new Map();
   for (const s of base.sections) lists.set(s.id, blocksOf(s.id, base).map(b => ({...b})));
   const secs = base.sections.map(s => ({...s}));
@@ -707,7 +718,8 @@ function layoutFrom(base, f){
     if (holding && !s.ghost) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
   }
   if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; }
-  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null);
+  // while a Section is held, the others only step out of its way; gaps close once it is dropped
+  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null, (f && f.kind === 'sec') || opts.noCompact ? false : cfg.secCompact, opts.skip || null);
   return {lists, secs};
 }
 function commit(lay){
@@ -747,21 +759,37 @@ function metaLine(l){
   else if (l.state === 'Open') chip = `<span class="chip ok">Open</span>`;
   return `<div class="meta">${fav(l)}<span>${esc(l.meta || siteOf(l).n)}</span>${chip}</div>`;
 }
-function art(l, style = ''){
+// kinds whose cover is "the page itself" (a photo, a frame, a screenshot) — these keep native pixels and are cropped, never scaled
+const IMG_KINDS = new Set(['video', 'photo', 'shot', 'stock']);
+// kinds whose cover carries the title as typography
+const TITLE_KINDS = new Set(['type', 'gh', 'paper']);
+const IMG_FALLBACK = ` onerror="this.style.display='none'" draggable="false" loading="lazy"`;
+// art(l, style, nt): nt = no title in the cover (the text block has it)
+function art(l, style = '', nt = false){
   const s = siteOf(l), t = esc(l.title), st = style ? ` style="${style}"` : '';
   switch (l.kind) {
-    case 'gh': return `<div class="art a-gh"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="t">${t}</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`;
-    case 'paper': return `<div class="art a-paper"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="t">${t}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`;
+    case 'gh': return nt
+      ? `<div class="art a-gh nt"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="big">GH</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`
+      : `<div class="art a-gh"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="t">${t}</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`;
+    case 'paper': return nt
+      ? `<div class="art a-paper nt"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`
+      : `<div class="art a-paper"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="t">${t}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`;
     case 'video': return `<div class="art img a-video"${st}><div class="cv" style="width:480px;height:270px"><i class="orb a"></i><i class="orb b"></i></div>${l.part ? `<div class="pt">${esc(l.part)}</div>` : ''}<div class="pl"></div><div class="du">${esc(l.dur || '')}</div></div>`;
-    case 'photo': return `<div class="art img"${st}><div class="cv a-photo" style="width:320px;height:427px"></div><div class="xh">♡ 2.3k</div></div>`;
-    case 'shot': return `<div class="art img"${st}><div class="cv tl a-shot" style="width:600px;height:375px"><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div></div>`;
-    case 'chat': return `<div class="art a-chat"${st}><div class="u">${esc(l.q || l.title)}</div><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`;
-    case 'stock': return `<div class="art img"${st}><div class="cv a-stock" style="width:420px;height:315px"></div><div class="wm">ifanr</div></div>`;
+    case 'photo': return `<div class="art img a-photo-bg"${st}><img class="cv" src="https://picsum.photos/seed/wukang-cafe/320/427" width="320" height="427" alt=""${IMG_FALLBACK}><div class="xh">♡ 2.3k</div></div>`;
+    case 'shot': return `<div class="art img"${st}><div class="cv tl a-shot" style="width:440px;height:275px"><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div></div>`;
+    case 'chat': return nt
+      ? `<div class="art a-chat"${st}><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`
+      : `<div class="art a-chat"${st}><div class="u">${esc(l.q || l.title)}</div><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`;
+    case 'stock': return `<div class="art img a-stock-bg"${st}><img class="cv" src="https://picsum.photos/seed/ifanr-pm/420/315" width="420" height="315" alt=""${IMG_FALLBACK}><div class="wm">ifanr</div></div>`;
     case 'brand': return `<div class="art a-brand"${st}><div class="g">${esc(s.g)}</div></div>`;
     case 'unclear': return `<div class="art a-unclear"${st}><div>${IC_ALERT}<span>Unclear title</span></div></div>`;
-    default: return `<div class="art a-type"${st}><div class="t">${t}</div><div class="d"><span class="fav">${esc(s.g)}</span>${esc(s.n)}</div></div>`;
+    default: return nt
+      ? `<div class="art a-type nt"${st}><div class="g">${esc(s.g)}</div><div class="d">${esc(s.n)}</div></div>`
+      : `<div class="art a-type"${st}><div class="t">${t}</div><div class="d"><span class="fav">${esc(s.g)}</span>${esc(s.n)}</div></div>`;
   }
 }
+// a small tinted tile for covers that would be unreadable at thumbnail size
+const tile = (l, style = '') => `<div class="art a-tile"${style ? ` style="${style}"` : ''}><div class="g">${esc(siteOf(l).g)}</div></div>`;
 function modeOf(it, W, H){
   if (it.kind !== 'card') return it.kind;
   const l = LINKS[it.link];
@@ -787,10 +815,12 @@ function cardHTML(it, W, H){
   const l = LINKS[it.link], mode = modeOf(it, W, H);
   const title = `<div class="ttl">${esc(l.title)}</div>`;
   if (mode === 'tiny') return `<div class="txt">${fav(l)}${title}</div>`;
-  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); return `${art(l, `width:${aw}px`)}<div class="txt">${title}${metaLine(l)}</div>`; }
-  if (mode === 'hero') return `${art(l)}<div class="txt">${title}${metaLine(l)}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
+  // the title appears exactly once: in the text block, or (tall cards of text-only pages) as typography in the cover
+  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); const a = IMG_KINDS.has(l.kind) || l.kind === 'brand' || l.kind === 'unclear' ? art(l, `width:${aw}px`) : tile(l, `width:${aw}px`); return `${a}<div class="txt">${title}${metaLine(l)}</div>`; }
+  if (mode === 'hero') return `${art(l, '', true)}<div class="txt">${title}${metaLine(l)}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
   if (mode === 'media') return `${art(l)}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm">${metaLine(l)}${l.dur ? `<span class="mdu">${esc(l.dur)}</span>` : ''}</div></div>`;
   const big = W >= 260 && H >= 260, showNote = l.note && H >= 230;
+  if (TITLE_KINDS.has(l.kind)) return `${art(l)}<div class="txt">${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
   return `${art(l)}<div class="txt">${title.replace('class="ttl"', `class="ttl${big ? ' big' : ''}"`)}${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
 }
 const KEBAB = '<button class="kebab" aria-label="更多" tabindex="-1"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button>';
@@ -871,7 +901,7 @@ function applyLayout(lay, instant, skipCard){
   kick();
 }
 function syncAll(instant){
-  applyLayout(layoutFrom(S, null), instant, null);
+  applyLayout(layoutFrom(S, null, {noCompact:true}), instant, null);
   $('#inboxN').textContent = S.inbox.length; $('#inboxN2').textContent = S.inbox.length;
   renderInbox();
   applySearch();
@@ -927,7 +957,7 @@ function tick(now){
     if (moving) busy = true; else if (n.el.classList.contains('settling')) n.el.classList.remove('settling');
   }
   if (drag) {
-    if (drag.kind !== 'sec') {
+    {
       [phs.x, phs.vx] = spring(phs.x, phs.vx, phs.tx, 700, 42, dt);
       [phs.y, phs.vy] = spring(phs.y, phs.vy, phs.ty, 700, 42, dt);
       [phs.w, phs.vw] = spring(phs.w, phs.vw, phs.tw, 700, 42, dt);
@@ -1085,6 +1115,8 @@ function beginSec(pr, p){
   sn.free = true; sn.vx = sn.vy = 0;
   drag = {kind:'sec', sn, sid:sn.s.id, base:snapshot(), offX:p.x - sn.x, offY:p.y - sn.y, px:sn.x, py:sn.y, tx:sn.s.x, ty:sn.s.y, last:p, layout:null, client:{x:p.cx, y:p.cy}};
   sn.el.classList.add('lift'); stage.classList.add('dragging');
+  Object.assign(phs, {x:sn.x, y:sn.y + LBL, w:sn.w, h:sn.h - LBL, tx:sn.x, ty:sn.y + LBL, tw:sn.w, th:sn.h - LBL, vx:0, vy:0, vw:0, vh:0});
+  ph.className = 'ph on sec';
   move(p); kick();
 }
 // hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
@@ -1110,7 +1142,8 @@ function move(p){
     d.px = p.x - d.offX; d.py = p.y - d.offY;
     if (!cfg.follow || reduceMotion.matches) { d.sn.x = d.px; d.sn.y = d.py; }
     const nx = Math.round(d.px / st) * st, ny = Math.round(d.py / st) * st;
-    if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:nx, y:ny}); applyLayout(d.layout, false, null); }
+    if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:nx, y:ny}); applyLayout(d.layout, false, null);
+      phs.tx = nx; phs.ty = ny + LBL; phs.tw = d.sn.w; phs.th = d.sn.h - LBL; }
     return;
   }
   const n = d.n;
@@ -1172,7 +1205,7 @@ function land(lay){
   for (const n of snodes.values()) n.el.classList.remove('target');
   if (d.kind === 'sec') {
     d.sn.free = false; d.sn.el.classList.remove('lift');
-    if (lay) { pushUndo(d.base); commit(lay); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; }
+    if (lay) { pushUndo(d.base); commit(lay); commit(layoutFrom(S, null, {skip:d.sid, noCompact:true})); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; }
     for (const n of nodes.values()) if (n.it.sec === d.sid) { n.vx = n.vy = 0; }
     syncAll(false); save(); return;
   }
