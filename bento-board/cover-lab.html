@@ -492,6 +492,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .sizer .nmx span{font-size:12px;color:var(--ink-3)}
 .sizer .foot{position:absolute;left:18px;right:18px;bottom:10px;font-size:12px;color:var(--ink-3)}
 .sizer{transition:width .5s var(--spring),height .5s var(--spring)}
+.sizer.resizing,.sizer.resizing .peek{transition:none}
 .sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:transform .5s var(--spring),opacity .25s}
 .sizer .fade,.sizer .foot{transition:opacity .25s}
 .sizer .nmx{opacity:0;transition:opacity .25s;pointer-events:none}
@@ -602,7 +603,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
   </header>
 
   <h2>尺寸由用户定</h2>
-  <p class="sub">拖右下角改封面大小，格子吸附。1 到 2 列只有名字；3 列起显示整个子画布，缩放随宽度连续变化，拉高只是多露出一些。</p>
+  <p class="sub">拖右下角改封面大小，跟手、松手吸格子。任何尺寸都显示整个子画布，缩放随宽度连续变化，拉高只是多露出一些。</p>
   <div id="sizer"></div>
 
   <h2>密度试验</h2>
@@ -857,25 +858,24 @@ function sizerStage(){
   const pk = $('.peek', body); for (const sx of board.secs) pk.appendChild(secEl(sx));
   const bw = Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)));
   let cols = 3, rows = 1;
-  function render(){
-    const W = secW(cols), H = secH(rows), tiny = cols <= 2;
+  // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
+  function render(W, H){
     cover.style.width = W + 'px'; cover.style.height = H + 'px';
-    cover.classList.toggle('tiny', tiny);
-    // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
     const k = Math.min(1, (W - 28) / bw);
-    pk.style.transform = `scale(${tiny ? k * .9 : k})`;
-    lod.textContent = `${cols} 列 × ${rows} 行 · ${tiny ? '只有名字' : `整个子画布，缩放 ${Math.round(k * 100)}%`}`;
+    pk.style.transform = `scale(${k})`;
+    lod.textContent = `${cols} 列 × ${rows} 行 · 缩放 ${Math.round(k * 100)}%`;
   }
-  render();
-  // drag the corner: size snaps to whole cells
+  render(secW(cols), secH(rows));
+  // the corner follows the hand 1:1 (frame and thumbnail together); the size snaps to whole cells on release
   const rz = $('.rz', cover); let st0 = null;
-  rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, c:cols, r:rows}; cover.classList.add('resizing'); });
+  rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, w:secW(cols), h:secH(rows)}; cover.classList.add('resizing'); });
   rz.addEventListener('pointermove', e => {
     if (!st0) return; const s = stObj.s, stp = CELL + GAP;
-    const nc = clamp(st0.c + Math.round((e.clientX - st0.x) / s / stp), 1, MAXC), nr = clamp(st0.r + Math.round((e.clientY - st0.y) / s / stp), 1, MAXR);
-    if (nc !== cols || nr !== rows) { cols = nc; rows = nr; render(); }
+    const W = clamp(st0.w + (e.clientX - st0.x) / s, secW(1), secW(MAXC)), H = clamp(st0.h + (e.clientY - st0.y) / s, secH(1), secH(MAXR));
+    cols = clamp(Math.round((W - PAD * 2 + GAP) / stp), 1, MAXC); rows = clamp(Math.round((H - LBL - PAD * 2 + GAP) / stp), 1, MAXR);
+    render(W, H);
   });
-  const end = () => { st0 = null; cover.classList.remove('resizing'); };
+  const end = () => { if (!st0) return; st0 = null; cover.classList.remove('resizing'); render(secW(cols), secH(rows)); };
   rz.addEventListener('pointerup', end); rz.addEventListener('pointercancel', end);
   const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '拖右下角'; el.appendChild(hint);
   const stObj = {el, w:secW(MAXC), h:secH(MAXR) + 26, s:1, inner:false}; stages.push(stObj);
@@ -1063,7 +1063,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1 到 2 列只剩名字；3 列起始终是整个子画布，按宽度缩放，拉高只是多露出一些。框和缩略图一起弹簧过渡。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。任何尺寸都显示整个子画布，按宽度缩放，拉高只是多露出一些。拖的时候框和缩略图跟手，松手吸到整格。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
