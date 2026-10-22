@@ -929,8 +929,7 @@ function tick(now){
   let busy = false;
   for (const n of snodes.values()) {
     if (n.free) {
-      // a lifted section follows the hand with the same follow spring; its cards ride along 1:1
-      if (drag && cfg.follow && !reduceMotion.matches) { [n.x, n.vx] = spring(n.x, n.vx, drag.px, cfg.fk, cfg.fc, dt); [n.y, n.vy] = spring(n.y, n.vy, drag.py, cfg.fk, cfg.fc, dt); }
+      // a lifted section sits under the hand; its cards ride along 1:1
       paintSec(n);
       for (const c of nodes.values()) if (c.it.sec === n.s.id) { c.x = n.x + PAD + X(c.it.x); c.y = n.y + LBL + PAD + X(c.it.y); paint(c); }
       busy = true; continue;
@@ -957,7 +956,7 @@ function tick(now){
     if (moving) busy = true; else if (n.el.classList.contains('settling')) n.el.classList.remove('settling');
   }
   if (drag) {
-    {
+    if (drag.kind !== 'sec') {
       [phs.x, phs.vx] = spring(phs.x, phs.vx, phs.tx, 700, 42, dt);
       [phs.y, phs.vy] = spring(phs.y, phs.vy, phs.ty, 700, 42, dt);
       [phs.w, phs.vw] = spring(phs.w, phs.vw, phs.tw, 700, 42, dt);
@@ -1115,8 +1114,6 @@ function beginSec(pr, p){
   sn.free = true; sn.vx = sn.vy = 0;
   drag = {kind:'sec', sn, sid:sn.s.id, base:snapshot(), offX:p.x - sn.x, offY:p.y - sn.y, px:sn.x, py:sn.y, tx:sn.s.x, ty:sn.s.y, last:p, layout:null, client:{x:p.cx, y:p.cy}};
   sn.el.classList.add('lift'); stage.classList.add('dragging');
-  Object.assign(phs, {x:sn.x, y:sn.y + LBL, w:sn.w, h:sn.h - LBL, tx:sn.x, ty:sn.y + LBL, tw:sn.w, th:sn.h - LBL, vx:0, vy:0, vw:0, vh:0});
-  ph.className = 'ph on sec';
   move(p); kick();
 }
 // hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
@@ -1139,11 +1136,10 @@ function move(p){
   const now = performance.now(); if (d.samples) { d.samples.push({t:now, x:p.x, y:p.y}); while (d.samples.length > 6) d.samples.shift(); }
   const st = step();
   if (d.kind === 'sec') {
+    // a Section is big: it sticks to the hand 1:1 and lands on the grid only when dropped
     d.px = p.x - d.offX; d.py = p.y - d.offY;
-    if (!cfg.follow || reduceMotion.matches) { d.sn.x = d.px; d.sn.y = d.py; }
-    const nx = Math.round(d.px / st) * st, ny = Math.round(d.py / st) * st;
-    if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:nx, y:ny}); applyLayout(d.layout, false, null);
-      phs.tx = nx; phs.ty = ny + LBL; phs.tw = d.sn.w; phs.th = d.sn.h - LBL; }
+    d.sn.x = d.px; d.sn.y = d.py;
+    if (!d.layout || Math.abs(d.px - d.tx) > 6 || Math.abs(d.py - d.ty) > 6) { d.tx = d.px; d.ty = d.py; d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:d.px, y:d.py}); applyLayout(d.layout, false, null); }
     return;
   }
   const n = d.n;
@@ -1228,6 +1224,7 @@ function land(lay){
 function drop(){
   const d = drag;
   if (d.kind === 'card' && d.sec === '__new') { const st = step(); d.nx = Math.round(d.nx / st) * st; d.ny = Math.round(d.ny / st) * st; preview(); }
+  if (d.kind === 'sec') { const st = step(); d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:Math.round(d.px / st) * st, y:Math.round(d.py / st) * st}); }
   land(d.layout);
 }
 function cancel(){ land(null); toast('已取消'); }
