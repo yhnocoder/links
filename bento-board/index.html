@@ -94,26 +94,49 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .sec.lift{z-index:10}
 /* collapsed Section / sub-whiteboard cover: one capsule component */
 .sec.board .sec-frame{box-shadow:inset 0 0 0 1px var(--sec-line),0 2px 0 -1px var(--sec-line),0 4px 0 -2px var(--sec-line)}
+/* collapsed Section: a thin strip with one tidy row of site marks */
 .capb[hidden]{display:none}
-.capb{position:absolute;inset:0;display:flex;align-items:center;gap:12px;padding:0 10px 0 14px}
-.fstack{display:flex;flex:none}
-.fstack .fav{width:26px;height:26px;border-radius:8px;margin-left:-6px;font-size:12px;box-shadow:0 0 0 2px var(--sec-fill)}
-.fstack .fav:first-child{margin-left:0}
-.capb .ctxt{min-width:0;display:flex;flex-direction:column;gap:3px}
-.capb .ctxt b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
-.capb .ctxt span{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
-.capb .mini{margin-left:auto;flex:none;position:relative;width:104px;height:40px;border-radius:8px;background:var(--line);overflow:hidden}
-.capb .mini u{position:absolute;border-radius:3px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sec-line)}
-.capb .mini i{position:absolute;border-radius:2px;background:var(--tint,#888);opacity:.85}
-.capb .cgo{flex:none;height:28px;padding:0 9px 0 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--line);display:inline-flex;align-items:center;gap:3px;transition:background .15s,color .15s}
-.capb .cgo .ic{width:13px;height:13px}
-.capb .cgo:hover{background:var(--accent-soft);color:var(--accent)}
-.sec.cap:not(.board) .capb .mini{display:none}
-.sec.cap:not(.board) .capb{gap:10px}
-.sec.cap.target .capb .cgo{background:var(--accent);color:var(--accent-ink)}
+.capb{position:absolute;inset:0;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px}
+.capb .marks{display:flex;gap:5px;flex:none}
+.capb .marks i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:650;font-style:normal;background:var(--t);box-shadow:inset 0 1px 0 oklch(1 0 0 / .22)}
+.capb .marks i.more{background:var(--line);color:var(--ink-3);font-size:10.5px}
+.capb .n{font-size:12.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.capb .chev{margin-left:auto;flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--ink-3);rotate:180deg;transition:background .15s,color .15s}
+.capb .chev:hover{background:var(--line);color:var(--ink)}
+.sec.cap.target .capb .chev{background:var(--accent);color:var(--accent-ink)}
+/* sub-whiteboard cover: the board itself, scaled to the cover's width, behind glass; the user sizes the window */
+.sec.board > .sec-frame{background:var(--surface);box-shadow:var(--shadow),var(--hl)}
+.sec.board:hover > .sec-frame{box-shadow:var(--shadow-hover),var(--hl)}
+.cover-b[hidden]{display:none}
+.cover-b{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+.cover-b .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:opacity .25s;will-change:transform}
+.cover-b .peek .sec-lbl{cursor:default}
+.cover-b .peek .sec-lbl .sm{display:none}
+.cover-b .peek > .sec > .sec-frame{opacity:0}
+.cover-b .peek .card{pointer-events:none}
+.cover-b .peek .card .kebab,.cover-b .peek .card .rz{display:none}
+.cover-b .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 62%,var(--surface) 97%);transition:opacity .25s;pointer-events:none}
+.cover-b .foot{position:absolute;left:18px;right:40px;bottom:10px;font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .25s;pointer-events:none}
+.cover-b .nmx{position:absolute;left:18px;top:16px;right:18px;display:flex;flex-direction:column;gap:5px;opacity:0;transition:opacity .25s;pointer-events:none}
+.cover-b .nmx b{font-family:var(--serif);font-size:24px;font-weight:500;letter-spacing:-.015em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cover-b .nmx span{font-size:12px;color:var(--ink-3)}
+.cover-b .nmx .toc{display:none;flex-direction:column;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.cover-b .nmx .toc span{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.cover-b .nmx .toc span em{font-style:normal;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.sec.board.tiny .cover-b .nmx{opacity:1;transition-delay:.1s}
+.sec.board.tiny .cover-b .peek,.sec.board.tiny .cover-b .fade,.sec.board.tiny .cover-b .foot{opacity:0}
+.sec.board.tall .cover-b .nmx .toc{display:flex}
+.sec.board.tiny .sec-lbl{opacity:0;pointer-events:none}
+.cover-b .rz{position:absolute;right:0;bottom:0;width:26px;height:26px;cursor:nwse-resize;z-index:6;opacity:0;transition:opacity .15s}
+.sec.board:hover .cover-b .rz,.sec.board.resizing .cover-b .rz{opacity:1}
+.cover-b .rz:after{content:"";position:absolute;right:8px;bottom:8px;width:9px;height:9px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);border-radius:0 0 3px 0}
+.sec.board.resizing > .sec-frame{box-shadow:0 0 0 2px var(--accent),var(--shadow-hover)}
+.sec.board .szb{position:absolute;right:30px;bottom:9px;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;opacity:0;transition:opacity .15s;pointer-events:none}
+.sec.board.resizing .szb{opacity:1}
 .sec-lbl .bd{font-size:10.5px;font-weight:650;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);letter-spacing:.02em;display:none}
 .sec.board .sec-lbl .bd{display:inline-block}
-.stage.lod-3 .capb{opacity:0}
+.stage.lod-3 .capb,.stage.lod-3 .cover-b{opacity:0}
+.morph{position:fixed;left:0;top:0;z-index:35;border-radius:var(--r-sec);background:var(--surface);box-shadow:var(--shadow-lift);pointer-events:none;transform-origin:0 0}
 .crumb{display:none;align-items:center;gap:2px;height:32px;padding:0 6px 0 2px;font-size:13px;color:var(--ink-3)}
 .crumb.on{display:inline-flex}
 .crumb button{height:24px;padding:0 6px;border-radius:6px;color:var(--ink-2);font-weight:500;transition:background .15s}
@@ -659,7 +682,8 @@ const blocksOf = (sid, src = S) => src.blocks.filter(b => b.sec === sid);
 const secById = (sid, src = S) => src.sections.find(s => s.id === sid);
 /* hierarchy: Card → Section → Whiteboard. A Section with `board` is a sub-whiteboard: its children carry parent = its id, and on the parent canvas it is drawn as a cover.
    `view` is the board being looked at (null = root). A collapsed Section and a board cover share one capsule component. */
-const CAP = 58;
+const CAP = 44;            // height of a collapsed Section's strip
+const MAXC = 8, MAXR = 5;   // a cover can be sized up to this many cells
 const inView = (s, v = view) => (s.parent || null) === (v || null);
 const viewSecs = (src = S, v = view) => src.sections.filter(s => inView(s, v));
 const kidsOf = (bid, src = S) => src.sections.filter(s => s.parent === bid);
@@ -794,7 +818,7 @@ function layoutFrom(base, f, opts = {}){
   }
   const holding = f && f.kind === 'card';
   for (const s of secs) {
-    s.w = secW(s.cols); s.h = isCap(s) ? LBL + CAP : secH(rowsOf(lists.get(s.id)));
+    s.w = secW(s.cols); s.h = s.collapsed ? LBL + CAP : s.board ? secH(s.rows || 1) : secH(rowsOf(lists.get(s.id)));
     // while a card is held, frames keep their size (the target may grow) and nothing else moves: a stable floor to drag over
     if (holding && !s.ghost && !isCap(s)) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
   }
@@ -940,7 +964,7 @@ function ensureSecNode(s){
   if (!n) {
     const el = document.createElement('div');
     el.className = 'sec'; el.dataset.sec = s.id;
-    el.innerHTML = `<div class="sec-frame"><div class="gridlines"></div><div class="capb" hidden><div class="fstack"></div><div class="ctxt"><b></b><span></span></div><div class="mini"></div><button class="cgo"></button></div></div><div class="sec-lbl"><b></b><span class="n"></span><span class="bd">子画布</span><button class="sm" aria-label="Section 菜单"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button></div><div class="sec-big"><div><b></b><span></span></div></div>`;
+    el.innerHTML = `<div class="sec-frame"><div class="gridlines"></div><div class="capb" hidden><div class="marks"></div><span class="n"></span><button class="chev" aria-label="展开"><svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg></button></div><div class="cover-b" hidden><div class="peek"></div><div class="fade"></div><div class="foot"></div><div class="nmx"><b></b><span></span><div class="toc"></div></div><div class="szb"></div><div class="rz" aria-hidden="true"></div></div></div><div class="sec-lbl"><b></b><span class="n"></span><span class="bd">子画布</span><button class="sm" aria-label="Section 菜单"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button></div><div class="sec-big"><div><b></b><span></span></div></div>`;
     secLayer.appendChild(el);
     n = {s, el, x:s.x, y:s.y, w:0, h:0, vx:0, vy:0, vw:0, vh:0, tx:s.x, ty:s.y, tw:0, th:0, free:false, first:true};
     snodes.set(s.id, n);
@@ -951,41 +975,67 @@ function ensureSecNode(s){
   $('.sec-big b', n.el).textContent = s.name; $('.sec-big span', n.el).textContent = s.ghost ? '' : countOf(s.id) + ' links';
   n.el.classList.toggle('ghost', !!s.ghost);
   n.el.classList.toggle('cap', isCap(s)); n.el.classList.toggle('board', !!s.board); n.el.classList.toggle('collapsed', !!s.collapsed);
-  renderCap(n, s);
+  renderFold(n, s); renderCover(n, s);
   n.el.style.setProperty('--step', step() + 'px'); n.el.style.setProperty('--gap', cfg.gap + 'px'); n.el.style.setProperty('--pad', PAD + 'px');
   return n;
 }
-// capsule body: stacked favicons + count (+ a mini map of the board inside, for a sub-whiteboard)
-function renderCap(n, s){
+// collapsed Section strip: the sites inside as equal, non-overlapping marks, then the count
+function renderFold(n, s){
   const cb = $('.capb', n.el);
-  if (!isCap(s) || s.ghost) { cb.hidden = true; n.ckey = ''; return; }
+  if (!s.collapsed || s.ghost) { cb.hidden = true; n.fkey = ''; return; }
   cb.hidden = false;
-  const bl = linksIn(s.id), kids = s.board ? descSecs(s.id) : [];
-  const key = s.id + '|' + (s.board ? 'b' : 'c') + '|' + s.name + '|' + bl.map(b => b.id + b.sec + b.x + b.y + b.w + b.h + (b.link || '')).join(',') + '|' + kids.map(k => k.id + k.x + k.y + k.cols + (k.collapsed ? 'c' : '')).join(',');
-  if (n.ckey === key) return; n.ckey = key;
+  const bl = blocksOf(s.id), key = s.id + '|' + bl.map(b => b.id + (b.link || '') + (b.rows || []).join('')).join(',');
+  if (n.fkey === key) return; n.fkey = key;
   const links = bl.flatMap(b => b.kind === 'card' ? [b.link] : b.kind === 'list' ? b.rows : []).map(id => LINKS[id]).filter(Boolean);
-  const seen = new Set(), favs = [];
-  for (const l of links) { if (seen.has(l.site)) continue; seen.add(l.site); favs.push(l); if (favs.length === 5) break; }
-  $('.fstack', cb).innerHTML = favs.map(fav).join('');
-  const cnt = countOf(s.id), notes = bl.filter(b => b.kind === 'note').length;
-  $('.ctxt b', cb).textContent = cnt ? favs.map(l => siteOf(l).n).slice(0, 3).join(' · ') : (s.board ? '空画布' : '空 Section');
-  $('.ctxt span', cb).textContent = s.board ? `${cnt} 个链接 · ${kids.filter(k => !k.board).length} 个 Section${kids.some(k => k.board) ? ` · ${kids.filter(k => k.board).length} 个子画布` : ''}` : `${cnt} 个链接${notes ? ` · ${notes} 张便签` : ''}`;
-  $('.cgo', cb).innerHTML = s.board ? '进入<svg class="ic" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>' : '展开<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>';
-  const mini = $('.mini', cb); mini.innerHTML = '';
-  if (s.board) {
-    const lay = layoutFrom(S, null, {noCompact:true, view:s.id});
-    const R = lay.secs; if (!R.length) return;
-    const x0 = Math.min(...R.map(r => r.x)), y0 = Math.min(...R.map(r => r.y)), x1 = Math.max(...R.map(r => r.x + r.w)), y1 = Math.max(...R.map(r => r.y + r.h));
-    const MW = 96, MH = 32, k = Math.min(MW / (x1 - x0), MH / (y1 - y0)), ox = 4 + (MW - (x1 - x0) * k) / 2, oy = 4 + (MH - (y1 - y0) * k) / 2;
-    let html = '';
-    for (const r of R) html += `<u style="left:${ox + (r.x - x0) * k}px;top:${oy + (r.y - y0) * k}px;width:${r.w * k}px;height:${r.h * k}px"></u>`;
-    for (const r of R) { if (isCap(r)) continue; for (const b of lay.lists.get(r.id) || []) { const bx = r.x + PAD + X(b.x), by = r.y + LBL + PAD + X(b.y); html += `<i style="left:${ox + (bx - x0) * k}px;top:${oy + (by - y0) * k}px;width:${Math.max(1.5, Wpx(b.w) * k)}px;height:${Math.max(1.5, Wpx(b.h) * k)}px;--tint:${tintOf(b)}"></i>`; } }
-    mini.innerHTML = html;
+  const seen = new Set(), sites = [];
+  for (const l of links) { const st = siteOf(l); if (seen.has(st.n)) continue; seen.add(st.n); sites.push(st); }
+  $('.marks', cb).innerHTML = sites.slice(0, 5).map(x => `<i style="--t:${x.t}">${esc(x.g)}</i>`).join('') + (sites.length > 5 ? `<i class="more">+${sites.length - 5}</i>` : '');
+  const notes = bl.filter(b => b.kind === 'note').length;
+  $('.n', cb).textContent = `${countOf(s.id)} 个链接${notes ? ` · ${notes} 张便签` : ''}`;
+}
+// static copies of the board inside a cover (no springs, no pointer events): rebuilt only when that board changes
+function staticCard(it){
+  const W = Wpx(it.w), H = Wpx(it.h);
+  return `<div class="card k-${it.kind}" style="--tint:${tintOf(it)};transform:translate(${PAD + X(it.x)}px,${LBL + PAD + X(it.y)}px);width:${W}px;height:${H}px"><div class="in m-${modeOf(it, W, H)}">${cardHTML(it, W, H)}</div></div>`;
+}
+function staticSec(r, list, ox, oy){
+  return `<div class="sec ps${isCap(r) ? ' cap' : ''}" style="transform:translate(${r.x - ox}px,${r.y - oy}px);width:${r.w}px;height:${r.h}px"><div class="sec-frame"></div><div class="sec-lbl"><b>${esc(r.name)}</b><span class="n">${countOf(r.id)}</span></div>${isCap(r) ? '' : list.map(staticCard).join('')}</div>`;
+}
+function renderCover(n, s){
+  const cb = $('.cover-b', n.el);
+  if (!s.board || s.ghost) { cb.hidden = true; n.ckey = ''; return; }
+  cb.hidden = false;
+  const kids = descSecs(s.id), bl = linksIn(s.id);
+  const key = s.id + '|' + s.name + '|' + kids.map(k => k.id + k.name + k.x + k.y + k.cols + (k.rows || '') + (k.collapsed ? 'c' : '') + (k.board ? 'b' : '')).join(',') + '|' + bl.map(b => b.id + b.sec + b.x + b.y + b.w + b.h + (b.link || '') + (b.text || '') + (b.rows || []).join('')).join(',');
+  if (n.ckey !== key) {
+    n.ckey = key;
+    const direct = kidsOf(s.id), meta = `${countOf(s.id)} 个链接 · ${direct.length} 个 Section`;
+    $('.foot', cb).textContent = meta;
+    $('.nmx b', cb).textContent = s.name; $('.nmx > span', cb).textContent = meta;
+    $('.nmx .toc', cb).innerHTML = direct.sort((a, b) => a.y - b.y || a.x - b.x).map(k => `<span>${esc(k.name)}<em>${countOf(k.id)}</em></span>`).join('');
+    const lay = layoutFrom(S, null, {noCompact:true, view:s.id}), R = lay.secs;
+    if (R.length) {
+      const x0 = Math.min(...R.map(r => r.x)), y0 = Math.min(...R.map(r => r.y));
+      n.bw = Math.max(...R.map(r => r.x + r.w)) - x0;
+      $('.peek', cb).innerHTML = R.map(r => staticSec(r, lay.lists.get(r.id) || [], x0, y0)).join('');
+    } else { n.bw = 0; $('.peek', cb).innerHTML = ''; }
   }
+  coverScale(n);
+}
+// one rule for every size: the whole board scaled to the cover's width. Under a quarter scale (or a 2×1 strip) the name takes over,
+// and a tall name-only cover lists the Sections inside.
+function coverScale(n){
+  const s = n.s; if (!s.board) return;
+  const cols = n.rcols ?? s.cols, rows = n.rrows ?? (s.rows || 1);
+  const k = n.bw ? Math.min(1, (n.w - 28) / n.bw) : 0;
+  const tiny = k < .25 || (rows === 1 && cols <= 2);
+  n.el.classList.toggle('tiny', tiny); n.el.classList.toggle('tall', tiny && rows >= 2);
+  $('.cover-b .peek', n.el).style.transform = `scale(${k.toFixed(4)})`;
 }
 function paintSec(n){
   n.el.style.transform = `translate3d(${n.x}px,${n.y}px,0)`;
   n.el.style.width = n.w + 'px'; n.el.style.height = n.h + 'px';
+  if (n.s.board) coverScale(n);
 }
 // push a layout into the spring targets (instant = jump there)
 function applyLayout(lay, instant, skipCard){
@@ -1145,8 +1195,9 @@ stage.addEventListener('pointerdown', e => {
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
   if (pointers.size === 2 && !drag) { startPinch(); return; }
   if (e.button === 2) return; // context menu handled on contextmenu
-  if (drag || press) return;
+  if (drag || press || crs) return;
   const p = wpt(e);
+  const crz = e.target.closest('.sec.board > .sec-frame .rz'); if (crz) { beginCoverResize(e, crz.closest('.sec')); return; }
   const cardEl = e.target.closest('.card');
   if (cardEl) {
     if (e.target.closest('a') || e.target.closest('.kebab') || e.target.closest('[contenteditable="true"]')) return;
@@ -1370,7 +1421,7 @@ function preview(){
   d.layout = layoutFrom(d.base, f);
   const sc = d.layout.secs.find(s => s.id === d.sec);
   const me = d.layout.lists.get(d.sec).find(i => i.id === d.item.id);
-  if (isCap(sc)) { phs.tx = sc.x + 6; phs.ty = sc.y + LBL + 6; phs.tw = sc.w - 12; phs.th = CAP - 12; }
+  if (isCap(sc)) { phs.tx = sc.x + 6; phs.ty = sc.y + LBL + 6; phs.tw = sc.w - 12; phs.th = sc.h - LBL - 12; }
   else { phs.tx = sc.x + PAD + X(me.x); phs.ty = sc.y + LBL + PAD + X(me.y); phs.tw = Wpx(me.w); phs.th = Wpx(me.h); }
   applyLayout(d.layout, false, d.item.id);
   for (const n of snodes.values()) n.el.classList.toggle('target', n.s.id === d.sec && d.sec !== d.item.sec);
@@ -1552,8 +1603,8 @@ function promoteSec(sid){
   pushUndo();
   const k = {id:uid('s'), name:s.name, cols:s.cols, x:0, y:0, parent:sid};
   S.sections.push(k); for (const b of blocksOf(sid)) b.sec = k.id;
-  s.board = true; delete s.collapsed;
-  settleAll(); syncAll(false); save(); toast(`${s.name} 已变成子画布，双击封面进入`, '撤销', undo);
+  s.board = true; delete s.collapsed; s.cols = 3; s.rows = 1;
+  settleAll(); syncAll(false); save(); toast(`${s.name} 已变成子画布，双击封面进入，拖右下角改大小`, '撤销', undo);
 }
 // back to a flat Section when it holds one plain Section; otherwise its Sections spill out onto this canvas
 function demoteSec(sid){
@@ -1562,7 +1613,7 @@ function demoteSec(sid){
   const kids = kidsOf(sid), deep = descSecs(sid);
   if (kids.length === 1 && deep.length === 1 && !kids[0].board) {
     const k = kids[0]; for (const b of blocksOf(k.id)) b.sec = sid;
-    s.cols = k.cols; S.sections = S.sections.filter(x => x.id !== k.id); delete s.board;
+    s.cols = k.cols; S.sections = S.sections.filter(x => x.id !== k.id); delete s.board; delete s.rows;
   } else {
     const R = layoutFrom(S, null, {noCompact:true}).secs.filter(x => x.id !== sid);
     let y = R.length ? Math.max(...R.map(r => r.y + r.h)) + cfg.secGap : s.y;
@@ -1572,6 +1623,55 @@ function demoteSec(sid){
   }
   settleAll(); syncAll(false); save(); toast('子画布已拆回画布', '撤销', undo);
 }
+/* ============ cover resize: the frame follows the hand on a stiff spring (it only takes the shake out) and snaps to cells on release ============ */
+let crs = null;
+function beginCoverResize(e, secEl){
+  const n = snodes.get(secEl.dataset.sec); if (!n || drag || press || crs) return;
+  closeMenus(); e.preventDefault();
+  const s = n.s;
+  crs = {n, x0:e.clientX, y0:e.clientY, w0:n.w, h0:n.h, tw:n.w, th:n.h, vw:0, vh:0, cols:s.cols, rows:s.rows || 1, raf:0, last:0, pid:e.pointerId};
+  n.free = true; n.rcols = s.cols; n.rrows = s.rows || 1;
+  n.el.classList.add('resizing'); stage.setPointerCapture(e.pointerId);
+  const szb = $('.szb', n.el); szb.textContent = `${crs.cols} 列 × ${crs.rows} 行`;
+  const step1 = now => {
+    const c = crs; if (!c) return;
+    const dt = Math.min(.05, (now - c.last) / 1000) || .016; c.last = now;
+    const K = c.held ? 1600 : 420, C = c.held ? 2 * Math.sqrt(K) * .85 : 30;
+    [n.w, c.vw] = spring(n.w, c.vw, c.tw, K, C, dt); [n.h, c.vh] = spring(n.h, c.vh, c.th, K, C, dt);
+    paintSec(n);
+    const done = !c.held && Math.abs(c.tw - n.w) < .3 && Math.abs(c.th - n.h) < .3 && Math.abs(c.vw) < 3 && Math.abs(c.vh) < 3;
+    if (done) finish(); else c.raf = requestAnimationFrame(step1);
+  };
+  const kick1 = () => { if (!crs.raf) { crs.last = performance.now(); crs.raf = requestAnimationFrame(step1); } };
+  crs.held = true;
+  const onMove = ev => {
+    const c = crs; if (!c) return;
+    if (ev.buttons === 0) { onUp(); return; }
+    const stp = step();
+    c.tw = clamp(c.w0 + (ev.clientX - c.x0) / cam.z, secW(1), secW(MAXC)); c.th = clamp(c.h0 + (ev.clientY - c.y0) / cam.z, secH(1), secH(MAXR));
+    c.cols = clamp(Math.round((c.tw - PAD * 2 + cfg.gap) / stp), 1, MAXC); c.rows = clamp(Math.round((c.th - LBL - PAD * 2 + cfg.gap) / stp), 1, MAXR);
+    n.rcols = c.cols; n.rrows = c.rows; szb.textContent = `${c.cols} 列 × ${c.rows} 行`;
+    kick1();
+  };
+  const onUp = () => {
+    const c = crs; if (!c || !c.held) return;
+    c.held = false; c.tw = secW(c.cols); c.th = secH(c.rows);
+    stage.removeEventListener('pointermove', onMove); stage.removeEventListener('pointerup', onUp); stage.removeEventListener('pointercancel', onUp); removeEventListener('blur', onUp);
+    try { stage.releasePointerCapture(c.pid); } catch(err) {}
+    // the size is committed at once; the frame springs the rest of the way on its own
+    const real = secById(s.id); // n.s is the layout's copy; the size is written to the real Section
+    if (real && (c.cols !== real.cols || (real.rows || 1) !== c.rows)) { pushUndo(); real.cols = c.cols; real.rows = c.rows; }
+    kick1();
+  };
+  const finish = () => {
+    const c = crs; if (!c) return; cancelAnimationFrame(c.raf); crs = null;
+    n.free = false; n.rcols = n.rrows = null; n.el.classList.remove('resizing');
+    n.w = c.tw; n.h = c.th; n.vw = n.vh = 0; paintSec(n);
+    settleAll(); syncAll(false); save();
+  };
+  stage.addEventListener('pointermove', onMove); stage.addEventListener('pointerup', onUp); stage.addEventListener('pointercancel', onUp); addEventListener('blur', onUp);
+  kick1();
+}
 /* ============ navigation between whiteboards ============ */
 const crumbEl = $('#crumb');
 function renderCrumb(){
@@ -1580,20 +1680,47 @@ function renderCrumb(){
   crumbEl.innerHTML = chain.length ? `<button data-v="">全部</button>` + chain.map((s, i) => `<i>›</i>${i === chain.length - 1 ? `<b>${esc(s.name)}</b>` : `<button data-v="${s.id}">${esc(s.name)}</button>`}`).join('') : '';
 }
 crumbEl.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) setView(b.dataset.v || null); });
-function setView(v, fromRect){
+const frameRect = el => $('.sec-frame', el).getBoundingClientRect();
+// entering a board: the cover's frame grows in place into the first Section inside; leaving: that Section shrinks back into the cover
+function setView(v, morph){
   v = v || null; if (v === view) return;
   if (drag) cancel(); release(); closeMenus();
   cams[view || ''] = {...cam};
-  clearSel(); view = v;
+  clearSel(); const prev = view; view = v;
   for (const n of nodes.values()) n.el.remove(); nodes.clear(); for (const n of snodes.values()) n.el.remove(); snodes.clear();
   settleAll(); syncAll(true);
   const c = cams[view || ''];
   if (c) { Object.assign(cam, c); applyCam(); } else fitAll(false);
-  for (const el of [secLayer, layer]) el.animate([{opacity:0, translate:'0 14px'}, {opacity:1, translate:'0 0'}], {duration:280, easing:'cubic-bezier(.2,.8,.2,1)'});
   renderCrumb(); save();
+  const E = 'cubic-bezier(.2,.8,.2,1)';
+  let target = null;
+  if (morph && !reduceMotion.matches) {
+    if (morph.toId) target = snodes.get(morph.toId);
+    else { const first = viewSecs().slice().sort((a, b) => a.y - b.y || a.x - b.x)[0]; target = first && snodes.get(first.id); }
+  }
+  if (target) {
+    const to = frameRect(target.el), from = morph.from;
+    const m = document.createElement('div'); m.className = 'morph'; stage.appendChild(m);
+    m.style.width = from.width + 'px'; m.style.height = from.height + 'px'; m.style.borderRadius = 26 * cam.z + 'px';
+    const tf = $('.sec-frame', target.el); tf.style.visibility = 'hidden';
+    const a = m.animate([{transform:`translate(${from.left}px,${from.top}px)`}, {transform:`translate(${to.left}px,${to.top}px)`, width:to.width + 'px', height:to.height + 'px'}], {duration:420, easing:E, fill:'forwards'});
+    for (const el of [secLayer, layer]) el.animate([{opacity:0}, {opacity:1}], {duration:300, delay:160, easing:E, fill:'backwards'});
+    a.finished.then(() => { m.remove(); tf.style.visibility = ''; }, () => { m.remove(); tf.style.visibility = ''; });
+  } else {
+    for (const el of [secLayer, layer]) el.animate([{opacity:0, translate:'0 14px'}, {opacity:1, translate:'0 0'}], {duration:280, easing:E});
+  }
 }
-function enterBoard(id){ const s = secById(id); if (!s || !s.board) return; setView(id); if (!tipsOff) toast(`进入 ${s.name}。⌘↑、面包屑或缩到最小可以回去`); }
-function exitBoard(){ if (!view) return; const s = secById(view); setView(s ? (s.parent || null) : null); }
+function enterBoard(id){
+  const s = secById(id); if (!s || !s.board) return;
+  const n = snodes.get(id), from = n ? frameRect(n.el) : null;
+  setView(id, from ? {from} : null);
+  if (!tipsOff) toast(`进入 ${s.name}。⌘↑、面包屑或缩到最小可以回去`);
+}
+function exitBoard(){
+  if (!view) return;
+  const s = secById(view), first = viewSecs().slice().sort((a, b) => a.y - b.y || a.x - b.x)[0], n = first && snodes.get(first.id);
+  setView(s ? (s.parent || null) : null, n ? {from:frameRect(n.el), toId:view} : null);
+}
 renderCrumb();
 function setSecCols(sid, cols){
   const s = secById(sid); if (!s) return; pushUndo(); s.cols = cols;
@@ -1611,7 +1738,7 @@ function newSection(){
 }
 stage.addEventListener('dblclick', e => {
   const lbl = e.target.closest('.sec-lbl'); if (lbl) { renameSec(lbl.closest('.sec').dataset.sec); return; }
-  const capEl = e.target.closest('.sec.cap .sec-frame'); if (capEl) { const sid = capEl.closest('.sec').dataset.sec, s = secById(sid); if (s) s.board ? enterBoard(sid) : toggleCollapse(sid); return; }
+  const capEl = e.target.closest('.sec.cap > .sec-frame'); if (capEl && !e.target.closest('.rz')) { const sid = capEl.closest('.sec').dataset.sec, s = secById(sid); if (s) s.board ? enterBoard(sid) : toggleCollapse(sid); return; }
   const card = e.target.closest('.card');
   if (card) { const n = nodes.get(card.dataset.id); if (n.it.kind === 'note') editNote(n); else if (n.it.kind === 'card') window.open(LINKS[n.it.link].url, '_blank', 'noopener'); }
 });
@@ -1708,7 +1835,7 @@ stage.addEventListener('contextmenu', e => {
 stage.addEventListener('click', e => {
   const kb = e.target.closest('.kebab'); if (kb) { const r = kb.getBoundingClientRect(); cardMenu(nodes.get(kb.closest('.card').dataset.id), r.left, r.bottom + 4); return; }
   const sm = e.target.closest('.sec-lbl .sm'); if (sm) { const r = sm.getBoundingClientRect(); secMenu(sm.closest('.sec').dataset.sec, r.left, r.bottom + 4); return; }
-  const go = e.target.closest('.capb .cgo'); if (go && !(pan && pan.moved)) { const sid = go.closest('.sec').dataset.sec, s = secById(sid); if (s) s.board ? enterBoard(sid) : toggleCollapse(sid); }
+  const ch = e.target.closest('.capb .chev'); if (ch && !(pan && pan.moved)) toggleCollapse(ch.closest('.sec').dataset.sec);
 });
 
 /* ============ top controls: view menu, search, inbox, tune, add ============ */
