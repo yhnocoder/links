@@ -324,13 +324,16 @@ function sizerStage(){
   const rz = $('.rz', cover); let st0 = null;
   rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, w:sp.tw, h:sp.th}; cover.classList.add('resizing'); });
   rz.addEventListener('pointermove', e => {
-    if (!st0) return; const s = stObj.s, stp = CELL + GAP;
+    if (!st0) return;
+    if (e.buttons === 0) { end(); return; } // the release happened somewhere we never heard about
+    const s = stObj.s, stp = CELL + GAP;
     sp.tw = clamp(st0.w + (e.clientX - st0.x) / s, secW(1), secW(MAXC)); sp.th = clamp(st0.h + (e.clientY - st0.y) / s, secH(1), secH(MAXR));
     cols = clamp(Math.round((sp.tw - PAD * 2 + GAP) / stp), 1, MAXC); rows = clamp(Math.round((sp.th - LBL - PAD * 2 + GAP) / stp), 1, MAXR);
     kick();
   });
   const end = () => { if (!st0) return; st0 = null; cover.classList.remove('resizing'); sp.tw = secW(cols); sp.th = secH(rows); kick(); };
-  rz.addEventListener('pointerup', end); rz.addEventListener('pointercancel', end);
+  rz.addEventListener('pointerup', end); rz.addEventListener('pointercancel', end); rz.addEventListener('lostpointercapture', end);
+  addEventListener('pointerup', end, true); addEventListener('blur', end);
   const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '拖右下角'; el.appendChild(hint);
   const stObj = {el, w:secW(MAXC), h:secH(MAXR) + 26, s:1, inner:false}; stages.push(stObj);
   w.style.top = '50px';
