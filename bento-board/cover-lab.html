@@ -502,6 +502,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .cv-b .peek{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
 .cv-b .peek .sec-lbl{display:none}
 .cv-b .peek .sec-frame{opacity:0}
+.cv-b .body{overflow:hidden}
 .cv-b .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,var(--surface) 96%)}
 .cv-b .foot{position:absolute;left:18px;right:18px;bottom:12px;display:flex;align-items:baseline;gap:10px}
 .cv-b .foot b{font-size:15px;font-weight:650;letter-spacing:-.01em}
@@ -578,6 +579,10 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
       </div>
     </div>
   </header>
+
+  <h2>密度试验</h2>
+  <p class="sub">选定的 B 窥视 + 3 标记行，各放 10 个。上面是现在的规则（都占整行宽，按两列堆），下面是对照：子画布封面缩到半宽，四个一排。</p>
+  <div id="dense"></div>
 
   <h2>子画布封面</h2>
   <p class="sub">子画布 Reading 里面有两个 Section、11 个链接。封面要回答的只有一个问题：这是哪块、里面大概有什么。</p>
@@ -789,15 +794,63 @@ function fit(st){
 }
 addEventListener('resize', () => stages.forEach(fit));
 
+function makeCover(v, board, cols, x, y){
+  const cover = document.createElement('div'); cover.className = `sec cover cv-${v.id}`; cover.setAttribute('role', 'button'); cover.tabIndex = 0; cover.setAttribute('aria-label', `进入子画布 ${board.name}`);
+  cover.style.transform = `translate(${x}px,${y}px)`; cover.style.width = secW(cols) + 'px'; cover.style.height = (LBL + v.h) + 'px';
+  cover.innerHTML = `<div class="sec-frame"><div class="body">${v.html(board)}</div><button class="go" tabindex="-1">进入${ARROW}</button></div><div class="sec-lbl"><b>${esc(board.name)}</b><span class="n">${board.count}</span>${v.id === 'e' ? '<span class="bd">子画布</span>' : ''}</div>`;
+  if (v.after) v.after($('.body', cover), board);
+  return cover;
+}
+function makeFold(v, sec, cols, x, y){
+  const el = document.createElement('div'); el.className = `sec fold cap fd-${v.id}`;
+  el.style.transform = `translate(${x}px,${y}px)`; el.style.width = secW(cols) + 'px'; el.style.height = v.h + 'px';
+  el.innerHTML = `<div class="sec-frame"><div class="capb">${v.html(sec)}<span class="chev">${CHEV}</span></div></div><div class="sec-lbl"><b>${esc(sec.name)}</b><span class="n">${countOf(sec.blocks)}</span></div>`;
+  return el;
+}
+/* ---------- density: 10 boards + 10 folded Sections ---------- */
+const IDS = Object.keys(LINKS);
+function pick(seed, n){ const out = []; let k = seed * 7919; for (let i = 0; i < n; i++) { k = (k * 1103515245 + 12345) % 2147483648; out.push(IDS[k % IDS.length]); } return [...new Set(out)]; }
+const SLOTS = [[0, 0, 2, 1], [0, 1, 2, 1], [2, 0, 2, 2], [4, 0, 2, 2]];
+function fakeBoard(name, seed){
+  const ids = pick(seed, 9);
+  const b1 = ids.slice(0, 4).map((id, i) => ({kind:'card', link:id, x:SLOTS[i][0], y:SLOTS[i][1], w:SLOTS[i][2], h:SLOTS[i][3]}));
+  const b2 = ids.slice(4, 7).map((id, i) => ({kind:'card', link:id, x:i * 2, y:0, w:2, h:1}));
+  const b = {name, secs:[{name, blocks:b1, cols:6, x:0, y:0}, {name:'Later', blocks:b2, cols:6, x:0, y:secH(2) + SGAP}]};
+  b.count = countOf(b1) + countOf(b2); b.sites = sitesOf([...b1, ...b2]); return b;
+}
+function fakeSec(name, seed){ const ids = pick(seed, 6); return {name, blocks:ids.map((id, i) => ({kind:'card', link:id, x:(i * 2) % 6, y:Math.floor(i / 3), w:2, h:1})), cols:6}; }
+const BOARD_NAMES = ['Reading', 'Design', 'Frontend', 'Papers', 'Infra', 'Writing', 'Photography', 'Travel', 'Finance', 'Side projects'];
+const SEC_NAMES = ['Work', 'Inspiration', 'Learning', 'Tools', 'Later', 'Recipes', 'Podcasts', 'Hiring', 'Home', 'Music'];
+const DBOARDS = BOARD_NAMES.map((n, i) => fakeBoard(n, i + 1)), DSECS = SEC_NAMES.map((n, i) => fakeSec(n, i + 11));
+function denseStage(compact){
+  const el = document.createElement('div'); el.className = 'lab';
+  const view = document.createElement('div'); view.className = 'view'; const w = document.createElement('div'); w.className = 'world'; view.appendChild(w); el.appendChild(view);
+  const cvB = COVERS.find(v => v.id === 'b'), fd3 = FOLDS.find(v => v.id === '3');
+  const colW = secW(6), G = SGAP * 1.6; let maxH = 0, totalW;
+  if (!compact) {
+    // today's rule: everything is a full-width row, stacked in two columns, boards and Sections mixed as they would be
+    const ys = [0, 0];
+    DBOARDS.forEach((b, i) => { const c = i % 2; w.appendChild(makeCover(cvB, b, 6, c * (colW + G), ys[c])); ys[c] += LBL + cvB.h + SGAP; });
+    DSECS.forEach((sx, i) => { const c = i % 2; w.appendChild(makeFold(fd3, sx, 6, c * (colW + G), ys[c])); ys[c] += fd3.h + SGAP; });
+    maxH = Math.max(...ys) - SGAP; totalW = colW * 2 + G;
+  } else {
+    // the alternative: covers at half width (3 columns), four to a row; folded Sections stay full width below
+    const half = secW(3), hg = SGAP; let y = 0;
+    DBOARDS.forEach((b, i) => { const c = i % 4, r = Math.floor(i / 4); w.appendChild(makeCover(cvB, b, 3, c * (half + hg), r * (LBL + cvB.h + SGAP))); y = (r + 1) * (LBL + cvB.h + SGAP); });
+    const ys = [y, y];
+    DSECS.forEach((sx, i) => { const c = i % 2; w.appendChild(makeFold(fd3, sx, 6, c * (colW + G), ys[c])); ys[c] += fd3.h + SGAP; });
+    maxH = Math.max(...ys) - SGAP; totalW = Math.max(colW * 2 + G, half * 4 + hg * 3);
+  }
+  for (const pk of $$('.cv-b .peek', w)) if (compact) pk.style.transform = 'scale(.44)';
+  const st = {el, w:totalW, h:maxH, s:1, inner:false}; stages.push(st);
+  return el;
+}
 function coverStage(v){
   const el = document.createElement('div'); el.className = 'lab';
   const outer = document.createElement('div'); outer.className = 'view v-outer'; const w1 = document.createElement('div'); w1.className = 'world'; outer.appendChild(w1);
   const inner = document.createElement('div'); inner.className = 'view v-inner'; inner.hidden = true; const w2 = document.createElement('div'); w2.className = 'world'; inner.appendChild(w2);
   // the cover sits where the Reading Section was, Learning below it
-  const cover = document.createElement('div'); cover.className = `sec cover cv-${v.id}`; cover.setAttribute('role', 'button'); cover.tabIndex = 0; cover.setAttribute('aria-label', `进入子画布 ${BOARD.name}`);
-  cover.style.transform = 'translate(0px,0px)'; cover.style.width = secW(6) + 'px'; cover.style.height = (LBL + v.h) + 'px';
-  cover.innerHTML = `<div class="sec-frame"><div class="body">${v.html(BOARD)}</div><button class="go" tabindex="-1">进入${ARROW}</button></div><div class="sec-lbl"><b>${esc(BOARD.name)}</b><span class="n">${BOARD.count}</span>${v.id === 'e' ? '<span class="bd">子画布</span>' : ''}</div>`;
-  if (v.after) v.after($('.body', cover), BOARD);
+  const cover = makeCover(v, BOARD, 6, 0, 0);
   const learn = secEl({name:'Learning', blocks:LEARN, cols:6, x:0, y:LBL + v.h + SGAP});
   w1.append(cover, learn);
   // inside: the board's own Sections and a breadcrumb
@@ -909,6 +962,7 @@ function block(v, stage){
   el.innerHTML = `<div class="nm"><span class="k">方案 ${v.k}</span><b>${esc(v.name)}</b><p>${esc(v.why)}</p></div>`;
   el.appendChild(stage); return el;
 }
+for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
 stages.forEach(fit);
