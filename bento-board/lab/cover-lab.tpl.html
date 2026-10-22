@@ -49,6 +49,20 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .crumbbar i{font-style:normal;opacity:.6}
 .lab .hint{position:absolute;right:14px;bottom:12px;font-size:11.5px;color:var(--ink-3);pointer-events:none}
 .cap-lbl{position:absolute;left:0;top:0;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-3);white-space:nowrap}
+.sizer .rz{opacity:1;width:26px;height:26px;cursor:nwse-resize;z-index:6}
+.sizer .rz:after{content:"";position:absolute;right:8px;bottom:8px;width:9px;height:9px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);border-radius:0 0 3px 0}
+.sizer .sec-frame{transition:box-shadow .2s}
+.sizer.resizing .sec-frame{box-shadow:0 0 0 2px var(--accent),var(--shadow-hover)}
+.sizer .lod{position:absolute;left:0;top:0;transform:translate(0,-26px);font-size:12px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sizer.tiny .sec-lbl{opacity:0;pointer-events:none}
+.sizer .nmx{position:absolute;left:18px;top:16px;right:18px;display:flex;flex-direction:column;gap:5px}
+.sizer .nmx b{font-family:var(--serif);font-size:24px;font-weight:500;letter-spacing:-.015em;line-height:1}
+.sizer .nmx span{font-size:12px;color:var(--ink-3)}
+.sizer .foot{position:absolute;left:18px;right:18px;bottom:10px;font-size:12px;color:var(--ink-3)}
+.sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none}
+.sizer .peek .sec-lbl{display:none}
+.sizer .peek .sec-frame{opacity:0}
+.sizer .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,var(--surface) 96%)}
 .morph{position:absolute;left:0;top:0;border-radius:26px;background:var(--surface);box-shadow:var(--shadow-lift);pointer-events:none;transform-origin:0 0}
 
 /* ---------- sub-whiteboard covers ---------- */
@@ -148,6 +162,10 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
       </div>
     </div>
   </header>
+
+  <h2>尺寸由用户定</h2>
+  <p class="sub">拖右下角改封面大小，格子吸附。封面按尺寸决定显示什么：小只有名字，中等看第一个 Section 的前几行，大能看到整个子画布怎么摆。</p>
+  <div id="sizer"></div>
 
   <h2>密度试验</h2>
   <p class="sub">选定的 B 窥视 + 3 标记行，各放 10 个。上面是现在的规则（都占整行宽，按两列堆），下面是对照：子画布封面缩到半宽，四个一排。</p>
@@ -256,6 +274,49 @@ function makeFold(v, sec, cols, x, y){
   const el = document.createElement('div'); el.className = `sec fold cap fd-${v.id}`;
   el.style.transform = `translate(${x}px,${y}px)`; el.style.width = secW(cols) + 'px'; el.style.height = v.h + 'px';
   el.innerHTML = `<div class="sec-frame"><div class="capb">${v.html(sec)}<span class="chev">${CHEV}</span></div></div><div class="sec-lbl"><b>${esc(sec.name)}</b><span class="n">${countOf(sec.blocks)}</span></div>`;
+  return el;
+}
+/* ---------- user-sized cover: what it shows depends on how big you make it ---------- */
+function sizerStage(){
+  const el = document.createElement('div'); el.className = 'lab';
+  const view = document.createElement('div'); view.className = 'view'; const w = document.createElement('div'); w.className = 'world'; view.appendChild(w); el.appendChild(view);
+  const board = BOARD, MAXC = 8, MAXR = 4;
+  const cover = document.createElement('div'); cover.className = 'sec cover sizer';
+  cover.innerHTML = `<div class="sec-frame"><div class="body"></div><div class="rz" aria-hidden="true"></div></div><div class="sec-lbl"><b>${esc(board.name)}</b><span class="n">${board.count}</span></div><div class="lod"></div>`;
+  w.appendChild(cover);
+  const body = $('.body', cover), lod = $('.lod', cover);
+  let cols = 3, rows = 1;
+  function render(){
+    const W = secW(cols), H = secH(rows);
+    cover.style.width = W + 'px'; cover.style.height = H + 'px';
+    const mode = cols <= 2 ? 'tiny' : (cols >= 5 && rows >= 2) ? 'large' : 'mid';
+    cover.classList.toggle('tiny', mode === 'tiny');
+    const meta = `${board.count} 个链接 · ${board.secs.length} 个 Section`;
+    if (mode === 'tiny') body.innerHTML = `<div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span></div>`;
+    else {
+      const secs = mode === 'large' ? board.secs : [board.secs[0]];
+      body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div>`;
+      const pk = $('.peek', body); for (const sx of secs) pk.appendChild(secEl(sx));
+      const bw = Math.max(...secs.map(sx => sx.x + secW(sx.cols))), bh = Math.max(...secs.map(sx => sx.y + secH(rowsOf(sx.blocks))));
+      const k = Math.min(1, (W - 28) / bw, mode === 'large' ? (H - LBL - 24) / (bh - LBL) : 1);
+      pk.style.transform = `scale(${k})`;
+    }
+    lod.textContent = `${cols} 列 × ${rows} 行 · ${mode === 'tiny' ? '小：只有名字' : mode === 'mid' ? '中：第一个 Section 的前几行' : '大：整个子画布'}`;
+  }
+  render();
+  // drag the corner: size snaps to whole cells
+  const rz = $('.rz', cover); let st0 = null;
+  rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); st0 = {x:e.clientX, y:e.clientY, c:cols, r:rows}; cover.classList.add('resizing'); });
+  rz.addEventListener('pointermove', e => {
+    if (!st0) return; const s = stObj.s, stp = CELL + GAP;
+    const nc = clamp(st0.c + Math.round((e.clientX - st0.x) / s / stp), 1, MAXC), nr = clamp(st0.r + Math.round((e.clientY - st0.y) / s / stp), 1, MAXR);
+    if (nc !== cols || nr !== rows) { cols = nc; rows = nr; render(); }
+  });
+  const end = () => { st0 = null; cover.classList.remove('resizing'); };
+  rz.addEventListener('pointerup', end); rz.addEventListener('pointercancel', end);
+  const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '拖右下角'; el.appendChild(hint);
+  const stObj = {el, w:secW(MAXC), h:secH(MAXR) + 26, s:1, inner:false}; stages.push(stObj);
+  w.style.top = '50px';
   return el;
 }
 /* ---------- density: 10 boards + 10 folded Sections ---------- */
@@ -439,6 +500,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行。1 到 2 列只剩名字；3 到 4 列是第一个 Section 的前几行；5 列以上且 2 行以上是整个子画布。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
