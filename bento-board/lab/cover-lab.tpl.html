@@ -48,6 +48,7 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .crumbbar b{color:var(--ink);font-weight:600;padding:0 4px}
 .crumbbar i{font-style:normal;opacity:.6}
 .lab .hint{position:absolute;right:14px;bottom:12px;font-size:11.5px;color:var(--ink-3);pointer-events:none}
+.cap-lbl{position:absolute;left:0;top:0;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-3);white-space:nowrap}
 .morph{position:absolute;left:0;top:0;border-radius:26px;background:var(--surface);box-shadow:var(--shadow-lift);pointer-events:none;transform-origin:0 0}
 
 /* ---------- sub-whiteboard covers ---------- */
@@ -152,6 +153,10 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
   <p class="sub">选定的 B 窥视 + 3 标记行，各放 10 个。上面是现在的规则（都占整行宽，按两列堆），下面是对照：子画布封面缩到半宽，四个一排。</p>
   <div id="dense"></div>
 
+  <h2>窥视封面装满时</h2>
+  <p class="sub">子画布里卡片足够多的三种形状，各看三种封面宽度。整板缩放是按子画布的总宽度缩到封面里，上面对齐、底部渐隐。</p>
+  <div id="rich"></div>
+
   <h2>子画布封面</h2>
   <p class="sub">子画布 Reading 里面有两个 Section、11 个链接。封面要回答的只有一个问题：这是哪块、里面大概有什么。</p>
   <div id="covers"></div>
@@ -210,7 +215,13 @@ const CHEV = '<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-
 /* ---------- cover variants: each returns {h, html, after?} ---------- */
 const COVERS = [
   {id:'a', k:'A', name:'纯标题', why:'只剩名字。名字本身就是记忆点，其余信息进去再看。底边两层叠纸说明"这里还有一层"。', h:112, html:b => `<div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
-  {id:'b', k:'B', name:'窥视', why:'封面就是子画布本身，缩小放在玻璃后面。看到的是真实卡片，不是色块。', h:168, html:b => `<div class="peek"></div><div class="fade"></div><div class="foot"><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`, after:(body, b) => { const pk = $('.peek', body); const s = secEl(b.secs[0]); pk.appendChild(s); pk.style.transform = 'scale(.46)'; pk.style.left = '14px'; pk.style.top = '-6px'; }},
+  {id:'b', k:'B', name:'窥视', why:'封面就是子画布本身，缩小放在玻璃后面。看到的是真实卡片，不是色块。', h:168, html:b => `<div class="peek"></div><div class="fade"></div><div class="foot"><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`, after:(body, b, cols) => {
+    const pk = $('.peek', body), secs = b.peekFirst ? [b.secs[0]] : b.secs;
+    for (const sx of secs) pk.appendChild(secEl(sx));
+    const bw = Math.max(...secs.map(sx => sx.x + secW(sx.cols))) - Math.min(...secs.map(sx => sx.x));
+    const k = Math.min(1, (secW(cols || 6) - 28) / bw);
+    pk.style.transform = `scale(${k})`; pk.style.left = '14px'; pk.style.top = '-6px';
+  }},
   {id:'c', k:'C', name:'封面图', why:'取里面第一张图片卡的封面铺满，像 Pinterest 的 board。有图的子画布最好认，没图的退回到站点色渐变。', h:168, html:b => `<div class="img"><img src="https://picsum.photos/seed/ifanr-pm/640/360" alt="" onerror="this.remove()" loading="lazy"></div><div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
   {id:'d', k:'D', name:'文件夹', why:'像 iOS 的 App 文件夹：站点标记排成整齐的小方块，不叠不挤，最多四个，剩下的计数。', h:104, html:b => `<div class="tiles">${b.sites.slice(0, 3).map(s => `<span class="tile" style="--t:${s.t}">${esc(s.g)}</span>`).join('')}<span class="tile more">+${Math.max(0, b.count - 3)}</span></div><div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
   {id:'e', k:'E', name:'目录', why:'列出里面的 Section 名和数量。子画布是靠结构记住的，不是靠某一个链接。', h:118, html:b => `<div class="toc">${b.secs.map(s => `<span class="sub">${esc(s.name)}<i>${countOf(s.blocks)}</i></span>`).join('')}</div><div class="sum">共 ${b.count} 个链接</div>`}
@@ -238,7 +249,7 @@ function makeCover(v, board, cols, x, y){
   const cover = document.createElement('div'); cover.className = `sec cover cv-${v.id}`; cover.setAttribute('role', 'button'); cover.tabIndex = 0; cover.setAttribute('aria-label', `进入子画布 ${board.name}`);
   cover.style.transform = `translate(${x}px,${y}px)`; cover.style.width = secW(cols) + 'px'; cover.style.height = (LBL + v.h) + 'px';
   cover.innerHTML = `<div class="sec-frame"><div class="body">${v.html(board)}</div><button class="go" tabindex="-1">进入${ARROW}</button></div><div class="sec-lbl"><b>${esc(board.name)}</b><span class="n">${board.count}</span>${v.id === 'e' ? '<span class="bd">子画布</span>' : ''}</div>`;
-  if (v.after) v.after($('.body', cover), board);
+  if (v.after) v.after($('.body', cover), board, cols);
   return cover;
 }
 function makeFold(v, sec, cols, x, y){
@@ -281,8 +292,33 @@ function denseStage(compact){
     DSECS.forEach((sx, i) => { const c = i % 2; w.appendChild(makeFold(fd3, sx, 6, c * (colW + G), ys[c])); ys[c] += fd3.h + SGAP; });
     maxH = Math.max(...ys) - SGAP; totalW = Math.max(colW * 2 + G, half * 4 + hg * 3);
   }
-  for (const pk of $$('.cv-b .peek', w)) if (compact) pk.style.transform = 'scale(.44)';
   const st = {el, w:totalW, h:maxH, s:1, inner:false}; stages.push(st);
+  return el;
+}
+/* ---------- the peek with a board that fills its rows ---------- */
+function richBoard(name, shape, seed){
+  const ids = pick(seed, 16);
+  const grid = (cols, n, off) => { const out = []; for (let i = 0; i < n; i++) { const w = 2; out.push({kind:'card', link:ids[(off + i) % ids.length], x:(i * w) % cols, y:Math.floor(i * w / cols), w, h:1}); } return out; };
+  let secs;
+  if (shape === 'full') secs = [{name, blocks:grid(6, 12, 0), cols:6, x:0, y:0}];
+  else if (shape === 'side') secs = [{name, blocks:grid(4, 6, 0), cols:4, x:0, y:0}, {name:'Later', blocks:grid(4, 6, 6), cols:4, x:secW(4) + SGAP, y:0}];
+  else secs = [{name, blocks:grid(6, 6, 0), cols:6, x:0, y:0}, {name:'Later', blocks:grid(6, 6, 6), cols:6, x:0, y:secH(2) + SGAP}];
+  const all = secs.flatMap(sx => sx.blocks);
+  return {name, secs, count:countOf(all), sites:sitesOf(all)};
+}
+function richStage(){
+  const el = document.createElement('div'); el.className = 'lab';
+  const view = document.createElement('div'); view.className = 'view'; const w = document.createElement('div'); w.className = 'world'; view.appendChild(w); el.appendChild(view);
+  const cvB = COVERS.find(v => v.id === 'b');
+  const shapes = [['full', '一个 Section 排满 3 行'], ['side', '两个 Section 并排'], ['stack', '两个 Section 竖着堆']];
+  const colsets = [[6, false, '整行宽 · 整板缩放'], [3, false, '半宽 · 整板缩放'], [3, true, '半宽 · 只看第一个 Section']];
+  const xs = [0, secW(6) + SGAP * 1.6, secW(6) + SGAP * 1.6 + secW(3) + SGAP * 1.6];
+  const rowH = LBL + cvB.h + SGAP + 26;
+  colsets.forEach(([c, first, cap], j) => { const t = document.createElement('div'); t.className = 'cap-lbl'; t.textContent = cap; t.style.transform = `translate(${xs[j]}px,0px)`; w.appendChild(t); });
+  shapes.forEach(([shape, nm], i) => {
+    colsets.forEach(([c, first, cap], j) => { const b = richBoard(nm, shape, 31 + i); b.peekFirst = first; w.appendChild(makeCover(cvB, b, c, xs[j], 26 + i * rowH)); });
+  });
+  const st = {el, w:xs[2] + secW(3), h:26 + shapes.length * rowH - SGAP, s:1, inner:false}; stages.push(st);
   return el;
 }
 function coverStage(v){
@@ -403,6 +439,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
+$('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
 stages.forEach(fit);
