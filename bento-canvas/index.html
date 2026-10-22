@@ -285,9 +285,13 @@ svg{-webkit-user-drag:none;display:block}
     <div class="pgroup">网格</div>
     <div class="fld"><label for="cols">列数</label><output id="colsO"></output><input type="range" id="cols" min="4" max="10" step="1"></div>
     <div class="fld"><label for="gap">间距</label><output id="gapO"></output><input type="range" id="gap" min="6" max="28" step="1"></div>
-    <div class="pgroup">弹簧</div>
-    <div class="fld"><label for="k">刚度 stiffness</label><output id="kO"></output><input type="range" id="k" min="120" max="900" step="10"></div>
-    <div class="fld"><label for="c">阻尼 damping</label><output id="cO"></output><input type="range" id="c" min="10" max="60" step="1"></div>
+    <div class="pgroup">拖动卡片跟随</div>
+    <label class="sw"><span>弹簧跟随（关掉就是 1:1 跟手）</span><input type="checkbox" id="follow"></label>
+    <div class="fld"><label for="fk">跟随刚度 stiffness</label><output id="fkO"></output><input type="range" id="fk" min="200" max="2400" step="20"></div>
+    <div class="fld"><label for="fc">跟随阻尼 damping</label><output id="fcO"></output><input type="range" id="fc" min="10" max="120" step="1"></div>
+    <div class="pgroup">被挤开的卡片</div>
+    <div class="fld"><label for="k">让位刚度 stiffness</label><output id="kO"></output><input type="range" id="k" min="120" max="900" step="10"></div>
+    <div class="fld"><label for="c">让位阻尼 damping</label><output id="cO"></output><input type="range" id="c" min="10" max="60" step="1"></div>
     <div class="pgroup">吸附与让位</div>
     <div class="fld"><label for="hyst">吸附迟滞</label><output id="hystO"></output><input type="range" id="hyst" min="0" max="0.35" step="0.01"></div>
     <div class="fld"><label for="mode">让位策略</label><select id="mode"><option value="smart">智能：填补空位 / 让到上方 / 下推</option><option value="push">只下推</option></select></div>
@@ -381,11 +385,11 @@ const EXTRA = ['l13','l28','l19','l20','l21','l22','l32','l31','l29'];
 
 /* ============ settings ============ */
 const PRESETS = {
-  crisp:{k:620, c:40, hyst:0.1, tilt:false},
-  soft:{k:300, c:30, hyst:0.14, tilt:true},
-  bouncy:{k:420, c:20, hyst:0.12, tilt:true}
+  crisp:{k:620, c:40, fk:1400, fc:70, follow:true, hyst:0.1, tilt:false},
+  soft:{k:300, c:30, fk:600, fc:40, follow:true, hyst:0.14, tilt:true},
+  bouncy:{k:420, c:20, fk:800, fc:30, follow:true, hyst:0.12, tilt:true}
 };
-const DEFAULTS = {cols:8, gap:14, k:420, c:30, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
+const DEFAULTS = {cols:8, gap:14, k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
 let cfg = {...DEFAULTS};
 let items = [];
 const persisted = (() => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
@@ -545,7 +549,12 @@ function tick(now){
   let busy = false;
   for (const n of nodes.values()) {
     if (n.free) {
-      // the lifted card follows the pointer; only its tilt is a spring
+      // the lifted card: a follow spring toward the hand (or 1:1 when off), plus a tilt spring
+      if (drag && !drag.rs && cfg.follow && !reduceMotion.matches) {
+        [n.x, n.vx] = spring(n.x, n.vx, drag.px, cfg.fk, cfg.fc, dt);
+        [n.y, n.vy] = spring(n.y, n.vy, drag.py, cfg.fk, cfg.fc, dt);
+        paint(n);
+      }
       [n.r, n.vr] = spring(n.r, n.vr, n.tr, 260, 22, dt);
       if (Math.abs(n.r - n.tr) < .02 && Math.abs(n.vr) < .5) { n.r = n.tr; n.vr = 0; } else busy = true;
       n.inn.style.transform = n.r ? `rotate(${n.r.toFixed(2)}deg)` : '';
@@ -615,7 +624,7 @@ function begin(pr, p){
     origin:{x:it.x, y:it.y, w:it.w, h:it.h},
     tx:it.x, ty:it.y, tw:it.w, th:it.h,
     offX:p.x - o.x - n.x, offY:p.y - o.y - n.y,
-    w0:n.w, h0:n.h, x0:p.x, y0:p.y,
+    w0:n.w, h0:n.h, x0:p.x, y0:p.y, px:n.x, py:n.y,
     last:p, samples:[{t:performance.now(), x:p.x, y:p.y}], layout:null, client:{x:p.cx, y:p.cy}
   };
   n.el.classList.remove('pressed'); n.el.classList.add('lift'); if (pr.rs) n.el.classList.add('rs');
@@ -634,13 +643,15 @@ function move(p){
   const now = performance.now(); d.samples.push({t:now, x:p.x, y:p.y}); while (d.samples.length > 6) d.samples.shift();
   const step = cell + cfg.gap;
   if (!d.rs) {
-    n.x = p.x - o.x - d.offX; n.y = p.y - o.y - d.offY;
-    paint(n);
+    // where the hand is; the card either sits there (1:1) or springs after it
+    d.px = p.x - o.x - d.offX; d.py = p.y - o.y - d.offY;
+    if (!cfg.follow || reduceMotion.matches) { n.x = d.px; n.y = d.py; n.vx = n.vy = 0; paint(n); }
     // tilt follows horizontal velocity
     const s0 = d.samples[0], dtv = (now - s0.t) / 1000;
     const vx = dtv > 0.016 ? (p.x - s0.x) / dtv : 0;
     n.tr = cfg.tilt ? clamp(vx / 90, -4, 4) : 0;
-    const nx = clamp(pick(n.x / step, d.tx), 0, cfg.cols - d.tw), ny = Math.max(0, pick(n.y / step, d.ty));
+    // snapping reads the hand, not the lagging card, so the placeholder stays responsive
+    const nx = clamp(pick(d.px / step, d.tx), 0, cfg.cols - d.tw), ny = Math.max(0, pick(d.py / step, d.ty));
     if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; preview(); }
   } else {
     n.w = Math.max(cell * .55, d.w0 + (p.x - d.x0)); n.h = Math.max(cell * .55, d.h0 + (p.y - d.y0));
@@ -674,7 +685,7 @@ function land(list){
   const me = items.find(i => i.id === n.it.id); n.it = me;
   // the dropped card keeps the hand's velocity and springs into its cell
   const s = d.samples, a = s[0], b = s[s.length - 1], dtv = (b.t - a.t) / 1000;
-  if (!d.rs && dtv > 0.016) { n.vx = clamp((b.x - a.x) / dtv, -1800, 1800) * .6; n.vy = clamp((b.y - a.y) / dtv, -1800, 1800) * .6; }
+  if (!d.rs && !cfg.follow && dtv > 0.016) { n.vx = clamp((b.x - a.x) / dtv, -1800, 1800) * .6; n.vy = clamp((b.y - a.y) / dtv, -1800, 1800) * .6; }
   n.tr = 0;
   n.el.classList.remove('lift', 'rs'); n.el.classList.add('settling');
   sec.classList.remove('dragging'); ph.className = 'ph';
@@ -687,16 +698,17 @@ function cancel(){ const d = drag; land(d.L0); toast('已取消'); }
 /* ============ panel & actions ============ */
 const panel = $('#panel');
 $('#panelHead').addEventListener('click', () => panel.classList.toggle('closed'));
-const ctl = {cols:$('#cols'), gap:$('#gap'), k:$('#k'), c:$('#c'), hyst:$('#hyst'), mode:$('#mode'), compact:$('#compact'), tilt:$('#tilt'), gridAlways:$('#gridAlways')};
+const ctl = {cols:$('#cols'), gap:$('#gap'), k:$('#k'), c:$('#c'), fk:$('#fk'), fc:$('#fc'), follow:$('#follow'), hyst:$('#hyst'), mode:$('#mode'), compact:$('#compact'), tilt:$('#tilt'), gridAlways:$('#gridAlways')};
 function reflect(){
-  for (const key of ['cols','gap','k','c','hyst']) { ctl[key].value = cfg[key]; $('#' + key + 'O').textContent = key === 'hyst' ? cfg.hyst.toFixed(2) + ' 格' : key === 'gap' ? cfg.gap + ' px' : cfg[key]; }
-  ctl.mode.value = cfg.mode; ctl.compact.checked = cfg.compact; ctl.tilt.checked = cfg.tilt; ctl.gridAlways.checked = cfg.gridAlways;
+  for (const key of ['cols','gap','k','c','fk','fc','hyst']) { ctl[key].value = cfg[key]; $('#' + key + 'O').textContent = key === 'hyst' ? cfg.hyst.toFixed(2) + ' 格' : key === 'gap' ? cfg.gap + ' px' : cfg[key]; }
+  ctl.mode.value = cfg.mode; ctl.follow.checked = cfg.follow; ctl.compact.checked = cfg.compact; ctl.tilt.checked = cfg.tilt; ctl.gridAlways.checked = cfg.gridAlways;
   sec.classList.toggle('grid-always', cfg.gridAlways);
 }
-for (const key of ['k','c','hyst']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; reflect(); save(); });
+for (const key of ['k','c','fk','fc','hyst']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; reflect(); save(); });
 for (const key of ['cols','gap']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); });
 ctl.mode.addEventListener('change', () => { cfg.mode = ctl.mode.value; save(); });
 ctl.compact.addEventListener('change', () => { cfg.compact = ctl.compact.checked; settleAll(); syncAll(false); save(); });
+ctl.follow.addEventListener('change', () => { cfg.follow = ctl.follow.checked; save(); });
 ctl.tilt.addEventListener('change', () => { cfg.tilt = ctl.tilt.checked; save(); });
 ctl.gridAlways.addEventListener('change', () => { cfg.gridAlways = ctl.gridAlways.checked; reflect(); save(); });
 $$('[data-preset]').forEach(b => b.addEventListener('click', () => { Object.assign(cfg, PRESETS[b.dataset.preset]); reflect(); save(); toast('已切换到「' + b.textContent + '」'); }));
