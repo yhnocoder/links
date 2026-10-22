@@ -491,7 +491,13 @@ h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em
 .sizer .nmx b{font-family:var(--serif);font-size:24px;font-weight:500;letter-spacing:-.015em;line-height:1}
 .sizer .nmx span{font-size:12px;color:var(--ink-3)}
 .sizer .foot{position:absolute;left:18px;right:18px;bottom:10px;font-size:12px;color:var(--ink-3)}
-.sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none}
+.sizer{transition:width .5s var(--spring),height .5s var(--spring)}
+.sizer .peek{position:absolute;left:14px;top:-6px;transform-origin:0 0;pointer-events:none;transition:transform .5s var(--spring),opacity .25s}
+.sizer .fade,.sizer .foot{transition:opacity .25s}
+.sizer .nmx{opacity:0;transition:opacity .25s;pointer-events:none}
+.sizer.tiny .nmx{opacity:1;transition-delay:.1s}
+.sizer.tiny .peek,.sizer.tiny .fade,.sizer.tiny .foot{opacity:0}
+.sizer .sec-lbl{transition:opacity .2s}
 .sizer .peek .sec-lbl{display:none}
 .sizer .peek .sec-frame{opacity:0}
 .sizer .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 62%,var(--surface) 97%)}
@@ -840,29 +846,25 @@ function makeFold(v, sec, cols, x, y){
 function sizerStage(){
   const el = document.createElement('div'); el.className = 'lab';
   const view = document.createElement('div'); view.className = 'view'; const w = document.createElement('div'); w.className = 'world'; view.appendChild(w); el.appendChild(view);
-  const board = BOARD, MAXC = 8, MAXR = 4;
+  const board = BOARD, MAXC = 8, MAXR = 5;
   const cover = document.createElement('div'); cover.className = 'sec cover sizer';
   cover.innerHTML = `<div class="sec-frame"><div class="body"></div><div class="rz" aria-hidden="true"></div></div><div class="sec-lbl"><b>${esc(board.name)}</b><span class="n">${board.count}</span></div><div class="lod"></div>`;
   w.appendChild(cover);
   const body = $('.body', cover), lod = $('.lod', cover);
+  const meta = `${board.count} 个链接 · ${board.secs.length} 个 Section`;
+  // both faces are built once; resizing only moves and scales them, so every change is a transition, never a redraw
+  body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div><div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span></div>`;
+  const pk = $('.peek', body); for (const sx of board.secs) pk.appendChild(secEl(sx));
+  const bw = Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)));
   let cols = 3, rows = 1;
   function render(){
-    const W = secW(cols), H = secH(rows);
+    const W = secW(cols), H = secH(rows), tiny = cols <= 2;
     cover.style.width = W + 'px'; cover.style.height = H + 'px';
-    const mode = cols <= 2 ? 'tiny' : 'peek';
-    cover.classList.toggle('tiny', mode === 'tiny');
-    const meta = `${board.count} 个链接 · ${board.secs.length} 个 Section`;
-    if (mode === 'tiny') body.innerHTML = `<div class="nmx"><b>${esc(board.name)}</b><span>${meta}</span></div>`;
-    else {
-      // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
-      const secs = board.secs;
-      body.innerHTML = `<div class="peek"></div><div class="fade"></div><div class="foot">${meta}</div>`;
-      const pk = $('.peek', body); for (const sx of secs) pk.appendChild(secEl(sx));
-      const bw = Math.max(...secs.map(sx => sx.x + secW(sx.cols))), bh = Math.max(...secs.map(sx => sx.y + secH(rowsOf(sx.blocks))));
-      const k = Math.min(1, (W - 28) / bw);
-      pk.style.transform = `scale(${k})`;
-    }
-    lod.textContent = `${cols} 列 × ${rows} 行 · ${mode === 'tiny' ? '只有名字' : `整个子画布，缩放 ${Math.round(Math.min(1, (W - 28) / Math.max(...board.secs.map(sx => sx.x + secW(sx.cols)))) * 100)}%`}`;
+    cover.classList.toggle('tiny', tiny);
+    // one rule for every size: the whole board, scaled to the cover's width; more rows simply reveal more of it
+    const k = Math.min(1, (W - 28) / bw);
+    pk.style.transform = `scale(${tiny ? k * .9 : k})`;
+    lod.textContent = `${cols} 列 × ${rows} 行 · ${tiny ? '只有名字' : `整个子画布，缩放 ${Math.round(k * 100)}%`}`;
   }
   render();
   // drag the corner: size snaps to whole cells
@@ -1061,7 +1063,7 @@ function block(v, stage){
   el.appendChild(stage); return el;
 }
 for (const [v, c] of [[{id:'d1', k:'密度 1', name:'整行宽，两列堆', why:'10 个子画布封面 + 10 个折叠 Section，按现在的规则排。看一眼能不能扫完、有没有地方停。'}, false], [{id:'d2', k:'密度 2', name:'封面半宽，四个一排', why:'同样的 20 个，子画布封面缩到 3 列宽。密度上去了，代价是封面要能在格子里横着排。'}, true]]) $('#dense').appendChild(block(v, denseStage(c)));
-$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行。1 到 2 列只剩名字；3 列起始终是整个子画布，按宽度缩放，拉高只是多露出一些，没有档位跳变。'}, sizerStage()));
+$('#sizer').appendChild(block({id:'s1', k:'尺寸', name:'拖角改大小', why:'默认 3 列 × 1 行，最大 8 列 × 5 行。1 到 2 列只剩名字；3 列起始终是整个子画布，按宽度缩放，拉高只是多露出一些。框和缩略图一起弹簧过渡。'}, sizerStage()));
 $('#rich').appendChild(block({id:'r1', k:'装满', name:'三种形状 × 三种宽度', why:'每行一种内容形状，每列一种封面宽度。看缩略图在哪一档还能认出内容。'}, richStage()));
 for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
 for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
