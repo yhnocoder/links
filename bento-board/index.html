@@ -158,7 +158,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .art{position:relative;flex:1;min-height:0;margin:6px 6px 0;border-radius:12px;overflow:hidden;background:var(--tint);container-type:size;color:#fff;display:block}
 @supports (corner-shape:squircle){.art{border-radius:15px;corner-shape:squircle}}
 .txt{flex:none;padding:9px 12px 11px;display:flex;flex-direction:column;gap:3px;min-width:0}
-.k-card .ttl,.k-card .fav,.k-card .mt,.k-card .art .t{cursor:pointer}
+.k-card .ttl,.k-card .fav,.k-card .mt,.k-card .art .t,.k-card .a-video .pl{cursor:pointer}
 .k-card .ttl:hover,.k-card .mt:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;text-decoration-color:var(--ink-3)}
 .ttl{--ln:2;font-size:13.5px;font-weight:600;letter-spacing:-.008em;line-height:1.28;display:block;max-height:calc(var(--ln) * 1lh);overflow:hidden;overflow-wrap:anywhere;word-break:normal}
 .meta{display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:11.5px;min-width:0;white-space:nowrap;overflow:hidden}
@@ -261,6 +261,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .card:hover .m-media .a-video .pl{scale:1.07;background:oklch(1 0 0 / .24)}
 .m-media .a-video .du,.m-media .a-video .pt{display:none}
 .mo{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:0 16px 13px;display:flex;flex-direction:column;gap:6px;color:#fff;pointer-events:none}
+.mo .mt,.mo .fav{pointer-events:auto}
 .mo .mt{font-size:15px;font-weight:650;line-height:1.28;letter-spacing:-.01em;text-shadow:0 1px 10px oklch(0 0 0 / .35);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .mo .mm{display:flex;align-items:center;gap:8px;min-width:0}
 .mo .meta{color:oklch(1 0 0 / .8)}
@@ -632,7 +633,7 @@ const countOf = sid => blocksOf(sid).reduce((n, b) => n + (b.kind === 'list' ? b
 /* ============ layout: make room inside a section ============ */
 // Rebuild a section's layout from the committed one (L0) with `forced` placed at (x,y,w,h).
 // Starting from L0 every time (not from the last preview) means moving the pointer back puts everything back.
-function resolve(L0, cols, forced, pinned = []){
+function resolve(L0, cols, forced, pinned = [], compact = cfg.compact){
   const list = L0.map(o => ({...o}));
   let d = null, origin = null;
   if (forced) {
@@ -670,7 +671,7 @@ function resolve(L0, cols, forced, pinned = []){
     }
     placed.push(it);
   }
-  if (cfg.compact) {
+  if (compact) {
     const fixed = [];
     for (const it of list.slice().sort(byPos)) {
       if (!pin.has(it.id)) while (it.y > 0) { const c = {...it, y:it.y - 1}; if (fixed.some(p => hit(c, p))) break; it.y--; }
@@ -726,7 +727,8 @@ function layoutFrom(base, f, opts = {}){
     // lift every mover out of its Section (the leader stays in its own Section when that is also the target: its origin drives the smart displacement)
     for (const sid of new Set(movers.map(m => m.sec).filter(Boolean))) if (lists.has(sid)) {
       const keep = lists.get(sid).filter(b => !moverIds.has(b.id) || (b.id === f.item.id && sid === f.sec));
-      if (keep.length !== lists.get(sid).length) lists.set(sid, resolve(keep, secById(sid, base).cols, null));
+      // while held, the hole a card left stays open (it closes on drop): nothing in the source Section jumps while you aim elsewhere
+      if (keep.length !== lists.get(sid).length) lists.set(sid, resolve(keep, secById(sid, base).cols, null, [], f.hold ? false : cfg.compact));
     }
     if (f.sec === '__new') { secs.push({id:'__new', name:'New section', cols:f.cols, x:f.nx, y:f.ny, ghost:true}); lists.set('__new', []); }
     if (f.sec) {
@@ -1073,9 +1075,9 @@ stage.addEventListener('pointerdown', e => {
     if (e.target.closest('a') || e.target.closest('.kebab') || e.target.closest('[contenteditable="true"]')) return;
     const n = nodes.get(cardEl.dataset.id); if (!n) return;
     press = {kind:'card', n, rs:!!e.target.closest('.rz'), x0:p.x, y0:p.y, pid:e.pointerId, touch:e.pointerType !== 'mouse', timer:0,
-      open:n.it.kind === 'card' && !!e.target.closest('.ttl,.mt,.fav,.art .t,.a-type .d')};
+      open:n.it.kind === 'card' && !!e.target.closest('.ttl,.mt,.fav,.art .t,.a-type .d,.a-video .pl')};
     stage.setPointerCapture(e.pointerId); cardEl.classList.add('pressed');
-    if (press.touch) press.timer = setTimeout(() => { if (press && !drag) beginCard(press, p); }, 180);
+    if (press.touch) press.timer = setTimeout(() => { if (press && !drag) beginCard(press, p); }, 250);
     return;
   }
   const lbl = e.target.closest('.sec-lbl');
@@ -1119,7 +1121,7 @@ stage.addEventListener('pointermove', e => {
   if (!drag) {
     const dist = Math.hypot(p.x - press.x0, p.y - press.y0) * cam.z;
     if (press.touch) { if (dist > 10) release(); return; }
-    if (dist > 4) { press.kind === 'card' ? beginCard(press, p) : beginSec(press, p); }
+    if (dist > 6) { press.kind === 'card' ? beginCard(press, p) : beginSec(press, p); }
     else return;
   }
   move(p);
@@ -1216,7 +1218,7 @@ function move(p){
     d.sn.x = d.px; d.sn.y = d.py;
     for (const g of d.gsecs) { g.x = d.px + g.gdx; g.y = d.py + g.gdy; }
     // nobody moves for a Section: it will land on the nearest free spot (an outline shows it when that differs from the hand)
-    const spot = freeSpot(d), snapped = Math.round(d.px / st) * st === spot.x && Math.round(d.py / st) * st === spot.y;
+    const spot = freeSpot(d), snapped = Math.abs(spot.x - d.px) < 20 && Math.abs(spot.y - d.py) < 20;
     d.spot = spot;
     phs.tx = spot.x; phs.ty = spot.y + LBL; phs.tw = d.sn.w; phs.th = d.sn.h - LBL;
     if (snapped) { Object.assign(phs, {x:phs.tx, y:phs.ty, w:phs.tw, h:phs.th, vx:0, vy:0}); }
@@ -1232,8 +1234,14 @@ function move(p){
     n.tr = cfg.tilt ? clamp(vx / 90, -4, 4) : 0;
     // snapping reads the hand, not the lagging card
     const hx = p.x, hy = p.y;
-    const target = secAt(hx, hy, d.sec);
-    let sec = target ? target.s.id : '__new', nx, ny;
+    let target = secAt(hx, hy, d.sec);
+    let cand = target ? target.s.id : '__new';
+    if (cand !== d.sec && d.sec) {
+      // a new target has to hold the hand for a moment before it takes the card (no "captured in passing"); the first target is taken at once
+      if (d.cand !== cand) { d.cand = cand; d.candT = now; }
+      if (now - d.candT < 120) { cand = d.sec; target = d.sec === '__new' ? null : snodes.get(d.sec); }
+    } else d.cand = null;
+    let sec = cand, nx, ny;
     if (target) {
       const w = Math.min(d.tw, target.s.cols);
       const relX = (d.px - target.tx - PAD) / st, relY = (d.py - target.ty - LBL - PAD) / st;
@@ -1243,7 +1251,12 @@ function move(p){
       nx = 0; ny = 0;
       d.nx = d.px - PAD; d.ny = d.py - LBL - PAD;
     }
-    if (sec !== d.sec || nx !== d.tx || ny !== d.ty || !d.layout || sec === '__new') { d.sec = sec; d.tx = nx; d.ty = ny; preview(); }
+    if (sec !== d.sec || nx !== d.tx || ny !== d.ty || !d.layout || sec === '__new') {
+      d.sec = sec; d.tx = nx; d.ty = ny;
+      // the placeholder moves at once; the other cards step aside once the pointer has rested for a beat
+      if (!d.layout || sec === '__new') preview();
+      else { d.pendingPreview = true; clearTimeout(d.settleT); d.settleT = setTimeout(() => { if (drag === d && d.pendingPreview) { d.pendingPreview = false; preview(); } }, 80); }
+    }
   } else {
     n.w = Math.max(cfg.cell * .55, d.w0 + (p.x - d.x0)); n.h = Math.max(cfg.cell * .55, d.h0 + (p.y - d.y0));
     paint(n);
@@ -1255,9 +1268,15 @@ function move(p){
 // the nearest grid spot where the held Section(s) fit without touching anyone, else where it came from
 function freeSpot(d){
   const st = step(), G = cfg.secGap, R = 8;
-  const sx = Math.round(d.px / st) * st, sy = Math.round(d.py / st) * st;
   const members = [{n:d.sn, dx:0, dy:0}, ...d.gsecs.map(g => ({n:g, dx:g.gdx, dy:g.gdy}))];
   const others = [...snodes.values()].filter(n => !d.sids.has(n.s.id) && !n.s.ghost).map(n => ({x:n.tx, y:n.ty, w:n.tw, h:n.th}));
+  // magnetic alignment: a neighbour's left / top edge, or the standard gap right under or beside it, beats the plain grid when within reach
+  const MAG = 18, W = d.sn.w, H = d.sn.h;
+  let sx = Math.round(d.px / st) * st, sy = Math.round(d.py / st) * st, bx = Math.abs(sx - d.px), by = Math.abs(sy - d.py);
+  for (const o of others) {
+    for (const cx of [o.x, o.x + o.w + G, o.x - W - G]) { const e = Math.abs(cx - d.px); if (e < MAG && e < bx) { sx = cx; bx = e; } }
+    for (const cy of [o.y, o.y + o.h + G, o.y - H - G]) { const e = Math.abs(cy - d.py); if (e < MAG && e < by) { sy = cy; by = e; } }
+  }
   const ok = (x, y) => members.every(m => !others.some(o => hit({x:x + m.dx - G, y:y + m.dy - G, w:m.n.w + 2 * G, h:m.n.h + 2 * G}, o)));
   if (ok(sx, sy)) return {x:sx, y:sy};
   let best = null, bd = Infinity;
@@ -1269,7 +1288,7 @@ function freeSpot(d){
 }
 function preview(){
   const d = drag;
-  const f = {kind:'card', item:d.item, sec:d.sec, group:d.gitems, x:d.tx, y:d.ty, w:d.tw, h:d.th, cols:Math.max(2, Math.min(4, d.tw)), nx:d.nx, ny:d.ny};
+  const f = {kind:'card', item:d.item, sec:d.sec, group:d.gitems, x:d.tx, y:d.ty, w:d.tw, h:d.th, cols:Math.max(2, Math.min(4, d.tw)), nx:d.nx, ny:d.ny, hold:!d.dropping};
   if (d.sec === '__new') { f.cols = Math.max(d.tw, 4); }
   d.layout = layoutFrom(d.base, f);
   const sc = d.layout.secs.find(s => s.id === d.sec);
@@ -1323,7 +1342,7 @@ function land(lay){
 }
 function drop(){
   const d = drag;
-  if (d.kind === 'card' && d.sec === '__new') { const st = step(); d.nx = Math.round(d.nx / st) * st; d.ny = Math.round(d.ny / st) * st; preview(); }
+  if (d.kind === 'card') { d.dropping = true; if (d.sec === '__new') { const st = step(); d.nx = Math.round(d.nx / st) * st; d.ny = Math.round(d.ny / st) * st; } clearTimeout(d.settleT); preview(); }
   if (d.kind === 'sec') { const sp = d.spot || freeSpot(d); d.layout = layoutFrom(d.base, {kind:'sec', id:d.sid, x:sp.x, y:sp.y, group:d.gsecs.map(g => ({id:g.s.id, x:sp.x + g.gdx, y:sp.y + g.gdy}))}); }
   land(d.layout);
 }
