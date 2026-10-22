@@ -92,6 +92,34 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .sec.ghost .sec-frame{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);border-style:dashed}
 .sec.ghost .sec-lbl b{color:var(--accent)}
 .sec.lift{z-index:10}
+/* collapsed Section / sub-whiteboard cover: one capsule component */
+.sec.board .sec-frame{box-shadow:inset 0 0 0 1px var(--sec-line),0 2px 0 -1px var(--sec-line),0 4px 0 -2px var(--sec-line)}
+.capb[hidden]{display:none}
+.capb{position:absolute;inset:0;display:flex;align-items:center;gap:12px;padding:0 10px 0 14px}
+.fstack{display:flex;flex:none}
+.fstack .fav{width:26px;height:26px;border-radius:8px;margin-left:-6px;font-size:12px;box-shadow:0 0 0 2px var(--sec-fill)}
+.fstack .fav:first-child{margin-left:0}
+.capb .ctxt{min-width:0;display:flex;flex-direction:column;gap:3px}
+.capb .ctxt b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.capb .ctxt span{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.capb .mini{margin-left:auto;flex:none;position:relative;width:104px;height:40px;border-radius:8px;background:var(--line);overflow:hidden}
+.capb .mini u{position:absolute;border-radius:3px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sec-line)}
+.capb .mini i{position:absolute;border-radius:2px;background:var(--tint,#888);opacity:.85}
+.capb .cgo{flex:none;height:28px;padding:0 9px 0 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--line);display:inline-flex;align-items:center;gap:3px;transition:background .15s,color .15s}
+.capb .cgo .ic{width:13px;height:13px}
+.capb .cgo:hover{background:var(--accent-soft);color:var(--accent)}
+.sec.cap:not(.board) .capb .mini{display:none}
+.sec.cap:not(.board) .capb{gap:10px}
+.sec.cap.target .capb .cgo{background:var(--accent);color:var(--accent-ink)}
+.sec-lbl .bd{font-size:10.5px;font-weight:650;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);letter-spacing:.02em;display:none}
+.sec.board .sec-lbl .bd{display:inline-block}
+.stage.lod-3 .capb{opacity:0}
+.crumb{display:none;align-items:center;gap:2px;height:32px;padding:0 6px 0 2px;font-size:13px;color:var(--ink-3)}
+.crumb.on{display:inline-flex}
+.crumb button{height:24px;padding:0 6px;border-radius:6px;color:var(--ink-2);font-weight:500;transition:background .15s}
+.crumb button:hover{background:var(--line);color:var(--ink)}
+.crumb b{color:var(--ink);font-weight:600;padding:0 4px}
+.crumb i{font-style:normal;opacity:.6}
 .sec.sel .sec-frame{box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 4px var(--accent-soft)}
 .sec.sel .sec-lbl b{color:var(--accent)}
 .card.ride{z-index:20}
@@ -428,6 +456,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 <div class="float tl glass">
   <button class="brand" id="fitBtn" aria-label="显示全部" title="显示全部（双击缩放比例同样）"><span class="mark"></span></button>
   <button class="viewbtn" id="viewBtn" aria-haspopup="menu"><span>Bento Canvas</span><svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg></button>
+  <nav class="crumb" id="crumb" aria-label="当前画布"></nav>
 </div>
 <div class="float tr glass">
   <label class="search" for="q" id="searchBox"><svg class="ic" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><input id="q" placeholder="搜索链接…" autocomplete="off" spellcheck="false" aria-label="搜索"><kbd>⌘K</kbd></label>
@@ -607,12 +636,12 @@ const PRESETS = {
 };
 const DEFAULTS = {cell:96, gap:6, secGap:28, k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, secCompact:true, tilt:true, gridAlways:false, theme:''};
 const PAD = 10, LBL = 34;
-let cfg = {...DEFAULTS}, S = null, cam = {x:0, y:0, z:1}, tipsOff = false, booted = false;
+let cfg = {...DEFAULTS}, S = null, cam = {x:0, y:0, z:1}, tipsOff = false, booted = false, view = null, cams = {};
 const persisted = (() => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
-if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; S = persisted.S; cam = persisted.cam || cam; tipsOff = !!persisted.tipsOff; booted = true; }
+if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; S = persisted.S; cam = persisted.cam || cam; tipsOff = !!persisted.tipsOff; booted = true; cams = persisted.cams || {}; view = persisted.view && S.sections.some(s => s.id === persisted.view && s.board) ? persisted.view : null; }
 else S = seedState();
 Object.assign(LINKS, S.links || {});
-function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:1, cfg, S, cam, tipsOff})); } catch(e) {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:1, cfg, S, cam, tipsOff, view, cams})); } catch(e) {} }
 function applyTheme(){ if (cfg.theme) document.documentElement.dataset.theme = cfg.theme; else delete document.documentElement.dataset.theme; }
 applyTheme();
 
@@ -628,7 +657,22 @@ const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a
 const byPos = (a, b) => a.y - b.y || a.x - b.x;
 const blocksOf = (sid, src = S) => src.blocks.filter(b => b.sec === sid);
 const secById = (sid, src = S) => src.sections.find(s => s.id === sid);
-const countOf = sid => blocksOf(sid).reduce((n, b) => n + (b.kind === 'list' ? b.rows.length : b.kind === 'card' ? 1 : 0), 0);
+/* hierarchy: Card → Section → Whiteboard. A Section with `board` is a sub-whiteboard: its children carry parent = its id, and on the parent canvas it is drawn as a cover.
+   `view` is the board being looked at (null = root). A collapsed Section and a board cover share one capsule component. */
+const CAP = 58;
+const inView = (s, v = view) => (s.parent || null) === (v || null);
+const viewSecs = (src = S, v = view) => src.sections.filter(s => inView(s, v));
+const kidsOf = (bid, src = S) => src.sections.filter(s => s.parent === bid);
+function descSecs(bid, src = S){ const out = []; const walk = id => { for (const k of kidsOf(id, src)) { out.push(k); walk(k.id); } }; walk(bid); return out; }
+const isCap = s => !!(s.collapsed || s.board);
+const linksIn = sid => { const s = secById(sid), ids = new Set(s && s.board ? descSecs(sid).map(k => k.id) : [sid]); return S.blocks.filter(b => ids.has(b.sec)); };
+const countOf = sid => linksIn(sid).reduce((n, b) => n + (b.kind === 'list' ? b.rows.length : b.kind === 'card' ? 1 : 0), 0);
+// a board keeps no cards itself: anything dropped on its cover lands in its first Section (made on demand)
+function firstKid(bid){
+  let k = kidsOf(bid).sort((a, b) => a.y - b.y || a.x - b.x)[0];
+  if (!k) { const s = secById(bid); k = {id:uid('s'), name:s.name, cols:s.cols || 6, x:0, y:0, parent:bid}; S.sections.push(k); }
+  return k;
+}
 
 /* ============ layout: make room inside a section ============ */
 // Rebuild a section's layout from the committed one (L0) with `forced` placed at (x,y,w,h).
@@ -719,8 +763,9 @@ function resolveSections(secs, forcedId, compact = cfg.secCompact, skipId = null
 // Full layout from a base state with an optional forced move. Returns {lists: Map secId→blocks, secs:[rects]}.
 function layoutFrom(base, f, opts = {}){
   const lists = new Map();
-  for (const s of base.sections) lists.set(s.id, blocksOf(s.id, base).map(b => ({...b})));
-  const secs = base.sections.map(s => ({...s}));
+  const vs = viewSecs(base, opts.view !== undefined ? opts.view : view);
+  for (const s of vs) lists.set(s.id, blocksOf(s.id, base).map(b => ({...b})));
+  const secs = vs.map(s => ({...s}));
   if (f && f.kind === 'card') {
     const group = f.group || [];
     const movers = [f.item, ...group], moverIds = new Set(movers.map(m => m.id));
@@ -749,9 +794,9 @@ function layoutFrom(base, f, opts = {}){
   }
   const holding = f && f.kind === 'card';
   for (const s of secs) {
-    s.w = secW(s.cols); s.h = secH(rowsOf(lists.get(s.id)));
+    s.w = secW(s.cols); s.h = isCap(s) ? LBL + CAP : secH(rowsOf(lists.get(s.id)));
     // while a card is held, frames keep their size (the target may grow) and nothing else moves: a stable floor to drag over
-    if (holding && !s.ghost) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
+    if (holding && !s.ghost && !isCap(s)) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
   }
   if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; for (const g of f.group || []) { const t = secs.find(x => x.id === g.id); if (t) { t.x = g.x; t.y = g.y; } } }
   // while a Section is held, the others only step out of its way; gaps close once it is dropped
@@ -762,12 +807,13 @@ function commit(lay){
   const keep = [];
   for (const s of lay.secs) {
     let real = secById(s.id);
-    if (!real) { real = {id:s.id === '__new' ? uid('s') : s.id, name:s.name, cols:s.cols}; S.sections.push(real); if (s.id === '__new') { const l = lay.lists.get('__new'); lay.lists.set(real.id, l); lay.lists.delete('__new'); for (const b of l) b.sec = real.id; } }
+    if (!real) { real = {id:s.id === '__new' ? uid('s') : s.id, name:s.name, cols:s.cols, parent:view || undefined}; S.sections.push(real); if (s.id === '__new') { const l = lay.lists.get('__new'); lay.lists.set(real.id, l); lay.lists.delete('__new'); for (const b of l) b.sec = real.id; } }
     real.x = s.x; real.y = s.y; keep.push(real.id);
   }
-  const blocks = [];
+  const blocks = S.blocks.filter(b => !lay.lists.has(b.sec) && !inView(secById(b.sec) || {}));
   for (const [sid, list] of lay.lists) for (const b of list) blocks.push({...b, sec:sid});
   S.blocks = blocks;
+  for (const b of S.blocks) { const s = secById(b.sec); if (s && s.board) { const k = firstKid(s.id), w = Math.min(b.w, k.cols), spot = firstFree(blocksOf(k.id).filter(o => o.id !== b.id), k.cols, w, b.h); Object.assign(b, {sec:k.id, x:spot.x, y:spot.y, w}); } }
 }
 // first boot: stack the seed sections into two columns
 function initialPositions(){
@@ -894,7 +940,7 @@ function ensureSecNode(s){
   if (!n) {
     const el = document.createElement('div');
     el.className = 'sec'; el.dataset.sec = s.id;
-    el.innerHTML = `<div class="sec-frame"><div class="gridlines"></div></div><div class="sec-lbl"><b></b><span class="n"></span><button class="sm" aria-label="Section 菜单"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button></div><div class="sec-big"><div><b></b><span></span></div></div>`;
+    el.innerHTML = `<div class="sec-frame"><div class="gridlines"></div><div class="capb" hidden><div class="fstack"></div><div class="ctxt"><b></b><span></span></div><div class="mini"></div><button class="cgo"></button></div></div><div class="sec-lbl"><b></b><span class="n"></span><span class="bd">子画布</span><button class="sm" aria-label="Section 菜单"><svg class="ic" viewBox="0 0 16 16"><path d="M4 8h.01M8 8h.01M12 8h.01"/></svg></button></div><div class="sec-big"><div><b></b><span></span></div></div>`;
     secLayer.appendChild(el);
     n = {s, el, x:s.x, y:s.y, w:0, h:0, vx:0, vy:0, vw:0, vh:0, tx:s.x, ty:s.y, tw:0, th:0, free:false, first:true};
     snodes.set(s.id, n);
@@ -904,8 +950,38 @@ function ensureSecNode(s){
   $('.sec-lbl .n', n.el).textContent = s.ghost ? '' : countOf(s.id);
   $('.sec-big b', n.el).textContent = s.name; $('.sec-big span', n.el).textContent = s.ghost ? '' : countOf(s.id) + ' links';
   n.el.classList.toggle('ghost', !!s.ghost);
+  n.el.classList.toggle('cap', isCap(s)); n.el.classList.toggle('board', !!s.board); n.el.classList.toggle('collapsed', !!s.collapsed);
+  renderCap(n, s);
   n.el.style.setProperty('--step', step() + 'px'); n.el.style.setProperty('--gap', cfg.gap + 'px'); n.el.style.setProperty('--pad', PAD + 'px');
   return n;
+}
+// capsule body: stacked favicons + count (+ a mini map of the board inside, for a sub-whiteboard)
+function renderCap(n, s){
+  const cb = $('.capb', n.el);
+  if (!isCap(s) || s.ghost) { cb.hidden = true; n.ckey = ''; return; }
+  cb.hidden = false;
+  const bl = linksIn(s.id), kids = s.board ? descSecs(s.id) : [];
+  const key = s.id + '|' + (s.board ? 'b' : 'c') + '|' + s.name + '|' + bl.map(b => b.id + b.sec + b.x + b.y + b.w + b.h + (b.link || '')).join(',') + '|' + kids.map(k => k.id + k.x + k.y + k.cols + (k.collapsed ? 'c' : '')).join(',');
+  if (n.ckey === key) return; n.ckey = key;
+  const links = bl.flatMap(b => b.kind === 'card' ? [b.link] : b.kind === 'list' ? b.rows : []).map(id => LINKS[id]).filter(Boolean);
+  const seen = new Set(), favs = [];
+  for (const l of links) { if (seen.has(l.site)) continue; seen.add(l.site); favs.push(l); if (favs.length === 5) break; }
+  $('.fstack', cb).innerHTML = favs.map(fav).join('');
+  const cnt = countOf(s.id), notes = bl.filter(b => b.kind === 'note').length;
+  $('.ctxt b', cb).textContent = cnt ? favs.map(l => siteOf(l).n).slice(0, 3).join(' · ') : (s.board ? '空画布' : '空 Section');
+  $('.ctxt span', cb).textContent = s.board ? `${cnt} 个链接 · ${kids.filter(k => !k.board).length} 个 Section${kids.some(k => k.board) ? ` · ${kids.filter(k => k.board).length} 个子画布` : ''}` : `${cnt} 个链接${notes ? ` · ${notes} 张便签` : ''}`;
+  $('.cgo', cb).innerHTML = s.board ? '进入<svg class="ic" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>' : '展开<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>';
+  const mini = $('.mini', cb); mini.innerHTML = '';
+  if (s.board) {
+    const lay = layoutFrom(S, null, {noCompact:true, view:s.id});
+    const R = lay.secs; if (!R.length) return;
+    const x0 = Math.min(...R.map(r => r.x)), y0 = Math.min(...R.map(r => r.y)), x1 = Math.max(...R.map(r => r.x + r.w)), y1 = Math.max(...R.map(r => r.y + r.h));
+    const MW = 96, MH = 32, k = Math.min(MW / (x1 - x0), MH / (y1 - y0)), ox = 4 + (MW - (x1 - x0) * k) / 2, oy = 4 + (MH - (y1 - y0) * k) / 2;
+    let html = '';
+    for (const r of R) html += `<u style="left:${ox + (r.x - x0) * k}px;top:${oy + (r.y - y0) * k}px;width:${r.w * k}px;height:${r.h * k}px"></u>`;
+    for (const r of R) { if (isCap(r)) continue; for (const b of lay.lists.get(r.id) || []) { const bx = r.x + PAD + X(b.x), by = r.y + LBL + PAD + X(b.y); html += `<i style="left:${ox + (bx - x0) * k}px;top:${oy + (by - y0) * k}px;width:${Math.max(1.5, Wpx(b.w) * k)}px;height:${Math.max(1.5, Wpx(b.h) * k)}px;--tint:${tintOf(b)}"></i>`; } }
+    mini.innerHTML = html;
+  }
 }
 function paintSec(n){
   n.el.style.transform = `translate3d(${n.x}px,${n.y}px,0)`;
@@ -923,7 +999,7 @@ function applyLayout(lay, instant, skipCard){
       if (instant || n.first) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; n.first = false; paintSec(n); }
     } else { n.tw = s.w; n.th = s.h; n.w = s.w; n.h = s.h; }
     if (s.ghost) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; paintSec(n); }
-    const list = lay.lists.get(s.id) || [];
+    const list = isCap(s) ? [] : (lay.lists.get(s.id) || []);
     for (const it of list) {
       keepC.add(it.id);
       if (skip.has(it.id)) continue;
@@ -1022,6 +1098,7 @@ function applyCam(){
   d.style.backgroundSize = st + 'px ' + st + 'px'; d.style.backgroundPosition = cam.x + 'px ' + cam.y + 'px';
 }
 function zoomAt(f, cx, cy){
+  if (view && f < 1 && cam.z <= .1201) { exitBoard(); return; }
   const z = clamp(cam.z * f, .12, 2.2);
   cam.x = cx - (cx - cam.x) * z / cam.z; cam.y = cy - (cy - cam.y) * z / cam.z; cam.z = z; applyCam(); saveSoon();
 }
@@ -1199,7 +1276,7 @@ function pick(f, cur){ return Math.abs(f - cur) <= 0.5 + cfg.hyst ? cur : Math.r
 function insideSec(n, x, y, slop, bslop){
   const bh = (drag && drag.baseH && drag.baseH.get(n.s.id)) || n.th;
   // the zone below a frame counts too: dropping just under the last row appends to that Section
-  return x >= n.tx - slop && x <= n.tx + n.tw + slop && y >= n.ty + LBL - slop && y <= n.ty + bh + bslop;
+  return x >= n.tx - slop && x <= n.tx + n.tw + slop && y >= n.ty + LBL - slop && y <= n.ty + bh + (isCap(n.s) ? Math.min(bslop, 10) : bslop);
 }
 function secAt(x, y, cur){
   // hysteresis: the current target keeps the card until the hand is clearly outside; a new one needs the hand inside its frame
@@ -1239,7 +1316,7 @@ function move(p){
     if (cand !== d.sec && d.sec) {
       // a new target has to hold the hand for a moment before it takes the card (no "captured in passing"); the first target is taken at once
       if (d.cand !== cand) { d.cand = cand; d.candT = now; }
-      if (now - d.candT < 120) { cand = d.sec; target = d.sec === '__new' ? null : snodes.get(d.sec); }
+      if (now - d.candT < 120) { cand = d.sec; target = d.sec === '__new' ? null : snodes.get(d.sec); clearTimeout(d.candTimer); d.candTimer = setTimeout(() => { if (drag === d && !d.dropping) move(d.last); }, 130 - (now - d.candT)); }
     } else d.cand = null;
     let sec = cand, nx, ny;
     if (target) {
@@ -1293,7 +1370,8 @@ function preview(){
   d.layout = layoutFrom(d.base, f);
   const sc = d.layout.secs.find(s => s.id === d.sec);
   const me = d.layout.lists.get(d.sec).find(i => i.id === d.item.id);
-  phs.tx = sc.x + PAD + X(me.x); phs.ty = sc.y + LBL + PAD + X(me.y); phs.tw = Wpx(me.w); phs.th = Wpx(me.h);
+  if (isCap(sc)) { phs.tx = sc.x + 6; phs.ty = sc.y + LBL + 6; phs.tw = sc.w - 12; phs.th = CAP - 12; }
+  else { phs.tx = sc.x + PAD + X(me.x); phs.ty = sc.y + LBL + PAD + X(me.y); phs.tw = Wpx(me.w); phs.th = Wpx(me.h); }
   applyLayout(d.layout, false, d.item.id);
   for (const n of snodes.values()) n.el.classList.toggle('target', n.s.id === d.sec && d.sec !== d.item.sec);
 }
@@ -1357,6 +1435,7 @@ addEventListener('keydown', e => {
   if (mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomAt(1.25, innerWidth / 2, innerHeight / 2); return; }
   if (mod && e.key === '-') { e.preventDefault(); zoomAt(1 / 1.25, innerWidth / 2, innerHeight / 2); return; }
   if (mod && e.key === '0') { e.preventDefault(); fitAll(); return; }
+  if (mod && e.key === 'ArrowUp') { e.preventDefault(); exitBoard(); return; }
   if (mod && e.key.toLowerCase() === 'a') { e.preventDefault(); sel.clear(); for (const n of nodes.values()) sel.add(n.it.id); syncSel(); return; }
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel.size) { e.preventDefault(); removeBlocks(selIds()); }
 });
@@ -1375,7 +1454,7 @@ function clearSel(){ if (sel.size || selSec.size) { sel.clear(); selSec.clear();
 const selIds = () => [...sel].filter(id => nodes.has(id));
 const undoStack = [];
 function pushUndo(base){ undoStack.push(base || snapshot()); if (undoStack.length > 40) undoStack.shift(); }
-function undo(){ const s = undoStack.pop(); if (!s) return toast('没有可撤销的操作'); S.sections = s.sections; S.blocks = s.blocks; S.inbox = s.inbox; settleAll(); syncAll(false); save(); toast('已撤销'); }
+function undo(){ const s = undoStack.pop(); if (!s) return toast('没有可撤销的操作'); S.sections = s.sections; S.blocks = s.blocks; S.inbox = s.inbox; if (view && !S.sections.some(x => x.id === view && x.board)) { view = null; } settleAll(); syncAll(false); renderCrumb(); save(); toast('已撤销'); }
 function removeBlocks(ids){
   const bs = ids.map(id => S.blocks.find(x => x.id === id)).filter(Boolean); if (!bs.length) return;
   pushUndo();
@@ -1398,13 +1477,16 @@ function resizeBlocks(ids, w0, h){
   syncAll(false); save();
 }
 function moveBlocksTo(ids, sid){
-  const s = secById(sid); if (!s) return;
+  let s = secById(sid); if (!s) return;
+  if (s.board) { s = firstKid(sid); sid = s.id; }
   pushUndo();
   let moved = 0;
   for (const id of ids) {
     const b = S.blocks.find(x => x.id === id); if (!b || b.sec === sid) continue;
     const w = Math.min(b.w, s.cols), spot = firstFree(blocksOf(sid), s.cols, w, b.h);
-    commit(layoutFrom(snapshot(), {kind:'card', item:{...b}, sec:sid, x:spot.x, y:spot.y, w, h:b.h})); moved++;
+    if (inView(s)) commit(layoutFrom(snapshot(), {kind:'card', item:{...b}, sec:sid, x:spot.x, y:spot.y, w, h:b.h}));
+    else Object.assign(b, {sec:sid, x:spot.x, y:spot.y, w});
+    moved++;
   }
   settleAll(); syncAll(false); save(); if (moved) toast((moved > 1 ? moved + ' 张' : '') + '已移到 ' + s.name);
 }
@@ -1413,7 +1495,8 @@ function firstFree(list, cols, w, h){
   return {x:0, y:rowsOf(list)};
 }
 function addLinkTo(linkId, sid, w = 2, h = 1){
-  const s = secById(sid); if (!s) return;
+  let s = secById(sid); if (!s) return;
+  if (s.board) { s = firstKid(sid); sid = s.id; }
   pushUndo();
   const list = blocksOf(sid), ww = Math.min(w, s.cols), spot = firstFree(list, s.cols, ww, h);
   const b = {id:uid('b'), sec:sid, kind:'card', link:linkId, x:spot.x, y:spot.y, w:ww, h};
@@ -1423,7 +1506,8 @@ function addLinkTo(linkId, sid, w = 2, h = 1){
   return b;
 }
 function addNoteTo(sid){
-  const s = secById(sid); if (!s) return;
+  let s = secById(sid); if (!s) return;
+  if (s.board) { s = firstKid(sid); sid = s.id; }
   pushUndo();
   const spot = firstFree(blocksOf(sid), s.cols, 2, 1);
   const b = {id:uid('b'), sec:sid, kind:'note', text:'新便签', x:spot.x, y:spot.y, w:2, h:1};
@@ -1450,10 +1534,67 @@ function renameSec(sid){
 function deleteSec(sid){
   const s = secById(sid); if (!s) return;
   pushUndo();
-  for (const b of blocksOf(sid)) { if (b.kind === 'card') S.inbox.unshift(b.link); if (b.kind === 'list') S.inbox.unshift(...b.rows); }
-  S.blocks = S.blocks.filter(b => b.sec !== sid); S.sections = S.sections.filter(x => x.id !== sid);
-  settleAll(); syncAll(false); save(); toast('Section 已删除，链接回到 Inbox', '撤销', undo);
+  const ids = new Set([sid, ...descSecs(sid).map(k => k.id)]);
+  for (const b of S.blocks) if (ids.has(b.sec)) { if (b.kind === 'card') S.inbox.unshift(b.link); if (b.kind === 'list') S.inbox.unshift(...b.rows); }
+  S.blocks = S.blocks.filter(b => !ids.has(b.sec)); S.sections = S.sections.filter(x => !ids.has(x.id));
+  if (view && ids.has(view)) view = null;
+  settleAll(); syncAll(false); renderCrumb(); save(); toast((s.board ? '子画布' : 'Section') + '已删除，链接回到 Inbox', '撤销', undo);
 }
+function toggleCollapse(sid){
+  const s = secById(sid); if (!s || s.board) return;
+  pushUndo(); s.collapsed = !s.collapsed;
+  if (!s.collapsed) for (const b of blocksOf(sid)) { const n = nodes.get(b.id); if (n) n.fresh = true; }
+  settleAll(); syncAll(false); save();
+}
+// a Section becomes a sub-whiteboard: its cards move into a Section of the same name inside, and it turns into a cover
+function promoteSec(sid){
+  const s = secById(sid); if (!s || s.board) return;
+  pushUndo();
+  const k = {id:uid('s'), name:s.name, cols:s.cols, x:0, y:0, parent:sid};
+  S.sections.push(k); for (const b of blocksOf(sid)) b.sec = k.id;
+  s.board = true; delete s.collapsed;
+  settleAll(); syncAll(false); save(); toast(`${s.name} 已变成子画布，双击封面进入`, '撤销', undo);
+}
+// back to a flat Section when it holds one plain Section; otherwise its Sections spill out onto this canvas
+function demoteSec(sid){
+  const s = secById(sid); if (!s || !s.board) return;
+  pushUndo();
+  const kids = kidsOf(sid), deep = descSecs(sid);
+  if (kids.length === 1 && deep.length === 1 && !kids[0].board) {
+    const k = kids[0]; for (const b of blocksOf(k.id)) b.sec = sid;
+    s.cols = k.cols; S.sections = S.sections.filter(x => x.id !== k.id); delete s.board;
+  } else {
+    const R = layoutFrom(S, null, {noCompact:true}).secs.filter(x => x.id !== sid);
+    let y = R.length ? Math.max(...R.map(r => r.y + r.h)) + cfg.secGap : s.y;
+    const lay = layoutFrom(S, null, {noCompact:true, view:sid});
+    for (const k of kids.sort((a, b) => a.y - b.y || a.x - b.x)) { const r = lay.secs.find(x => x.id === k.id); k.parent = s.parent; k.x = s.x; k.y = y; y += (r ? r.h : secH(1)) + cfg.secGap; }
+    S.sections = S.sections.filter(x => x.id !== sid);
+  }
+  settleAll(); syncAll(false); save(); toast('子画布已拆回画布', '撤销', undo);
+}
+/* ============ navigation between whiteboards ============ */
+const crumbEl = $('#crumb');
+function renderCrumb(){
+  const chain = []; let v = view; while (v) { const s = secById(v); if (!s) break; chain.unshift(s); v = s.parent || null; }
+  crumbEl.classList.toggle('on', chain.length > 0);
+  crumbEl.innerHTML = chain.length ? `<button data-v="">全部</button>` + chain.map((s, i) => `<i>›</i>${i === chain.length - 1 ? `<b>${esc(s.name)}</b>` : `<button data-v="${s.id}">${esc(s.name)}</button>`}`).join('') : '';
+}
+crumbEl.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) setView(b.dataset.v || null); });
+function setView(v, fromRect){
+  v = v || null; if (v === view) return;
+  if (drag) cancel(); release(); closeMenus();
+  cams[view || ''] = {...cam};
+  clearSel(); view = v;
+  for (const n of nodes.values()) n.el.remove(); nodes.clear(); for (const n of snodes.values()) n.el.remove(); snodes.clear();
+  settleAll(); syncAll(true);
+  const c = cams[view || ''];
+  if (c) { Object.assign(cam, c); applyCam(); } else fitAll(false);
+  for (const el of [secLayer, layer]) el.animate([{opacity:0, translate:'0 14px'}, {opacity:1, translate:'0 0'}], {duration:280, easing:'cubic-bezier(.2,.8,.2,1)'});
+  renderCrumb(); save();
+}
+function enterBoard(id){ const s = secById(id); if (!s || !s.board) return; setView(id); if (!tipsOff) toast(`进入 ${s.name}。⌘↑、面包屑或缩到最小可以回去`); }
+function exitBoard(){ if (!view) return; const s = secById(view); setView(s ? (s.parent || null) : null); }
+renderCrumb();
 function setSecCols(sid, cols){
   const s = secById(sid); if (!s) return; pushUndo(); s.cols = cols;
   for (const b of blocksOf(sid)) { b.w = Math.min(b.w, cols); b.x = Math.min(b.x, cols - b.w); nodes.get(b.id) && (nodes.get(b.id).key = ''); }
@@ -1463,13 +1604,14 @@ function newSection(){
   pushUndo();
   const R = [...snodes.values()].map(n => ({x:n.tx, y:n.ty, w:n.tw, h:n.th}));
   const y = R.length ? Math.max(...R.map(r => r.y + r.h)) + cfg.secGap : 0, x = R.length ? Math.min(...R.map(r => r.x)) : 0;
-  const s = {id:uid('s'), name:'New section', cols:6, x, y}; S.sections.push(s);
+  const s = {id:uid('s'), name:'New section', cols:6, x, y, parent:view || undefined}; S.sections.push(s);
   settleAll(); syncAll(false); save();
   const n = snodes.get(s.id); animateCam({z:cam.z, x:cam.x, y:Math.min(cam.y, innerHeight - 160 - (n.ty + n.th) * cam.z)});
   setTimeout(() => renameSec(s.id), 300);
 }
 stage.addEventListener('dblclick', e => {
   const lbl = e.target.closest('.sec-lbl'); if (lbl) { renameSec(lbl.closest('.sec').dataset.sec); return; }
+  const capEl = e.target.closest('.sec.cap .sec-frame'); if (capEl) { const sid = capEl.closest('.sec').dataset.sec, s = secById(sid); if (s) s.board ? enterBoard(sid) : toggleCollapse(sid); return; }
   const card = e.target.closest('.card');
   if (card) { const n = nodes.get(card.dataset.id); if (n.it.kind === 'note') editNote(n); else if (n.it.kind === 'card') window.open(LINKS[n.it.link].url, '_blank', 'noopener'); }
 });
@@ -1502,14 +1644,18 @@ const IC = {
   edit:'<svg class="ic" viewBox="0 0 16 16"><path d="m3 13 .8-3.2L10.5 3l2.5 2.5-6.8 6.7z"/></svg>',
   cols:'<svg class="ic" viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="2"/><path d="M6.5 3v10M10 3v10"/></svg>',
   note:'<svg class="ic" viewBox="0 0 16 16"><path d="M3.5 2.5h9v7l-4 4h-5z"/><path d="M8.5 13.5v-4h4"/></svg>',
-  plus:'<svg class="ic" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>'
+  plus:'<svg class="ic" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>',
+  fold:'<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 10 3.5-3.5 3.5 3.5"/></svg>',
+  expand:'<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>',
+  layers:'<svg class="ic" viewBox="0 0 16 16"><path d="m8 3 5.5 3L8 9 2.5 6z"/><path d="m2.5 9.5 5.5 3 5.5-3"/></svg>',
+  enter:'<svg class="ic" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>'
 };
 function cardMenu(n, x, y){
   const it = n.it;
   if (!sel.has(it.id)) selectOnly(it.id);
   const ids = sel.size > 1 ? selIds() : [it.id], many = ids.length > 1;
   const sizes = [['S', 1, 1], ['M', 2, 1], ['L', 2, 2], ['XL', 4, 2]];
-  const sects = S.sections.filter(s => many || s.id !== it.sec).map(s => `<button class="mi" data-act="move" data-v="${s.id}">${IC.move}移到 ${esc(s.name)}</button>`).join('');
+  const sects = viewSecs().filter(s => many || s.id !== it.sec).map(s => `<button class="mi" data-act="move" data-v="${s.id}">${IC.move}移到 ${esc(s.name)}</button>`).join('');
   openMenu(x, y, `
     ${many ? `<div class="mlabel">已选 ${ids.length} 张</div>` : ''}
     ${!many && it.kind === 'card' ? `<button class="mi" data-act="open">${IC.open}打开链接<kbd>双击</kbd></button>` : ''}
@@ -1527,17 +1673,23 @@ function cardMenu(n, x, y){
   });
 }
 function secMenu(sid, x, y){
-  const s = secById(sid), empty = blocksOf(sid).length === 0;
+  const s = secById(sid), empty = linksIn(sid).length === 0;
   openMenu(x, y, `
     <button class="mi" data-act="rename">${IC.edit}重命名<kbd>双击</kbd></button>
-    <button class="mi" data-act="note">${IC.note}添加便签</button>
+    ${s.board ? `<button class="mi" data-act="enter">${IC.enter}进入子画布<kbd>双击</kbd></button><button class="mi" data-act="demote">${IC.layers}拆回画布</button>` : `<button class="mi" data-act="fold">${s.collapsed ? IC.expand + '展开' : IC.fold + '折叠'}</button><button class="mi" data-act="promote">${IC.layers}转为子画布</button>`}
+    <div class="msep"></div>
+    ${s.board ? '' : `<button class="mi" data-act="note">${IC.note}添加便签</button>`}
     <button class="mi" data-act="add">${IC.plus}添加链接…</button>
     <div class="mlabel">宽度（列）</div>
     <div class="mrow">${[4, 5, 6, 7, 8].map(c => `<button data-act="cols" data-v="${c}" class="${s.cols === c ? 'on' : ''}">${c}</button>`).join('')}</div>
     <div class="msep"></div>
-    <button class="mi danger" data-act="del">${IC.trash}${empty ? '删除 Section' : '删除 Section（链接回 Inbox）'}</button>`,
+    <button class="mi danger" data-act="del">${IC.trash}${empty ? '删除' : '删除（链接回 Inbox）'}</button>`,
   (act, v) => {
     if (act === 'rename') renameSec(sid);
+    if (act === 'fold') toggleCollapse(sid);
+    if (act === 'promote') promoteSec(sid);
+    if (act === 'demote') demoteSec(sid);
+    if (act === 'enter') enterBoard(sid);
     if (act === 'note') addNoteTo(sid);
     if (act === 'add') { openAdd(sid); }
     if (act === 'cols') setSecCols(sid, +v);
@@ -1550,12 +1702,13 @@ stage.addEventListener('contextmenu', e => {
   const sec = e.target.closest('.sec'); if (sec) { secMenu(sec.dataset.sec, e.clientX, e.clientY); return; }
   openMenu(e.clientX, e.clientY, `<button class="mi" data-act="new">${IC.plus}在这里新建 Section</button><button class="mi" data-act="fit">${IC.cols}显示全部<kbd>⌘0</kbd></button>`, act => {
     if (act === 'fit') fitAll();
-    if (act === 'new') { pushUndo(); const p = wpt(e), st = step(); const s = {id:uid('s'), name:'New section', cols:4, x:Math.round(p.x / st) * st, y:Math.round(p.y / st) * st}; S.sections.push(s); settleAll(); syncAll(false); save(); setTimeout(() => renameSec(s.id), 250); }
+    if (act === 'new') { pushUndo(); const p = wpt(e), st = step(); const s = {id:uid('s'), name:'New section', cols:4, x:Math.round(p.x / st) * st, y:Math.round(p.y / st) * st, parent:view || undefined}; S.sections.push(s); settleAll(); syncAll(false); save(); setTimeout(() => renameSec(s.id), 250); }
   });
 });
 stage.addEventListener('click', e => {
   const kb = e.target.closest('.kebab'); if (kb) { const r = kb.getBoundingClientRect(); cardMenu(nodes.get(kb.closest('.card').dataset.id), r.left, r.bottom + 4); return; }
-  const sm = e.target.closest('.sec-lbl .sm'); if (sm) { const r = sm.getBoundingClientRect(); secMenu(sm.closest('.sec').dataset.sec, r.left, r.bottom + 4); }
+  const sm = e.target.closest('.sec-lbl .sm'); if (sm) { const r = sm.getBoundingClientRect(); secMenu(sm.closest('.sec').dataset.sec, r.left, r.bottom + 4); return; }
+  const go = e.target.closest('.capb .cgo'); if (go && !(pan && pan.moved)) { const sid = go.closest('.sec').dataset.sec, s = secById(sid); if (s) s.board ? enterBoard(sid) : toggleCollapse(sid); }
 });
 
 /* ============ top controls: view menu, search, inbox, tune, add ============ */
@@ -1607,8 +1760,9 @@ const addPop = $('#addPop'), addUrl = $('#addUrl'), addSec = $('#addSec');
 let lastSec = null;
 function openAdd(sid){
   const was = !addPop.hidden; closeMenus(); if (was && !sid) return;
-  addSec.innerHTML = S.sections.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  addSec.value = sid || lastSec || (S.sections[0] && S.sections[0].id);
+  const vs = viewSecs();
+  addSec.innerHTML = vs.map(s => `<option value="${s.id}">${esc(s.name)}${s.board ? '（子画布）' : ''}</option>`).join('');
+  addSec.value = sid || (vs.some(s => s.id === lastSec) ? lastSec : '') || (vs[0] && vs[0].id);
   addPop.hidden = false; $('#addBtn').setAttribute('aria-expanded', 'true'); addUrl.value = ''; setTimeout(() => addUrl.focus(), 50);
 }
 $('#addBtn').addEventListener('click', () => openAdd());
