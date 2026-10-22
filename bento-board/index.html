@@ -87,6 +87,7 @@ kbd{font:inherit;font-size:11px;padding:0 5px;border-radius:4px;background:var(-
 .sec{position:absolute;left:0;top:0;will-change:transform;--hd:34px}
 .sec-frame{position:absolute;left:0;right:0;top:var(--hd);bottom:0;border-radius:var(--r-sec);background:var(--sec-fill);box-shadow:inset 0 0 0 1px var(--sec-line);transition:background .25s,box-shadow .25s;overflow:hidden}
 @supports (corner-shape:squircle){.sec-frame{corner-shape:squircle;border-radius:calc(var(--r-sec) * 1.35)}}
+.sec.target{z-index:1}
 .sec.target .sec-frame{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .sec.ghost .sec-frame{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);border-style:dashed}
 .sec.ghost .sec-lbl b{color:var(--accent)}
@@ -699,9 +700,14 @@ function layoutFrom(base, f){
   } else {
     for (const s of secs) lists.set(s.id, resolve(lists.get(s.id), s.cols, null));
   }
-  for (const s of secs) { s.w = secW(s.cols); s.h = secH(rowsOf(lists.get(s.id))); }
+  const holding = f && f.kind === 'card';
+  for (const s of secs) {
+    s.w = secW(s.cols); s.h = secH(rowsOf(lists.get(s.id)));
+    // while a card is held, frames keep their size (the target may grow) and nothing else moves: a stable floor to drag over
+    if (holding && !s.ghost) s.h = Math.max(s.h, secH(rowsOf(blocksOf(s.id, base))));
+  }
   if (f && f.kind === 'sec') { const s = secs.find(x => x.id === f.id); s.x = f.x; s.y = f.y; }
-  resolveSections(secs, f && f.kind === 'sec' ? f.id : null);
+  if (!holding) resolveSections(secs, f && f.kind === 'sec' ? f.id : null);
   return {lists, secs};
 }
 function commit(lay){
@@ -849,6 +855,7 @@ function applyLayout(lay, instant, skipCard){
       n.tx = s.x; n.ty = s.y; n.tw = s.w; n.th = s.h;
       if (instant || n.first) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; n.first = false; paintSec(n); }
     } else { n.tw = s.w; n.th = s.h; n.w = s.w; n.h = s.h; }
+    if (s.ghost) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; paintSec(n); }
     const list = lay.lists.get(s.id) || [];
     for (const it of list) {
       keepC.add(it.id);
@@ -1083,20 +1090,16 @@ function beginSec(pr, p){
 // hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
 function pick(f, cur){ return Math.abs(f - cur) <= 0.5 + cfg.hyst ? cur : Math.round(f); }
 // which section is under the hand (frames grow a little so the edge is forgiving)
-function secAt(x, y, w, h){
-  const slop = 32;
-  let best = null, bestA = 0;
-  for (const n of snodes.values()) {
-    if (n.s.ghost) continue;
-    const bh = (drag && drag.baseH && drag.baseH.get(n.s.id)) || n.th;
-    const r = {x:n.tx - slop, y:n.ty + LBL - slop, w:n.tw + slop * 2, h:bh - LBL + slop * 2};
-    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-      // when frames overlap during a preview, prefer the one that contains more of the card
-      const a = Math.max(0, Math.min(x + w, r.x + r.w) - Math.max(x, r.x)) * Math.max(0, Math.min(y + h, r.y + r.h) - Math.max(y, r.y));
-      if (!best || a > bestA) { best = n; bestA = a; }
-    }
-  }
-  return best;
+function insideSec(n, x, y, slop, bslop){
+  const bh = (drag && drag.baseH && drag.baseH.get(n.s.id)) || n.th;
+  // the zone below a frame counts too: dropping just under the last row appends to that Section
+  return x >= n.tx - slop && x <= n.tx + n.tw + slop && y >= n.ty + LBL - slop && y <= n.ty + bh + bslop;
+}
+function secAt(x, y, cur){
+  // hysteresis: the current target keeps the card until the hand is clearly outside; a new one needs the hand inside its frame
+  if (cur && cur !== '__new') { const n = snodes.get(cur); if (n && !n.s.ghost && insideSec(n, x, y, 32, step() * .6 + 30)) return n; }
+  for (const n of snodes.values()) if (!n.s.ghost && insideSec(n, x, y, 6, step() * .6)) return n;
+  return null;
 }
 function move(p){
   const d = drag;
@@ -1119,7 +1122,7 @@ function move(p){
     n.tr = cfg.tilt ? clamp(vx / 90, -4, 4) : 0;
     // snapping reads the hand, not the lagging card
     const hx = p.x, hy = p.y;
-    const target = secAt(hx, hy, 0, 0);
+    const target = secAt(hx, hy, d.sec);
     let sec = target ? target.s.id : '__new', nx, ny;
     if (target) {
       const w = Math.min(d.tw, target.s.cols);
@@ -1128,8 +1131,7 @@ function move(p){
     } else {
       // empty canvas: a ghost Section appears under the card
       nx = 0; ny = 0;
-      const gx = Math.round((d.px - PAD) / st) * st, gy = Math.round((d.py - LBL - PAD) / st) * st;
-      d.nx = gx; d.ny = gy;
+      d.nx = d.px - PAD; d.ny = d.py - LBL - PAD;
     }
     if (sec !== d.sec || nx !== d.tx || ny !== d.ty || !d.layout || sec === '__new') { d.sec = sec; d.tx = nx; d.ty = ny; preview(); }
   } else {
@@ -1153,11 +1155,12 @@ function preview(){
 }
 function autoPan(dt){
   const d = drag; if (!d) return;
-  const edge = 60, max = 900;
+  const edge = 36, max = 700;
   const {x, y} = d.client;
   let vx = 0, vy = 0;
   if (x < edge) vx = max * (1 - x / edge); else if (x > innerWidth - edge) vx = -max * (1 - (innerWidth - x) / edge);
-  if (y < edge + 44) vy = max * (1 - (y - 44) / edge); else if (y > innerHeight - edge) vy = -max * (1 - (innerHeight - y) / edge);
+  if (y < edge) vy = max * (1 - y / edge); else if (y > innerHeight - edge) vy = -max * (1 - (innerHeight - y) / edge);
+  vx = clamp(vx, -max, max); vy = clamp(vy, -max, max);
   if (!vx && !vy) return;
   cam.x += vx * dt; cam.y += vy * dt; applyCam();
   move({x:(x - cam.x) / cam.z, y:(y - cam.y) / cam.z, cx:x, cy:y});
@@ -1175,7 +1178,7 @@ function land(lay){
   }
   const n = d.n;
   n.free = false;
-  if (lay) { pushUndo(d.base); commit(lay); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; S.inbox = d.base.inbox; }
+  if (lay) { pushUndo(d.base); commit(lay); settleAll(); } else { S.sections = d.base.sections; S.blocks = d.base.blocks; S.inbox = d.base.inbox; }
   if (d.fromInbox && !lay) { n.el.remove(); nodes.delete(n.it.id); }
   else {
     const me = S.blocks.find(i => i.id === d.item.id);
@@ -1189,7 +1192,11 @@ function land(lay){
   syncAll(false); save();
   if (lay && d.sec === '__new') toast('新建了一个 Section，双击名字可以改名');
 }
-function drop(){ land(drag.layout); }
+function drop(){
+  const d = drag;
+  if (d.kind === 'card' && d.sec === '__new') { const st = step(); d.nx = Math.round(d.nx / st) * st; d.ny = Math.round(d.ny / st) * st; preview(); }
+  land(d.layout);
+}
 function cancel(){ land(null); toast('已取消'); }
 addEventListener('keydown', e => {
   const editing = e.target.closest && (e.target.closest('input,textarea,[contenteditable="true"]'));
