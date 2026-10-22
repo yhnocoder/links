@@ -150,6 +150,9 @@ svg{-webkit-user-drag:none;display:block}
 .m-tall .ttl.big{font-size:17px;letter-spacing:-.016em;line-height:1.22}
 .m-tall .txt{gap:4px}
 /* covers */
+.art.img{container-type:size}
+.art .cv{position:absolute;left:50%;top:50%;translate:-50% -50%;container-type:size;overflow:hidden}
+.art .cv.tl{left:0;top:0;translate:none}
 .a-gh{background:#0D1117;color:#E6EDF3;padding:12px 14px;display:flex;flex-direction:column;gap:7px;font-family:var(--mono)}
 .a-gh .r{display:flex;align-items:center;gap:6px;font-size:clamp(9px,6cqw,13px);color:#9198A1;white-space:nowrap;overflow:hidden}
 .a-gh .r i{width:clamp(10px,7cqw,16px);height:clamp(10px,7cqw,16px);border-radius:50%;background:#E6EDF3;flex:none;box-shadow:inset 0 0 0 3px #0D1117,0 0 0 1px #E6EDF3}
@@ -175,7 +178,7 @@ svg{-webkit-user-drag:none;display:block}
 .a-photo{background:radial-gradient(60% 50% at 78% 22%,#FFE9C2 0,#FFD7A0 18%,transparent 60%),radial-gradient(90% 70% at 10% 100%,#5B3A2A,transparent 70%),linear-gradient(180deg,#E7B88A,#A9724C 70%,#6E4430)}
 .a-photo:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 14%,oklch(0.2 0.03 50 / .22) 14% 19%,transparent 19% 30%);mix-blend-mode:multiply}
 .a-photo:after{content:"";position:absolute;left:18%;right:30%;bottom:9%;height:26%;border-radius:50% 50% 10% 10%;background:radial-gradient(60% 80% at 50% 30%,#F3E6D4,#CDB79B);box-shadow:0 8px 18px oklch(0.2 0.05 50 / .45)}
-.a-photo .xh{position:absolute;left:6cqw;bottom:5cqh;z-index:1;font-size:clamp(9px,5cqw,12px);font-weight:600;color:#fff;text-shadow:0 1px 6px oklch(0 0 0 / .4);display:flex;align-items:center;gap:4px}
+.xh{position:absolute;left:6cqw;bottom:5cqh;z-index:1;font-size:clamp(9px,5cqw,12px);font-weight:600;color:#fff;text-shadow:0 1px 6px oklch(0 0 0 / .4);display:flex;align-items:center;gap:4px}
 .a-shot{background:#F2F2F4;color:#111;display:flex;flex-direction:column}
 .a-shot .ch{height:max(14px,9cqh);display:flex;align-items:center;gap:4px;padding:0 5cqw;background:#E4E4E8;flex:none}
 .a-shot .ch i{width:max(5px,2.2cqw);height:max(5px,2.2cqw);border-radius:50%;background:#C9C9CE}
@@ -197,7 +200,7 @@ svg{-webkit-user-drag:none;display:block}
 .a-chat .b span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .a-stock{background:radial-gradient(70% 60% at 30% 40%,#A9B8C9,transparent 70%),radial-gradient(60% 60% at 75% 70%,#58677A,transparent 70%),linear-gradient(135deg,#C9D2DC,#7E8B9B)}
 .a-stock:after{content:"";position:absolute;left:26%;top:22%;width:30%;height:58%;border-radius:40% 40% 8% 8%;background:linear-gradient(180deg,#2D3440,#465061);filter:blur(1.5px);opacity:.75}
-.a-stock .wm{position:absolute;right:5cqw;bottom:5cqh;font-size:clamp(8px,4cqw,11px);font-weight:700;color:#fff;opacity:.8;letter-spacing:.04em}
+.wm{position:absolute;right:5cqw;bottom:5cqh;font-size:clamp(8px,4cqw,11px);font-weight:700;color:#fff;opacity:.8;letter-spacing:.04em}
 .a-type{background:color-mix(in oklch,var(--tint) 10%,var(--surface));color:var(--ink);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
 .a-type .t{font-size:clamp(12px,10.5cqw,30px);font-weight:700;letter-spacing:-.025em;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
 .a-type .d{font-size:clamp(8px,4.6cqw,12px);color:color-mix(in oklch,var(--tint) 70%,var(--ink));font-weight:600;display:flex;align-items:center;gap:5px}
@@ -518,11 +521,12 @@ function art(l, style = ''){
   switch (l.kind) {
     case 'gh': return `<div class="art a-gh"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="t">${t}</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`;
     case 'paper': return `<div class="art a-paper"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="t">${t}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`;
-    case 'video': return `<div class="art a-video"${st}><i class="orb a"></i><i class="orb b"></i>${l.part ? `<div class="pt">${esc(l.part)}</div>` : ''}<div class="pl"></div><div class="du">${esc(l.dur || '')}</div></div>`;
-    case 'photo': return `<div class="art a-photo"${st}><div class="xh">♡ 2.3k</div></div>`;
-    case 'shot': return `<div class="art a-shot"${st}><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div>`;
+    // image-like covers keep their native pixel size and are cropped by the card, never scaled
+    case 'video': return `<div class="art img a-video"${st}><div class="cv" style="width:480px;height:270px"><i class="orb a"></i><i class="orb b"></i></div>${l.part ? `<div class="pt">${esc(l.part)}</div>` : ''}<div class="pl"></div><div class="du">${esc(l.dur || '')}</div></div>`;
+    case 'photo': return `<div class="art img"${st}><div class="cv a-photo" style="width:320px;height:427px"></div><div class="xh">♡ 2.3k</div></div>`;
+    case 'shot': return `<div class="art img"${st}><div class="cv tl a-shot" style="width:600px;height:375px"><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div></div>`;
     case 'chat': return `<div class="art a-chat"${st}><div class="u">${esc(l.q || l.title)}</div><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`;
-    case 'stock': return `<div class="art a-stock"${st}><div class="wm">ifanr</div></div>`;
+    case 'stock': return `<div class="art img"${st}><div class="cv a-stock" style="width:420px;height:315px"></div><div class="wm">ifanr</div></div>`;
     case 'brand': return `<div class="art a-brand"${st}><div class="g">${esc(s.g)}</div></div>`;
     case 'unclear': return `<div class="art a-unclear"${st}><div>${IC_ALERT}<span>Unclear title</span></div></div>`;
     default: return `<div class="art a-type"${st}><div class="t">${t}</div><div class="d"><span class="fav">${esc(s.g)}</span>${esc(s.n)}</div></div>`;
