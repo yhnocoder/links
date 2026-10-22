@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bento Canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap">
+<style>
+/* Layout concept: one Section on a coarse cell grid. Cards sit on whole cells; the pointer drags a lifted card freely,
+   a placeholder shows where it will land, and every other card springs out of the way. */
+:root{
+  --bg:oklch(0.945 0.006 265);
+  --surface:oklch(1 0 0);
+  --surface-2:oklch(0.975 0.004 265);
+  --glass:oklch(0.98 0.004 265 / 0.78);
+  --ink:oklch(0.22 0.012 265);
+  --ink-2:oklch(0.43 0.012 265);
+  --ink-3:oklch(0.58 0.01 265);
+  --line:oklch(0.25 0.02 265 / 0.09);
+  --line-2:oklch(0.25 0.02 265 / 0.16);
+  --accent:oklch(0.6 0.19 255);
+  --accent-ink:oklch(0.99 0 0);
+  --accent-soft:oklch(0.6 0.19 255 / 0.13);
+  --sec-fill:oklch(0.99 0.002 265 / 0.6);
+  --sec-line:oklch(0.25 0.02 265 / 0.06);
+  --note:oklch(0.97 0.05 95);
+  --note-ink:oklch(0.36 0.06 85);
+  --dot:oklch(0.25 0.02 265 / 0.16);
+  --scrim:oklch(0.15 0.01 265 / 0.55);
+  --shadow:0 0 0 .5px oklch(0.2 0.02 265 / .08),0 1px 2px oklch(0.2 0.02 265 / .05),0 10px 24px -14px oklch(0.2 0.02 265 / .18);
+  --shadow-hover:0 0 0 .5px oklch(0.2 0.02 265 / .1),0 2px 4px oklch(0.2 0.02 265 / .06),0 18px 36px -16px oklch(0.2 0.02 265 / .26);
+  --shadow-lift:0 0 0 .5px oklch(0.2 0.02 265 / .1),0 8px 16px -6px oklch(0.2 0.02 265 / .18),0 36px 72px -20px oklch(0.2 0.02 265 / .42);
+  --hl:inset 0 1px 0 oklch(1 0 0 / .9);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Noto Sans SC","Segoe UI",system-ui,sans-serif;
+  --serif:"Newsreader","Songti SC","Noto Serif SC","STSong",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  --r-card:18px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:oklch(0.17 0.006 265);--surface:oklch(0.235 0.008 265);--surface-2:oklch(0.21 0.008 265);--glass:oklch(0.2 0.008 265 / 0.78);
+  --ink:oklch(0.95 0.004 265);--ink-2:oklch(0.78 0.008 265);--ink-3:oklch(0.62 0.01 265);
+  --line:oklch(1 0 0 / 0.08);--line-2:oklch(1 0 0 / 0.14);--accent:oklch(0.7 0.16 255);--accent-ink:oklch(0.16 0.02 265);--accent-soft:oklch(0.7 0.16 255 / 0.18);
+  --sec-fill:oklch(1 0 0 / 0.035);--sec-line:oklch(1 0 0 / 0.07);--note:oklch(0.32 0.04 90);--note-ink:oklch(0.93 0.05 92);--dot:oklch(1 0 0 / 0.14);--scrim:oklch(0.1 0.01 265 / 0.6);
+  --shadow:0 0 0 .5px oklch(1 0 0 / .09),0 1px 2px oklch(0 0 0 / .3),0 10px 24px -14px oklch(0 0 0 / .6);
+  --shadow-hover:0 0 0 .5px oklch(1 0 0 / .14),0 2px 4px oklch(0 0 0 / .3),0 18px 36px -16px oklch(0 0 0 / .7);
+  --shadow-lift:0 0 0 .5px oklch(1 0 0 / .16),0 8px 16px -6px oklch(0 0 0 / .4),0 36px 72px -20px oklch(0 0 0 / .85);
+  --hl:inset 0 1px 0 oklch(1 0 0 / .06);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:oklch(0.17 0.006 265);--surface:oklch(0.235 0.008 265);--surface-2:oklch(0.21 0.008 265);--glass:oklch(0.2 0.008 265 / 0.78);
+  --ink:oklch(0.95 0.004 265);--ink-2:oklch(0.78 0.008 265);--ink-3:oklch(0.62 0.01 265);
+  --line:oklch(1 0 0 / 0.08);--line-2:oklch(1 0 0 / 0.14);--accent:oklch(0.7 0.16 255);--accent-ink:oklch(0.16 0.02 265);--accent-soft:oklch(0.7 0.16 255 / 0.18);
+  --sec-fill:oklch(1 0 0 / 0.035);--sec-line:oklch(1 0 0 / 0.07);--note:oklch(0.32 0.04 90);--note-ink:oklch(0.93 0.05 92);--dot:oklch(1 0 0 / 0.14);--scrim:oklch(0.1 0.01 265 / 0.6);
+  --shadow:0 0 0 .5px oklch(1 0 0 / .09),0 1px 2px oklch(0 0 0 / .3),0 10px 24px -14px oklch(0 0 0 / .6);
+  --shadow-hover:0 0 0 .5px oklch(1 0 0 / .14),0 2px 4px oklch(0 0 0 / .3),0 18px 36px -16px oklch(0 0 0 / .7);
+  --shadow-lift:0 0 0 .5px oklch(1 0 0 / .16),0 8px 16px -6px oklch(0 0 0 / .4),0 36px 72px -20px oklch(0 0 0 / .85);
+  --hl:inset 0 1px 0 oklch(1 0 0 / .06);color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:default}
+a{color:inherit;text-decoration:none;-webkit-user-drag:none}
+svg{-webkit-user-drag:none;display:block}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;display:flex;align-items:center;gap:14px;height:52px;margin:0 -16px;padding:0 20px;
+  background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 1px 0 var(--line)}
+.top .brand{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.top .crumb{color:var(--ink-3);display:flex;align-items:center;gap:8px;font-size:12.5px}
+.top .crumb b{color:var(--ink-2);font-weight:550}
+.top .sp{flex:1}
+.tb{height:30px;padding:0 11px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:550;color:var(--ink-2);transition:background .15s,color .15s}
+.tb:hover{background:var(--line);color:var(--ink)}
+.tb:active{transform:scale(.97)}
+.tb.on{background:var(--accent-soft);color:var(--accent)}
+.tb .ic{width:14px;height:14px}
+
+/* ---------- section ---------- */
+.wrap{max-width:1120px;margin:0 auto;padding-top:34px}
+.sec-head{display:flex;align-items:baseline;gap:10px;padding:0 8px 12px}
+.sec-head h1{margin:0;font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.015em;line-height:1.1;text-wrap:balance}
+.sec-head .n{font-size:14px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.sec-head .hint{margin-left:auto;font-size:12.5px;color:var(--ink-3);display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.sec-head kbd{font:inherit;font-size:11px;padding:1px 5px;border-radius:5px;background:var(--line);color:var(--ink-2)}
+.sec{position:relative;border-radius:32px;background:var(--sec-fill);box-shadow:inset 0 0 0 1px var(--sec-line);padding:var(--pad);
+  transition:height .34s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.sec.dragging{box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.board{position:relative}
+/* grid dots: one dot per cell corner, visible while a card is in the air (or always, from the panel) */
+.gridlines{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;
+  background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.6px);background-size:var(--step) var(--step);background-position:calc(var(--gap) * -1) calc(var(--gap) * -1);
+  margin:calc(var(--gap) * .5 * -1);}
+.sec.dragging .gridlines,.sec.grid-always .gridlines{opacity:1}
+
+/* placeholder: where the lifted card will land */
+.ph{position:absolute;left:0;top:0;border-radius:var(--r-card);background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);
+  opacity:0;transition:opacity .18s;pointer-events:none;will-change:transform}
+.ph.on{opacity:1}
+
+/* ---------- cards ---------- */
+.card{position:absolute;left:0;top:0;will-change:transform;touch-action:pan-y;z-index:1}
+.card.pressed .in{scale:.985}
+.card.lift{z-index:30}
+.card.settling{z-index:20}
+.card .in{position:absolute;inset:0;border-radius:var(--r-card);background:var(--surface);box-shadow:var(--shadow),var(--hl);overflow:hidden;
+  display:flex;transform-origin:50% 50%;transition:scale .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;
+  corner-shape:squircle}
+.card:hover .in{box-shadow:var(--shadow-hover),var(--hl)}
+.card.lift .in{scale:1.035;box-shadow:var(--shadow-lift),var(--hl);transition:scale .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+.card.lift.rs .in{scale:1}
+.card.lift,.card.lift *{cursor:grabbing}
+.card.lift.rs,.card.lift.rs *{cursor:nwse-resize}
+.sec.dragging .card:not(.lift) .in{box-shadow:var(--shadow),var(--hl)}
+/* resize handle */
+.rz{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;opacity:0;transition:opacity .15s;z-index:5}
+.rz::after{content:"";position:absolute;right:7px;bottom:7px;width:9px;height:9px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);border-radius:0 0 3px 0;opacity:.7}
+.card:hover .rz{opacity:1}
+.sec.dragging .rz{opacity:0}
+
+/* link card */
+.k-link .in{flex-direction:column;padding:14px;gap:10px}
+.tile{flex:none;width:34px;height:34px;border-radius:10px;background:var(--t);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;
+  font-family:var(--ui);box-shadow:inset 0 0 0 .5px oklch(0 0 0 / .12)}
+.k-link .txt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.ttl{font-weight:600;font-size:13.5px;line-height:1.3;letter-spacing:-.005em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.meta{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desc{margin:4px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+.nq{margin-top:auto;padding:7px 9px;border-radius:9px;background:var(--note);color:var(--note-ink);font-size:12px;line-height:1.35}
+.badge{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border-radius:999px;background:var(--line);font-size:11px;font-weight:550;color:var(--ink-2);width:max-content}
+/* size variants */
+.k-link.w-1 .in{padding:12px;gap:8px}
+.k-link.w-1 .meta,.k-link.w-1 .desc,.k-link.w-1 .nq,.k-link.w-1 .badge{display:none}
+.k-link.w-1 .ttl{font-size:12px;-webkit-line-clamp:3}
+.k-link.w-1 .tile{width:30px;height:30px;border-radius:9px;font-size:13px}
+.k-link.h-1:not(.w-1) .in{flex-direction:row;align-items:flex-start;padding:13px 14px}
+.k-link.h-1 .desc,.k-link.h-1 .nq{display:none}
+.k-link.h-1:not(.w-1) .ttl{-webkit-line-clamp:2}
+.k-link.h-1.w-3 .ttl,.k-link.h-1.w-4 .ttl{-webkit-line-clamp:2;font-size:14px}
+.k-link.h-2.w-2 .tile,.k-link.h-3 .tile{width:40px;height:40px;border-radius:12px;font-size:17px}
+.k-link.h-2.w-2 .ttl,.k-link.h-3 .ttl,.k-link.h-2.w-3 .ttl,.k-link.h-2.w-4 .ttl{font-size:15px;-webkit-line-clamp:3}
+.k-link.h-2.w-3 .in,.k-link.h-2.w-4 .in{flex-direction:row;gap:16px}
+.k-link.h-2.w-3 .tile,.k-link.h-2.w-4 .tile{width:48px;height:48px;border-radius:14px;font-size:20px}
+.k-link.h-1 .nq{display:none}
+
+/* media card: cover fills the card, title sits on a scrim */
+.k-media .in{background:var(--t)}
+.cover{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 20% 0%,oklch(1 0 0 / .32),transparent 55%),
+  radial-gradient(90% 70% at 100% 100%,oklch(0 0 0 / .32),transparent 60%),
+  var(--t)}
+.cover .play{position:absolute;left:50%;top:50%;translate:-50% -50%;width:44px;height:44px;border-radius:50%;background:oklch(1 0 0 / .22);backdrop-filter:blur(8px);
+  display:grid;place-items:center;color:#fff;transition:scale .25s cubic-bezier(.2,.8,.2,1)}
+.card:hover .cover .play{scale:1.08}
+.cover .play svg{width:18px;height:18px;fill:#fff;margin-left:2px}
+.frame{position:absolute;left:10%;right:0;top:14%;bottom:0;border-radius:10px 0 0 0;background:oklch(1 0 0 / .92);box-shadow:0 8px 28px -8px oklch(0 0 0 / .4);overflow:hidden}
+.frame::before{content:"";position:absolute;left:10px;top:9px;width:8px;height:8px;border-radius:50%;background:oklch(0.8 0.02 265);box-shadow:14px 0 0 oklch(0.8 0.02 265),28px 0 0 oklch(0.8 0.02 265)}
+.frame i{position:absolute;left:12px;height:7px;border-radius:4px;background:oklch(0.88 0.01 265)}
+.frame i:nth-child(1){top:36px;width:46%;height:12px;background:oklch(0.78 0.02 265)}
+.frame i:nth-child(2){top:58px;width:72%}
+.frame i:nth-child(3){top:72px;width:64%}
+.frame i:nth-child(4){top:86px;width:40%}
+.frame i:nth-child(5){top:108px;width:88%;height:80px;border-radius:8px;background:var(--t);opacity:.35}
+.photo{position:absolute;inset:0;background:
+  radial-gradient(60% 50% at 30% 35%,oklch(0.98 0.06 80 / .9),transparent 70%),
+  radial-gradient(50% 40% at 75% 70%,oklch(0.55 0.1 40 / .6),transparent 70%),
+  linear-gradient(180deg,oklch(0.85 0.08 70),oklch(0.5 0.1 45))}
+.mo{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;background:linear-gradient(180deg,transparent,var(--scrim));color:#fff}
+.mt{font-weight:600;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-shadow:0 1px 2px oklch(0 0 0 / .3)}
+.mm{font-size:11.5px;opacity:.85;margin-top:2px;display:flex;gap:8px;white-space:nowrap;overflow:hidden}
+.mm .dur{margin-left:auto;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11px}
+.k-media.h-1 .mo{padding-top:18px}
+.k-media.h-1 .mt{-webkit-line-clamp:1;font-size:12.5px}
+.k-media.w-1 .mm{display:none}
+.k-media.w-1 .cover .play{width:34px;height:34px}
+.k-media.w-1 .mt{font-size:11.5px}
+
+/* list card */
+.k-list .in{flex-direction:column;padding:10px 10px 8px}
+.lh{display:flex;align-items:center;gap:7px;padding:4px 6px 8px;font-weight:650;font-size:13.5px}
+.lh .ic{color:var(--ink-3)}
+.lh .n{color:var(--ink-3);font-weight:500;font-size:12px;font-variant-numeric:tabular-nums}
+.rows{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
+.row{display:flex;align-items:center;gap:9px;height:30px;flex:none;padding:0 6px;border-radius:8px;min-width:0}
+.row:hover{background:var(--line)}
+.row .fv{flex:none;width:16px;height:16px;border-radius:5px;background:var(--t);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center}
+.row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.row .s{color:var(--ink-3);font-size:11px;white-space:nowrap}
+.k-list.w-1 .row .s,.k-list.w-2 .row .s{display:none}
+.more{padding:5px 6px 2px;font-size:11.5px;color:var(--ink-3);text-align:left}
+
+/* note card */
+.k-note .in{background:var(--note);color:var(--note-ink);flex-direction:column;padding:13px 14px;gap:6px}
+.k-note .nl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;font-weight:600}
+.k-note .nt{font-family:var(--serif);font-size:16px;line-height:1.35;font-weight:500;overflow:hidden}
+.k-note.h-2 .nt{font-size:19px}
+
+/* ---------- tuning panel ---------- */
+.panel{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;width:290px;max-width:calc(100vw - 32px);
+  border-radius:18px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  box-shadow:0 0 0 .5px var(--line-2),0 24px 48px -16px oklch(0.2 0.02 265 / .3);overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.panel.closed{transform:translateY(calc(100% - 44px))}
+.panel header{height:44px;display:flex;align-items:center;gap:8px;padding:0 10px 0 16px;font-weight:650;font-size:13px;cursor:pointer}
+.panel header .sp{flex:1}
+.panel header .chev{transition:transform .3s}
+.panel.closed header .chev{transform:rotate(180deg)}
+.panel .body{padding:2px 16px 14px;display:flex;flex-direction:column;gap:10px;max-height:min(62vh,560px);overflow:auto}
+.fld{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;font-size:12.5px}
+.fld label{color:var(--ink-2)}
+.fld output{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.fld input[type=range]{grid-column:1 / -1;width:100%;accent-color:var(--accent);margin:0;height:22px}
+.fld select{grid-column:1 / -1;font:inherit;font-size:12.5px;height:30px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);padding:0 8px}
+.sw{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink-2);min-height:26px}
+.sw input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.pgroup{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-top:6px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.btn{height:30px;padding:0 11px;border-radius:9px;background:var(--line);font-size:12.5px;font-weight:550;color:var(--ink);transition:background .15s}
+.btn:hover{background:var(--line-2)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.presets{display:flex;gap:6px}
+.presets .btn{flex:1;padding:0;text-align:center}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:60;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);
+  font-size:12.5px;font-weight:550;box-shadow:var(--shadow-lift);opacity:0;transition:opacity .2s,translate .3s cubic-bezier(.2,.8,.2,1);pointer-events:none;translate:-50% 8px}
+.toast.on{opacity:1;translate:-50% 0}
+
+@media (max-width:700px){
+  .top .crumb{display:none}
+  .sec-head h1{font-size:24px}
+  .sec-head .hint{display:none}
+  .sec{border-radius:24px}
+}
+@media (prefers-reduced-motion: reduce){
+  .card .in,.sec,.ph,.panel{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="brand">Links</span>
+  <span class="crumb"><span>Bento Canvas</span><span>·</span><b>Work</b></span>
+  <span class="sp"></span>
+  <button class="tb" id="addBtn" title="添加一张卡片"><svg class="ic" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>添加</button>
+  <button class="tb" id="shuffleBtn" title="随机排布"><svg class="ic" viewBox="0 0 16 16"><path d="M2.5 4.5h2.2c1.2 0 2 .6 2.6 1.6l1.4 2.8c.6 1 1.4 1.6 2.6 1.6h2.2M2.5 11.5h2.2c1.2 0 2-.6 2.6-1.6M8.7 6.1c.6-1 1.4-1.6 2.6-1.6h2.2M11.5 2.5l2 2-2 2M11.5 8.5l2 2-2 2"/></svg>打乱</button>
+  <button class="tb" id="resetBtn" title="恢复初始布局"><svg class="ic" viewBox="0 0 16 16"><path d="M5.5 4 2.5 7l3 3"/><path d="M2.5 7h7a3.5 3.5 0 0 1 0 7H7"/></svg>重置</button>
+  <button class="tb" id="themeBtn" title="切换深浅色"><svg class="ic" viewBox="0 0 16 16"><path d="M8 2.5v1M8 12.5v1M2.5 8h1M12.5 8h1M4.1 4.1l.7.7M11.2 11.2l.7.7M4.1 11.9l.7-.7M11.2 4.8l.7-.7"/><circle cx="8" cy="8" r="2.8"/></svg></button>
+</div>
+
+<main class="wrap">
+  <div class="sec-head">
+    <h1>Work</h1>
+    <span class="n" id="count"></span>
+    <span class="hint"><span>拖动卡片移动</span><span>拖右下角改大小</span><span><kbd>Esc</kbd> 取消</span></span>
+  </div>
+  <section class="sec" id="sec">
+    <div class="board" id="board">
+      <div class="gridlines"></div>
+      <div class="ph" id="ph"></div>
+      <div id="cards"></div>
+    </div>
+  </section>
+</main>
+
+<aside class="panel closed" id="panel">
+  <header id="panelHead">
+    <svg class="ic" viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h10M3 11.5h10"/><circle cx="6" cy="4.5" r="1.4" fill="var(--glass)"/><circle cx="10.5" cy="8" r="1.4" fill="var(--glass)"/><circle cx="7" cy="11.5" r="1.4" fill="var(--glass)"/></svg>
+    手感调参
+    <span class="sp"></span>
+    <svg class="ic chev" viewBox="0 0 16 16"><path d="m4.5 9.5 3.5-3.5 3.5 3.5"/></svg>
+  </header>
+  <div class="body">
+    <div class="presets">
+      <button class="btn" data-preset="crisp">利落</button>
+      <button class="btn" data-preset="soft">柔和</button>
+      <button class="btn" data-preset="bouncy">Q 弹</button>
+    </div>
+    <div class="pgroup">网格</div>
+    <div class="fld"><label for="cols">列数</label><output id="colsO"></output><input type="range" id="cols" min="4" max="10" step="1"></div>
+    <div class="fld"><label for="gap">间距</label><output id="gapO"></output><input type="range" id="gap" min="6" max="28" step="1"></div>
+    <div class="pgroup">弹簧</div>
+    <div class="fld"><label for="k">刚度 stiffness</label><output id="kO"></output><input type="range" id="k" min="120" max="900" step="10"></div>
+    <div class="fld"><label for="c">阻尼 damping</label><output id="cO"></output><input type="range" id="c" min="10" max="60" step="1"></div>
+    <div class="pgroup">吸附与让位</div>
+    <div class="fld"><label for="hyst">吸附迟滞</label><output id="hystO"></output><input type="range" id="hyst" min="0" max="0.35" step="0.01"></div>
+    <div class="fld"><label for="mode">让位策略</label><select id="mode"><option value="smart">智能：填补空位 / 让到上方 / 下推</option><option value="push">只下推</option></select></div>
+    <label class="sw"><span>向上收紧（无空行）</span><input type="checkbox" id="compact"></label>
+    <label class="sw"><span>拖动时轻微倾斜</span><input type="checkbox" id="tilt"></label>
+    <label class="sw"><span>一直显示网格点</span><input type="checkbox" id="gridAlways"></label>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = 'links-bento-canvas-v1';
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ============ sample data (from the Links design seed) ============ */
+const SITES = {
+  github:{n:'GitHub',t:'#24292F',g:'GH'}, nextjs:{n:'nextjs.org',t:'#111111',g:'N'}, vercel:{n:'vercel-status.com',t:'#000000',g:'▲'},
+  sentry:{n:'sentry.io',t:'#362D59',g:'S'}, geekbang:{n:'time.geekbang.org',t:'#E8890C',g:'极'}, bilibili:{n:'bilibili',t:'#FB7299',g:'b'},
+  ifanr:{n:'爱范儿',t:'#D6001C',g:'A'}, arxiv:{n:'arXiv',t:'#B31B1B',g:'χ'}, pg:{n:'paulgraham.com',t:'#B07D2A',g:'P'},
+  supasidebar:{n:'supasidebar.com',t:'#7C5CFF',g:'S'}, xhs:{n:'小红书',t:'#FF2442',g:'红'}, linear:{n:'linear.app',t:'#5E6AD2',g:'L'},
+  rauno:{n:'rauno.me',t:'#1F1F1F',g:'R'}, youtube:{n:'YouTube',t:'#FF0033',g:'▶'}, chatgpt:{n:'ChatGPT',t:'#10A37F',g:'G'},
+  raycast:{n:'raycast.com',t:'#FF6363',g:'R'}, excalidraw:{n:'excalidraw.com',t:'#6965DB',g:'E'}, dropover:{n:'dropoverapp.com',t:'#2D9CDB',g:'D'},
+  cloudflare:{n:'developers.cloudflare.com',t:'#F38020',g:'C'}, secretlives:{n:'thesecretlivesofdata.com',t:'#2F6FDB',g:'R'},
+  incomplete:{n:'incompleteideas.net',t:'#5B6470',g:'I'}, mcfunley:{n:'mcfunley.com',t:'#4B7F52',g:'M'}, zhihu:{n:'知乎',t:'#0066FF',g:'知'},
+  mit:{n:'pdos.csail.mit.edu',t:'#A31F34',g:'M'}, raft:{n:'raft.github.io',t:'#3A7BD5',g:'R'}, ddia:{n:'dataintensive.net',t:'#C2410C',g:'D'}, jepsen:{n:'jepsen.io',t:'#0F766E',g:'J'},
+  apple:{n:'developer.apple.com',t:'#1D1D1F',g:'A'}, hn:{n:'news.ycombinator.com',t:'#FF6600',g:'Y'}, solid:{n:'solidjs.com',t:'#2C4F7C',g:'S'}
+};
+const L = {
+  l1:{site:'github',url:'https://github.com/vercel/next.js/discussions/35773',title:'Hydration failed because the initial UI does not match what was rendered on the server',meta:'vercel/next.js · Discussion',badge:'Open',desc:'Long-running discussion: mismatched markup between server render and the first client render, usually from Date, locale or browser-only APIs.'},
+  l2:{site:'github',url:'https://github.com/yhnocoder/tongtu',title:'可选裁掉中文 PDF 的页边白边',meta:'yhnocoder/tongtu · PR #168'},
+  l3:{site:'github',url:'https://github.com/yhnocoder/tongtu',title:'tongtu/CLAUDE.md',meta:'github · File'},
+  l4:{site:'nextjs',url:'https://nextjs.org/docs/app/guides/upgrading/version-15',title:'Upgrading: Version 15 | Next.js',meta:'nextjs.org · Docs',desc:'Async request APIs, new caching defaults, React 19.'},
+  l5:{site:'vercel',url:'https://www.vercel-status.com',title:'Vercel Status',meta:'vercel-status.com',desc:'All systems operational.'},
+  l6:{site:'sentry',url:'https://sentry.io',title:'Issues · tongtu-web · Sentry',meta:'sentry.io'},
+  l7:{site:'geekbang',url:'https://time.geekbang.org',title:'极客时间-学 AI ，用极客时间',meta:'time.geekbang.org',badge:'标题待确认',desc:'页面标题是站点口号，文章本身要登录。'},
+  l8:{site:'bilibili',url:'https://www.bilibili.com',title:'产品经理面试重点问题解析（下）',meta:'bilibili · P81/99',dur:'20:08',media:'video'},
+  l9:{site:'ifanr',url:'https://www.ifanr.com',title:'看完这 5 点，才知道产品经理这么难做',meta:'爱范儿'},
+  l10:{site:'arxiv',url:'https://arxiv.org/abs/1706.03762',title:'Attention Is All You Need',meta:'arXiv · 2017',desc:'The Transformer: a sequence model based solely on attention.'},
+  l13:{site:'pg',url:'https://paulgraham.com/greatwork.html',title:'How to Do Great Work',meta:'paulgraham.com',note:'读完写 3 条自己的结论',desc:'A long essay on choosing what to work on and how to do it well.'},
+  l15:{site:'supasidebar',url:'https://supasidebar.com',title:'Supa Sidebar',meta:'supasidebar.com · 截图',media:'shot'},
+  l16:{site:'xhs',url:'https://www.xiaohongshu.com',title:'武康路这家咖啡店，下午三点的光太好了',meta:'小红书 · 2.3k 赞',media:'photo'},
+  l17:{site:'linear',url:'https://linear.app/changelog',title:'Changelog – Linear',meta:'linear.app',desc:'Weekly product updates, each with a short video.'},
+  l18:{site:'rauno',url:'https://rauno.me/craft/interaction-design',title:'Invisible Details of Interaction Design',meta:'rauno.me',note:'拖拽、惯性、可中断动画，全是我们要的',desc:'Why great interactions feel right: metaphors, kinetics, interruptibility.'},
+  l23:{site:'youtube',url:'https://www.youtube.com/watch?v=aircAruvnKk',title:'But what is a neural network? | Deep learning chapter 1',meta:'YouTube · 3Blue1Brown',dur:'18:40',media:'video'},
+  l24:{site:'chatgpt',url:'https://chatgpt.com',title:'CRDT 和 OT 的区别，用一个协同编辑的例子讲清楚',meta:'ChatGPT · 分享的对话',desc:'OT 依赖中心服务器给操作排序并做变换；CRDT 让每个副本独立合并，最终一致。'},
+  l25:{site:'raycast',url:'https://www.raycast.com',title:'Raycast',meta:'raycast.com'},
+  l26:{site:'excalidraw',url:'https://excalidraw.com',title:'Excalidraw',meta:'excalidraw.com'},
+  l27:{site:'dropover',url:'https://dropoverapp.com',title:'Dropover - Easier Drag and Drop on your Mac.',meta:'dropoverapp.com',note:'Shelf 的交互参考',desc:'A floating shelf for dragging files around macOS.'},
+  l28:{site:'cloudflare',url:'https://developers.cloudflare.com/cloudflare-one/policies/access/',title:'Access policies · Cloudflare Zero Trust docs',meta:'developers.cloudflare.com'},
+  l11:{site:'secretlives',url:'https://thesecretlivesofdata.com/raft/',title:'Raft: Understandable Distributed Consensus',meta:'thesecretlivesofdata.com'},
+  l12:{site:'incomplete',url:'http://www.incompleteideas.net/IncIdeas/BitterLesson.html',title:'The Bitter Lesson',meta:'incompleteideas.net'},
+  l14:{site:'mcfunley',url:'https://mcfunley.com/choose-boring-technology',title:'Choose Boring Technology',meta:'mcfunley.com'},
+  l34:{site:'zhihu',url:'https://www.zhihu.com',title:'为什么很多人收藏了，却从来不看？',meta:'知乎 · 问题'},
+  l19:{site:'mit',url:'https://pdos.csail.mit.edu/6.824/',title:'6.5840: Distributed Systems',meta:'pdos.csail.mit.edu'},
+  l20:{site:'raft',url:'https://raft.github.io/raft.pdf',title:'In Search of an Understandable Consensus Algorithm',meta:'raft.github.io · PDF'},
+  l21:{site:'ddia',url:'https://dataintensive.net',title:'Designing Data-Intensive Applications',meta:'dataintensive.net'},
+  l22:{site:'jepsen',url:'https://jepsen.io/analyses',title:'Jepsen: Analyses',meta:'jepsen.io'},
+  l32:{site:'apple',url:'https://developer.apple.com/documentation/technologyoverviews/liquid-glass',title:'Liquid Glass | Apple Developer Documentation',meta:'developer.apple.com'},
+  l31:{site:'hn',url:'https://news.ycombinator.com',title:'Hacker News',meta:'news.ycombinator.com'},
+  l29:{site:'solid',url:'https://www.solidjs.com',title:'SolidJS · Reactive Javascript Library',meta:'solidjs.com'}
+};
+// 8-column seed. x,y,w,h in cells.
+const SEED = [
+  {id:'b1', kind:'link', link:'l1',  x:0,y:0,w:2,h:2},
+  {id:'b2', kind:'list', title:'PRs this week', rows:['l2','l3','l4','l6'], x:2,y:0,w:2,h:2},
+  {id:'b3', kind:'note', text:'周五前把 #167、#168 都合掉', x:4,y:0,w:2,h:1},
+  {id:'b4', kind:'link', link:'l7',  x:4,y:1,w:2,h:1},
+  {id:'b5', kind:'link', link:'l5',  x:6,y:0,w:1,h:1},
+  {id:'b6', kind:'link', link:'l6',  x:7,y:0,w:1,h:1},
+  {id:'b7', kind:'link', link:'l17', x:6,y:1,w:2,h:1},
+  {id:'b8', kind:'media',link:'l8',  x:0,y:2,w:2,h:2},
+  {id:'b9', kind:'link', link:'l9',  x:2,y:2,w:2,h:1},
+  {id:'b10',kind:'link', link:'l10', x:2,y:3,w:2,h:1},
+  {id:'b11',kind:'media',link:'l15', x:4,y:2,w:4,h:2},
+  {id:'b12',kind:'media',link:'l16', x:0,y:4,w:2,h:3},
+  {id:'b13',kind:'link', link:'l18', x:2,y:4,w:2,h:2},
+  {id:'b14',kind:'list', title:'To read this weekend', rows:['l11','l12','l13','l14','l34'], x:4,y:4,w:2,h:2},
+  {id:'b15',kind:'media',link:'l23', x:6,y:4,w:2,h:2},
+  {id:'b16',kind:'link', link:'l25', x:2,y:6,w:1,h:1},
+  {id:'b17',kind:'link', link:'l26', x:3,y:6,w:1,h:1},
+  {id:'b18',kind:'link', link:'l24', x:4,y:6,w:2,h:1},
+  {id:'b19',kind:'link', link:'l27', x:6,y:6,w:2,h:1}
+];
+const EXTRA = ['l13','l28','l19','l20','l21','l22','l32','l31','l29'];
+
+/* ============ settings ============ */
+const PRESETS = {
+  crisp:{k:620, c:40, hyst:0.1, tilt:false},
+  soft:{k:300, c:30, hyst:0.14, tilt:true},
+  bouncy:{k:420, c:20, hyst:0.12, tilt:true}
+};
+const DEFAULTS = {cols:8, gap:14, k:420, c:30, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
+let cfg = {...DEFAULTS};
+let items = [];
+const persisted = (() => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
+if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; items = persisted.items; }
+else items = SEED.map(o => ({...o}));
+function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:1, cfg, items})); } catch(e) {} }
+if (cfg.theme) document.documentElement.dataset.theme = cfg.theme;
+
+/* ============ grid geometry ============ */
+const sec = $('#sec'), board = $('#board'), layer = $('#cards'), ph = $('#ph');
+let cell = 100, PAD = 18;
+function measure(){
+  PAD = innerWidth < 700 ? 12 : 18;
+  sec.style.setProperty('--pad', PAD + 'px');
+  const W = sec.clientWidth - PAD * 2;
+  cell = (W - (cfg.cols - 1) * cfg.gap) / cfg.cols;
+  board.style.setProperty('--step', (cell + cfg.gap) + 'px');
+  board.style.setProperty('--gap', cfg.gap + 'px');
+}
+const X = gx => gx * (cell + cfg.gap);
+const Wpx = gw => gw * cell + (gw - 1) * cfg.gap;
+const rowsOf = list => Math.max(1, ...list.map(i => i.y + i.h));
+function setBoardHeight(list){ const r = rowsOf(list); board.style.height = Wpx(r) + 'px'; }
+
+/* ============ layout: make room ============ */
+const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+const byPos = (a, b) => a.y - b.y || a.x - b.x;
+// Rebuild the layout from the committed one (L0) with item `id` forced to (tx,ty,tw,th).
+// Starting from L0 every time (not from the last preview) means moving the pointer back puts everything back.
+function resolve(L0, id, tx, ty, tw, th){
+  const list = L0.map(o => ({...o}));
+  const d = id ? list.find(i => i.id === id) : null;
+  let origin = null;
+  if (d) { origin = {x:d.x, y:d.y, w:d.w, h:d.h}; d.x = tx; d.y = ty; d.w = tw; d.h = th; }
+  for (const it of list) { it.w = clamp(it.w, 1, cfg.cols); it.x = clamp(it.x, 0, cfg.cols - it.w); it.y = Math.max(0, it.y); it.h = Math.max(1, it.h); }
+  const placed = d ? [d] : [];
+  const others = list.filter(i => i !== d).sort(byPos);
+  const movingDown = d && ty > origin.y;
+  for (const it of others) {
+    let hits = placed.filter(p => hit(it, p));
+    if (hits.length) {
+      let done = false;
+      const direct = d && hits.includes(d);
+      if (cfg.mode === 'smart' && direct) {
+        // 1) the hole the dragged card left behind: a card that fits there slides in (same-size cards swap)
+        if (it.w <= origin.w && it.h <= origin.h) {
+          outer: for (let yy = origin.y; yy + it.h <= origin.y + origin.h; yy++) for (let xx = origin.x; xx + it.w <= origin.x + origin.w; xx++) {
+            const c = {x:xx, y:yy, w:it.w, h:it.h};
+            if (!placed.some(p => hit(c, p))) { it.x = xx; it.y = yy; done = true; break outer; }
+          }
+        }
+        // 2) dragging downward over a card: that card goes above instead of being pushed further down
+        if (!done && movingDown) {
+          const c = {x:it.x, y:Math.max(0, ty - it.h), w:it.w, h:it.h};
+          if (c.y + c.h <= ty && !placed.some(p => hit(c, p))) { it.y = c.y; done = true; }
+        }
+      }
+      // 3) otherwise push it down until it is clear
+      let guard = 0;
+      while (!done && hits.length && guard++ < 200) { it.y = Math.max(...hits.map(p => p.y + p.h)); hits = placed.filter(p => hit(it, p)); }
+    }
+    placed.push(it);
+  }
+  if (cfg.compact) {
+    const fixed = [];
+    for (const it of list.slice().sort(byPos)) {
+      while (it.y > 0) { const c = {...it, y:it.y - 1}; if (fixed.some(p => hit(c, p))) break; it.y--; }
+      fixed.push(it);
+    }
+  }
+  return list;
+}
+function settleAll(){ items = resolve(items, null); }
+
+/* ============ cards ============ */
+const nodes = new Map();
+function cardHTML(it){
+  if (it.kind === 'note') return `<div class="nl">Note</div><div class="nt">${esc(it.text)}</div>`;
+  if (it.kind === 'list') {
+    const max = Math.max(1, Math.floor((Wpx(it.h) - 52) / 30));
+    const rows = it.rows.slice(0, max).map(id => { const l = L[id], s = SITES[l.site]; return `<a class="row" href="${esc(l.url)}" target="_blank" rel="noopener" draggable="false"><span class="fv" style="--t:${s.t}">${esc(s.g)}</span><span class="t">${esc(l.title)}</span><span class="s">${esc(s.n)}</span></a>`; }).join('');
+    const more = it.rows.length - Math.min(max, it.rows.length);
+    return `<div class="lh"><svg class="ic" viewBox="0 0 16 16"><path d="M6 4.5h7M6 8h7M6 11.5h7M3 4.5h.01M3 8h.01M3 11.5h.01"/></svg><b>${esc(it.title)}</b><span class="n">${it.rows.length}</span></div><div class="rows">${rows}</div>${more > 0 ? `<div class="more">还有 ${more} 条</div>` : ''}`;
+  }
+  const l = L[it.link], s = SITES[l.site];
+  if (it.kind === 'media') {
+    const art = l.media === 'video' ? `<div class="cover" style="--t:${s.t}"><div class="play"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></div></div>`
+      : l.media === 'shot' ? `<div class="cover" style="--t:${s.t}"><div class="frame"><i></i><i></i><i></i><i></i><i></i></div></div>`
+      : `<div class="photo"></div>`;
+    return `${art}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm"><span>${esc(l.meta)}</span>${l.dur ? `<span class="dur">${esc(l.dur)}</span>` : ''}</div></div>`;
+  }
+  return `<div class="tile" style="--t:${s.t}">${esc(s.g)}</div><div class="txt"><div class="ttl">${esc(l.title)}</div><div class="meta">${esc(l.meta)}</div>${l.badge ? `<span class="badge">${esc(l.badge)}</span>` : ''}${l.desc ? `<p class="desc">${esc(l.desc)}</p>` : ''}${l.note ? `<div class="nq">${esc(l.note)}</div>` : ''}</div>`;
+}
+function sizeClass(el, w, h){
+  el.className = el.className.replace(/\b[wh]-\d+\b/g, '').replace(/\s+/g, ' ').trim();
+  el.classList.add('w-' + clamp(w, 1, 4), 'h-' + clamp(h, 1, 3));
+}
+function tintOf(it){ if (it.kind === 'note') return '#E8C547'; if (it.kind === 'list') return '#9AA3B2'; return SITES[L[it.link].site].t; }
+function ensureNode(it){
+  let n = nodes.get(it.id);
+  if (!n) {
+    const el = document.createElement('div');
+    el.className = 'card k-' + it.kind; el.dataset.id = it.id;
+    el.style.setProperty('--t', tintOf(it));
+    el.innerHTML = '<div class="in"></div>';
+    layer.appendChild(el);
+    n = {it, el, inn:$('.in', el), key:'', x:X(it.x), y:X(it.y), w:Wpx(it.w), h:Wpx(it.h), vx:0, vy:0, vw:0, vh:0, tx:0, ty:0, tw:0, th:0, r:0, vr:0, tr:0, free:false};
+    nodes.set(it.id, n);
+  }
+  n.it = it;
+  const key = it.kind + '|' + it.w + '|' + it.h + '|' + cfg.cols;
+  if (n.key !== key) { n.key = key; sizeClass(n.el, it.w, it.h); n.inn.innerHTML = cardHTML(it) + '<div class="rz" aria-hidden="true"></div>'; }
+  return n;
+}
+function paint(n){
+  n.el.style.transform = `translate3d(${n.x}px,${n.y}px,0)`;
+  n.el.style.width = n.w + 'px'; n.el.style.height = n.h + 'px';
+  n.inn.style.transform = n.r ? `rotate(${n.r}deg)` : '';
+}
+function syncAll(instant){
+  for (const it of items) { const n = ensureNode(it); if (n.free) continue; n.tx = X(it.x); n.ty = X(it.y); n.tw = Wpx(it.w); n.th = Wpx(it.h);
+    if (instant) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; paint(n); } }
+  for (const [id, n] of nodes) if (!items.find(i => i.id === id)) { n.el.remove(); nodes.delete(id); }
+  setBoardHeight(items);
+  $('#count').textContent = items.length + ' 张';
+  kick();
+}
+// move the spring targets to a layout preview; the dragged card itself is left alone
+function previewTargets(list, skipId){
+  for (const it of list) { if (it.id === skipId) continue; const n = nodes.get(it.id); if (!n) continue; n.tx = X(it.x); n.ty = X(it.y); n.tw = Wpx(it.w); n.th = Wpx(it.h); }
+  setBoardHeight(list);
+  kick();
+}
+
+/* ============ springs ============ */
+// One spring per axis, integrated every frame. Retargeting keeps velocity, so a card that is sent back
+// mid-flight turns around instead of restarting.
+let raf = 0, last = 0;
+function kick(){ if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } }
+function spring(p, v, t, k, c, dt){ const a = k * (t - p) - c * v; v += a * dt; p += v * dt; return [p, v]; }
+function stepNode(n, dt){
+  if (reduceMotion.matches) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; return false; }
+  const k = cfg.k, c = cfg.c;
+  [n.x, n.vx] = spring(n.x, n.vx, n.tx, k, c, dt);
+  [n.y, n.vy] = spring(n.y, n.vy, n.ty, k, c, dt);
+  [n.w, n.vw] = spring(n.w, n.vw, n.tw, k * 1.3, c * 1.15, dt);
+  [n.h, n.vh] = spring(n.h, n.vh, n.th, k * 1.3, c * 1.15, dt);
+  const rest = Math.abs(n.x - n.tx) < .08 && Math.abs(n.y - n.ty) < .08 && Math.abs(n.vx) < 1 && Math.abs(n.vy) < 1
+    && Math.abs(n.w - n.tw) < .08 && Math.abs(n.h - n.th) < .08 && Math.abs(n.vw) < 1 && Math.abs(n.vh) < 1;
+  if (rest) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; }
+  return !rest;
+}
+const phs = {x:0, y:0, w:0, h:0, vx:0, vy:0, vw:0, vh:0, tx:0, ty:0, tw:0, th:0};
+function tick(now){
+  raf = 0;
+  const dt = Math.min(0.032, Math.max(0.001, (now - last) / 1000)); last = now;
+  let busy = false;
+  for (const n of nodes.values()) {
+    if (n.free) {
+      // the lifted card follows the pointer; only its tilt is a spring
+      [n.r, n.vr] = spring(n.r, n.vr, n.tr, 260, 22, dt);
+      if (Math.abs(n.r - n.tr) < .02 && Math.abs(n.vr) < .5) { n.r = n.tr; n.vr = 0; } else busy = true;
+      n.inn.style.transform = n.r ? `rotate(${n.r.toFixed(2)}deg)` : '';
+      continue;
+    }
+    const moving = stepNode(n, dt);
+    if (n.r || n.vr) { [n.r, n.vr] = spring(n.r, n.vr, 0, 260, 22, dt); if (Math.abs(n.r) < .02 && Math.abs(n.vr) < .5) { n.r = 0; n.vr = 0; } else busy = true; }
+    if (moving || n.painted !== 1) { paint(n); n.painted = moving ? 0 : 1; }
+    if (moving) busy = true; else if (n.el.classList.contains('settling')) n.el.classList.remove('settling');
+  }
+  if (drag) {
+    // placeholder spring (a bit stiffer than the cards, so it leads them)
+    [phs.x, phs.vx] = spring(phs.x, phs.vx, phs.tx, 700, 42, dt);
+    [phs.y, phs.vy] = spring(phs.y, phs.vy, phs.ty, 700, 42, dt);
+    [phs.w, phs.vw] = spring(phs.w, phs.vw, phs.tw, 700, 42, dt);
+    [phs.h, phs.vh] = spring(phs.h, phs.vh, phs.th, 700, 42, dt);
+    ph.style.transform = `translate3d(${phs.x}px,${phs.y}px,0)`; ph.style.width = phs.w + 'px'; ph.style.height = phs.h + 'px';
+    autoScroll(dt);
+    busy = true;
+  }
+  if (busy) kick();
+}
+
+/* ============ pointer: press, lift, drag, drop ============ */
+let press = null, drag = null;
+const pagePt = e => ({x:e.pageX, y:e.pageY, cx:e.clientX, cy:e.clientY});
+function boardOrigin(){ const r = board.getBoundingClientRect(); return {x:r.left + scrollX, y:r.top + scrollY}; }
+
+layer.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || drag || press) return;
+  const el = e.target.closest('.card'); if (!el) return;
+  if (e.target.closest('a')) return;
+  const n = nodes.get(el.dataset.id); if (!n) return;
+  const p = pagePt(e);
+  press = {n, rs:!!e.target.closest('.rz'), x0:p.x, y0:p.y, pid:e.pointerId, touch:e.pointerType !== 'mouse', timer:0};
+  el.setPointerCapture(e.pointerId);
+  el.classList.add('pressed');
+  // touch: hold briefly to lift, so a swipe still scrolls the page
+  if (press.touch) press.timer = setTimeout(() => { if (press && !drag) begin(press, p); }, 180);
+});
+layer.addEventListener('pointermove', e => {
+  if (!press) return;
+  const p = pagePt(e);
+  if (!drag) {
+    const dist = Math.hypot(p.x - press.x0, p.y - press.y0);
+    if (press.touch) { if (dist > 10) release(); return; }
+    if (dist > 4) begin(press, p);
+    else return;
+  }
+  move(p);
+});
+layer.addEventListener('pointerup', e => { if (!press) return; if (drag) drop(); else release(); });
+layer.addEventListener('pointercancel', () => { if (drag) cancel(); else release(); });
+document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, {passive:false});
+addEventListener('keydown', e => { if (e.key === 'Escape' && drag) cancel(); });
+addEventListener('blur', () => { if (drag) cancel(); });
+
+function release(){ if (!press) return; clearTimeout(press.timer); press.n.el.classList.remove('pressed'); press = null; }
+
+function begin(pr, p){
+  clearTimeout(pr.timer);
+  const n = pr.n, it = n.it;
+  n.free = true; n.vx = n.vy = n.vw = n.vh = 0;
+  const o = boardOrigin();
+  drag = {
+    n, rs:pr.rs, L0:items.map(i => ({...i})),
+    origin:{x:it.x, y:it.y, w:it.w, h:it.h},
+    tx:it.x, ty:it.y, tw:it.w, th:it.h,
+    offX:p.x - o.x - n.x, offY:p.y - o.y - n.y,
+    w0:n.w, h0:n.h, x0:p.x, y0:p.y,
+    last:p, samples:[{t:performance.now(), x:p.x, y:p.y}], layout:null, client:{x:p.cx, y:p.cy}
+  };
+  n.el.classList.remove('pressed'); n.el.classList.add('lift'); if (pr.rs) n.el.classList.add('rs');
+  sec.classList.add('dragging');
+  Object.assign(phs, {x:n.x, y:n.y, w:n.w, h:n.h, tx:n.x, ty:n.y, tw:n.w, th:n.h, vx:0, vy:0, vw:0, vh:0});
+  ph.className = 'ph on'; ph.style.borderRadius = '';
+  if (navigator.vibrate && pr.touch) { try { navigator.vibrate(8); } catch(e) {} }
+  move(p);
+  kick();
+}
+// hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
+function pick(f, cur){ return Math.abs(f - cur) <= 0.5 + cfg.hyst ? cur : Math.round(f); }
+function move(p){
+  const d = drag, n = d.n, o = boardOrigin();
+  d.last = p; d.client = {x:p.cx, y:p.cy};
+  const now = performance.now(); d.samples.push({t:now, x:p.x, y:p.y}); while (d.samples.length > 6) d.samples.shift();
+  const step = cell + cfg.gap;
+  if (!d.rs) {
+    n.x = p.x - o.x - d.offX; n.y = p.y - o.y - d.offY;
+    paint(n);
+    // tilt follows horizontal velocity
+    const s0 = d.samples[0], dtv = (now - s0.t) / 1000;
+    const vx = dtv > 0.016 ? (p.x - s0.x) / dtv : 0;
+    n.tr = cfg.tilt ? clamp(vx / 90, -4, 4) : 0;
+    const nx = clamp(pick(n.x / step, d.tx), 0, cfg.cols - d.tw), ny = Math.max(0, pick(n.y / step, d.ty));
+    if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; preview(); }
+  } else {
+    n.w = Math.max(cell * .55, d.w0 + (p.x - d.x0)); n.h = Math.max(cell * .55, d.h0 + (p.y - d.y0));
+    paint(n);
+    const nw = clamp(pick((n.w + cfg.gap) / step, d.tw), 1, cfg.cols - d.tx), nh = Math.max(1, pick((n.h + cfg.gap) / step, d.th));
+    if (nw !== d.tw || nh !== d.th || !d.layout) { d.tw = nw; d.th = nh; n.key = ''; sizeClass(n.el, nw, nh); n.inn.innerHTML = cardHTML({...n.it, w:nw, h:nh}) + '<div class="rz" aria-hidden="true"></div>'; preview(); }
+  }
+}
+function preview(){
+  const d = drag;
+  d.layout = resolve(d.L0, d.n.it.id, d.tx, d.ty, d.tw, d.th);
+  const me = d.layout.find(i => i.id === d.n.it.id);
+  phs.tx = X(me.x); phs.ty = X(me.y); phs.tw = Wpx(me.w); phs.th = Wpx(me.h);
+  previewTargets(d.layout, d.n.it.id);
+}
+function autoScroll(dt){
+  const d = drag; if (!d) return;
+  const edge = 70, max = 1400;
+  const y = d.client.y, top = y - edge, bot = innerHeight - edge - y;
+  let v = 0;
+  if (top < 0) v = -max * Math.min(1, -top / edge); else if (bot < 0) v = max * Math.min(1, -bot / edge);
+  if (!v) return;
+  const before = scrollY; scrollBy(0, v * dt);
+  if (scrollY !== before) move({...d.last, y:d.last.y + (scrollY - before)});
+}
+function land(list){
+  const d = drag, n = d.n;
+  drag = null; press = null;
+  items = list.map(i => ({...i}));
+  n.free = false;
+  const me = items.find(i => i.id === n.it.id); n.it = me;
+  // the dropped card keeps the hand's velocity and springs into its cell
+  const s = d.samples, a = s[0], b = s[s.length - 1], dtv = (b.t - a.t) / 1000;
+  if (!d.rs && dtv > 0.016) { n.vx = clamp((b.x - a.x) / dtv, -1800, 1800) * .6; n.vy = clamp((b.y - a.y) / dtv, -1800, 1800) * .6; }
+  n.tr = 0;
+  n.el.classList.remove('lift', 'rs'); n.el.classList.add('settling');
+  sec.classList.remove('dragging'); ph.className = 'ph';
+  syncAll(false);
+  save();
+}
+function drop(){ land(drag.layout || drag.L0); }
+function cancel(){ const d = drag; land(d.L0); toast('已取消'); }
+
+/* ============ panel & actions ============ */
+const panel = $('#panel');
+$('#panelHead').addEventListener('click', () => panel.classList.toggle('closed'));
+const ctl = {cols:$('#cols'), gap:$('#gap'), k:$('#k'), c:$('#c'), hyst:$('#hyst'), mode:$('#mode'), compact:$('#compact'), tilt:$('#tilt'), gridAlways:$('#gridAlways')};
+function reflect(){
+  for (const key of ['cols','gap','k','c','hyst']) { ctl[key].value = cfg[key]; $('#' + key + 'O').textContent = key === 'hyst' ? cfg.hyst.toFixed(2) + ' 格' : key === 'gap' ? cfg.gap + ' px' : cfg[key]; }
+  ctl.mode.value = cfg.mode; ctl.compact.checked = cfg.compact; ctl.tilt.checked = cfg.tilt; ctl.gridAlways.checked = cfg.gridAlways;
+  sec.classList.toggle('grid-always', cfg.gridAlways);
+}
+for (const key of ['k','c','hyst']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; reflect(); save(); });
+for (const key of ['cols','gap']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); });
+ctl.mode.addEventListener('change', () => { cfg.mode = ctl.mode.value; save(); });
+ctl.compact.addEventListener('change', () => { cfg.compact = ctl.compact.checked; settleAll(); syncAll(false); save(); });
+ctl.tilt.addEventListener('change', () => { cfg.tilt = ctl.tilt.checked; save(); });
+ctl.gridAlways.addEventListener('change', () => { cfg.gridAlways = ctl.gridAlways.checked; reflect(); save(); });
+$$('[data-preset]').forEach(b => b.addEventListener('click', () => { Object.assign(cfg, PRESETS[b.dataset.preset]); reflect(); save(); toast('已切换到「' + b.textContent + '」'); }));
+
+$('#resetBtn').addEventListener('click', () => { items = SEED.map(o => ({...o})); cfg = {...DEFAULTS, theme:cfg.theme}; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); toast('已恢复初始布局'); });
+$('#shuffleBtn').addEventListener('click', () => {
+  const pool = items.slice().sort(() => Math.random() - .5); const out = [];
+  for (const it of pool) { const c = {...it, w:Math.min(it.w, cfg.cols)}; let y = 0, done = false;
+    for (; y < 200 && !done; y++) for (let x = 0; x + c.w <= cfg.cols; x++) { const r = {...c, x, y}; if (!out.some(o => hit(r, o))) { out.push(r); done = true; break; } } }
+  items = out; settleAll(); syncAll(false); save();
+});
+$('#addBtn').addEventListener('click', () => {
+  const used = new Set(items.map(i => i.link)); const free = EXTRA.filter(l => !used.has(l)); if (!free.length) return toast('样例链接用完了');
+  const link = free[Math.floor(Math.random() * free.length)]; const sizes = [[1,1],[2,1],[2,2]]; const [w, h] = sizes[Math.floor(Math.random() * sizes.length)];
+  const it = {id:'n' + Math.random().toString(36).slice(2, 7), kind:'link', link, x:0, y:rowsOf(items) + 2, w, h};
+  // find the first free slot in reading order
+  outer: for (let y = 0; y < 400; y++) for (let x = 0; x + w <= cfg.cols; x++) { const r = {...it, x, y}; if (!items.some(o => hit(r, o))) { it.x = x; it.y = y; break outer; } }
+  items.push(it); settleAll();
+  const n = ensureNode(it); n.x = X(it.x); n.y = X(it.y) + 24; n.w = Wpx(it.w); n.h = Wpx(it.h); n.el.style.opacity = '0'; paint(n);
+  requestAnimationFrame(() => { n.el.style.transition = 'opacity .25s'; n.el.style.opacity = '1'; });
+  syncAll(false); save();
+});
+$('#themeBtn').addEventListener('click', () => {
+  const dark = cfg.theme ? cfg.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  cfg.theme = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = cfg.theme; save();
+});
+let toastT = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1600); }
+
+/* ============ boot ============ */
+let rsT = 0;
+addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { measure(); for (const n of nodes.values()) n.key = ''; syncAll(true); }, 60); });
+measure(); settleAll(); reflect(); syncAll(true);
+</script>
+</body>
+</html>
