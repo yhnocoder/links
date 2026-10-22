@@ -1,0 +1,356 @@
+<title>子画布封面样式探索</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap">
+<style>
+/*BOARD_CSS*/
+
+/* ---------- lab page: a scrolling document of live stages (overrides the board's fixed stage) ---------- */
+html,body{height:auto;overflow:visible}
+body{background:var(--bg);overflow-x:hidden}
+.page{max-width:980px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hd{display:flex;flex-direction:column;gap:14px;margin-bottom:36px}
+.hd h1{font-family:var(--serif);font-weight:500;font-size:34px;letter-spacing:-.01em;line-height:1.15;margin:0;text-wrap:balance}
+.hd p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:62ch;line-height:1.55}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:13px;color:var(--ink-3)}
+.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--line);gap:2px}
+.seg button{height:28px;padding:0 11px;border-radius:8px;font-size:13px;font-weight:550;color:var(--ink-2);transition:background .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+h2{font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.01em;margin:48px 0 6px}
+.sub{color:var(--ink-3);font-size:13.5px;margin:0 0 18px}
+.var{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px 28px;align-items:start;padding:22px 0;border-top:1px solid var(--line)}
+.var .nm{display:flex;flex-direction:column;gap:8px;position:sticky;top:16px}
+.var .nm b{font-size:16px;font-weight:650;letter-spacing:-.01em}
+.var .nm .k{font-size:11px;font-weight:650;letter-spacing:.06em;color:var(--accent);text-transform:uppercase}
+.var .nm p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-2)}
+.var .nm .try{font-size:12px;color:var(--ink-3)}
+@media (max-width:720px){.var{grid-template-columns:1fr}.var .nm{position:static}}
+/* a stage is a small window onto the canvas */
+.lab{position:relative;overflow:hidden;border-radius:18px;background:var(--canvas);box-shadow:inset 0 0 0 1px var(--line);min-width:0;
+  background-image:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 1.3px);background-size:24px 24px}
+.lab .view{position:absolute;inset:0;transform-origin:50% 50%}
+.lab .view[hidden]{display:none}
+.lab .world{position:absolute;left:24px;top:24px;transform-origin:0 0}
+.lab .v-inner .world{top:64px}
+.lab .sec{transition:transform .5s var(--spring),height .5s var(--spring)}
+.lab .sec .cards{position:absolute;inset:0;transition:opacity .22s;pointer-events:none}
+.lab .sec-lbl{cursor:default}
+.lab .sec-lbl .n{transition:opacity .2s}
+.lab .card{pointer-events:none}
+.lab .card .in{transition:opacity .25s,scale .35s var(--spring)}
+.lab .sec.cap .cards{opacity:0;pointer-events:none}
+.lab .sec.cap .card .in{scale:.96}
+.lab .sec.cap .sec-frame{box-shadow:inset 0 0 0 1px var(--sec-line)}
+.crumbbar{position:absolute;left:24px;top:18px;height:32px;display:inline-flex;align-items:center;gap:4px;padding:0 10px 0 6px;border-radius:10px;background:var(--glass-solid);box-shadow:var(--shadow-float);font-size:13px;color:var(--ink-3)}
+.crumbbar button{height:26px;padding:0 7px;border-radius:7px;color:var(--ink-2);font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.crumbbar button:hover{background:var(--line);color:var(--ink)}
+.crumbbar b{color:var(--ink);font-weight:600;padding:0 4px}
+.crumbbar i{font-style:normal;opacity:.6}
+.lab .hint{position:absolute;right:14px;bottom:12px;font-size:11.5px;color:var(--ink-3);pointer-events:none}
+.morph{position:absolute;left:0;top:0;border-radius:26px;background:var(--surface);box-shadow:var(--shadow-lift);pointer-events:none;transform-origin:0 0}
+
+/* ---------- sub-whiteboard covers ---------- */
+.cover{cursor:pointer}
+.cover .sec-frame{background:var(--surface);box-shadow:var(--shadow),var(--hl);transition:box-shadow .2s,translate .3s var(--spring)}
+.cover:hover .sec-frame{box-shadow:var(--shadow-hover),var(--hl)}
+.cover .body{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+.cover .go{position:absolute;right:14px;bottom:12px;height:28px;padding:0 10px 0 12px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--line);opacity:0;translate:0 4px;transition:opacity .18s,translate .25s var(--spring)}
+.cover:hover .go{opacity:1;translate:0 0}
+.cover .go .ic{width:13px;height:13px}
+/* A 纯标题：only the name, big; a stacked edge says "there is depth here" */
+.cv-a .sec-frame:before,.cv-a .sec-frame:after{content:"";position:absolute;left:14px;right:14px;bottom:-5px;height:5px;border-radius:0 0 12px 12px;background:var(--surface);box-shadow:0 0 0 .5px var(--line-2);z-index:-1}
+.cv-a .sec-frame:after{left:26px;right:26px;bottom:-10px;opacity:.6}
+.cv-a .sec-frame{overflow:visible}
+.cv-a .nmx{position:absolute;left:22px;top:20px;right:22px;display:flex;flex-direction:column;gap:6px}
+.cv-a .nmx b{font-family:var(--serif);font-size:30px;font-weight:500;letter-spacing:-.015em;line-height:1}
+.cv-a .nmx span{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.cv-a .sec-lbl{opacity:0;pointer-events:none}
+/* B 窥视：the board itself, small, behind glass */
+.cv-b .peek{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+.cv-b .peek .sec-lbl{display:none}
+.cv-b .peek .sec-frame{opacity:0}
+.cv-b .fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,var(--surface) 96%)}
+.cv-b .foot{position:absolute;left:18px;right:18px;bottom:12px;display:flex;align-items:baseline;gap:10px}
+.cv-b .foot b{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.cv-b .foot span{font-size:12px;color:var(--ink-3)}
+/* C 封面图：one image, the name on it */
+.cv-c .sec-frame{background:oklch(0.3 0.03 265)}
+.cv-c .img{position:absolute;inset:0;background:linear-gradient(135deg,oklch(0.55 0.1 30),oklch(0.35 0.08 300))}
+.cv-c .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cv-c .img:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,oklch(0.12 0.02 265 / .78),transparent 55%)}
+.cv-c .nmx{position:absolute;left:20px;right:20px;bottom:16px;display:flex;flex-direction:column;gap:4px;color:#fff;text-shadow:0 1px 12px oklch(0 0 0 / .35)}
+.cv-c .nmx b{font-size:22px;font-weight:650;letter-spacing:-.012em}
+.cv-c .nmx span{font-size:12.5px;opacity:.82}
+.cv-c .sec-lbl{opacity:0;pointer-events:none}
+.cv-c .go{background:oklch(1 0 0 / .18);color:#fff;backdrop-filter:blur(8px)}
+/* D 文件夹：a tidy grid of site tiles, like app icons in a folder */
+.cv-d .body{display:flex;align-items:center;gap:20px;padding:0 22px}
+.cv-d .tiles{display:grid;grid-template-columns:repeat(4,38px);gap:6px;flex:none}
+.cv-d .tile{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:650;background:var(--t);box-shadow:inset 0 1px 0 oklch(1 0 0 / .25),0 1px 2px oklch(0 0 0 / .12)}
+.cv-d .tile.more{background:var(--line);color:var(--ink-3);font-size:12px;font-weight:600}
+.cv-d .nmx{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cv-d .nmx b{font-size:18px;font-weight:650;letter-spacing:-.012em}
+.cv-d .nmx span{font-size:12.5px;color:var(--ink-3)}
+.cv-d .sec-lbl{opacity:0;pointer-events:none}
+/* E 目录：what is inside, by Section name */
+.cv-e .body{padding:16px 20px 0;display:flex;flex-direction:column;gap:12px}
+.cv-e .toc{display:flex;flex-wrap:wrap;gap:6px}
+.cv-e .toc span{height:30px;padding:0 11px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:550;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line)}
+.cv-e .toc span i{font-style:normal;color:var(--ink-3);font-weight:500;font-variant-numeric:tabular-nums}
+.cv-e .toc span.sub:before{content:"";width:12px;height:12px;border-radius:3px;background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.cv-e .sum{font-size:12.5px;color:var(--ink-3)}
+.cv-e .sec-lbl .bd{font-size:10.5px;font-weight:650;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);letter-spacing:.02em}
+
+/* ---------- collapsed Sections ---------- */
+.fold{cursor:pointer}
+.fold .capb{position:absolute;inset:0;display:flex;align-items:center;opacity:0;transition:opacity .2s;pointer-events:none}
+.fold.cap .capb{opacity:1;transition-delay:.12s}
+.fold .chev{margin-left:auto;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--ink-3);transition:rotate .35s var(--spring),background .15s}
+.fold:hover .chev{background:var(--line);color:var(--ink)}
+.fold.cap .chev{rotate:180deg}
+/* 1 仅标题：no frame at all, a hairline marks the folded Section */
+.fd-1.cap .sec-frame{opacity:0}
+.fd-1 .rule{position:absolute;left:12px;right:12px;top:calc(var(--hd) + 2px);height:1px;background:var(--line-2);opacity:0;transition:opacity .2s}
+.fd-1.cap .rule{opacity:1;transition-delay:.15s}
+.fd-1 .lblx{position:absolute;left:0;right:12px;top:0;height:var(--hd);display:flex;align-items:center}
+.fd-1 .lblx .chev{position:absolute;right:0;top:4px}
+/* 2 薄条：a thin strip with words only */
+.fd-2 .capb{padding:0 10px 0 18px;gap:10px;font-size:13px;color:var(--ink-2)}
+.fd-2 .capb .n{color:var(--ink-3)}
+/* 3 图标行：one tidy row of site marks */
+.fd-3 .capb{padding:0 10px 0 16px;gap:12px}
+.fd-3 .marks{display:flex;gap:5px}
+.fd-3 .marks i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:650;font-style:normal;background:var(--t);box-shadow:inset 0 1px 0 oklch(1 0 0 / .22)}
+.fd-3 .marks i.more{background:var(--line);color:var(--ink-3);font-size:10.5px}
+.fd-3 .capb .n{font-size:12.5px;color:var(--ink-3)}
+/* 4 摘要：the first titles, as text */
+.fd-4 .capb{padding:0 10px 0 18px;gap:12px}
+.fd-4 .lines{min-width:0;display:flex;flex-direction:column;gap:3px}
+.fd-4 .lines b{font-size:13px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fd-4 .lines b i{font-style:normal;color:var(--ink-3);margin:0 7px;font-weight:400}
+.fd-4 .lines span{font-size:12px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){.lab *,.lab .sec,.cover .sec-frame{transition:none!important}}
+</style>
+
+<div class="page">
+  <header class="hd">
+    <h1>子画布封面与折叠 Section</h1>
+    <p>每个方案都是一段真实的画布：点封面进入子画布，点面包屑或缩略图回来；折叠方案点标题栏切换。先定样式，定稿后再合进 Bento Canvas Board。</p>
+    <div class="ctl">
+      <span>进入过渡</span>
+      <div class="seg" id="trans" role="group" aria-label="进入过渡">
+        <button aria-pressed="true" data-t="morph">原地展开</button>
+        <button aria-pressed="false" data-t="zoom">镜头推进</button>
+        <button aria-pressed="false" data-t="fade">淡入</button>
+      </div>
+    </div>
+  </header>
+
+  <h2>子画布封面</h2>
+  <p class="sub">子画布 Reading 里面有两个 Section、11 个链接。封面要回答的只有一个问题：这是哪块、里面大概有什么。</p>
+  <div id="covers"></div>
+
+  <h2>折叠 Section</h2>
+  <p class="sub">Work 折叠后保持原宽度，下面的 Inspiration 贴上来。点标题栏折叠或展开。</p>
+  <div id="folds"></div>
+</div>
+
+<script>
+'use strict';
+/*BOARD_HELPERS*/
+/*BOARD_DATA*/
+const cfg = {cell:96, gap:6};
+/*BOARD_RENDER*/
+function tintOf(it){ if (it.kind === 'note') return '#E8C547'; if (it.kind === 'list') return '#9AA3B2'; return siteOf(LINKS[it.link]).t; }
+const CELL = 96, GAP = 6, PAD = 10, LBL = 34, SGAP = 28;
+const X = g => g * (CELL + GAP), Wpx = g => g * CELL + (g - 1) * GAP, secW = c => PAD * 2 + Wpx(c), secH = r => LBL + PAD * 2 + Wpx(Math.max(1, r));
+const rowsOf = list => Math.max(1, ...list.map(i => i.y + i.h));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- sample data (same seed as the board) ---------- */
+const READ = [{kind:'card', link:'l9', x:0, y:0, w:2, h:1}, {kind:'card', link:'l10', x:0, y:1, w:2, h:1}, {kind:'list', title:'To read this weekend', rows:['l11', 'l12', 'l13', 'l14', 'l34'], x:2, y:0, w:2, h:2}, {kind:'card', link:'l8', x:4, y:0, w:2, h:2}];
+const PAPERS = [{kind:'card', link:'l19', x:0, y:0, w:2, h:1}, {kind:'card', link:'l20', x:2, y:0, w:2, h:1}, {kind:'card', link:'l21', x:4, y:0, w:2, h:1}];
+const LEARN = [{kind:'card', link:'l23', x:0, y:0, w:2, h:2}, {kind:'list', title:'Distributed systems', rows:['l19', 'l20', 'l21', 'l22'], x:2, y:0, w:2, h:2}, {kind:'card', link:'l24', x:4, y:0, w:2, h:2}];
+const WORK = [{kind:'note', text:'周五前把 #167、#168 都合掉', x:0, y:0, w:2, h:1}, {kind:'card', link:'l7', x:0, y:1, w:2, h:1}, {kind:'list', title:'PRs this week', rows:['l2', 'l3', 'l4', 'l6'], x:2, y:0, w:2, h:2}, {kind:'card', link:'l1', x:4, y:0, w:2, h:2}];
+const INSP = [{kind:'card', link:'l15', x:0, y:0, w:4, h:2}, {kind:'card', link:'l16', x:4, y:0, w:2, h:3}, {kind:'card', link:'l17', x:0, y:2, w:2, h:1}, {kind:'card', link:'l18', x:2, y:2, w:2, h:1}];
+const BOARD = {name:'Reading', secs:[{name:'Reading', blocks:READ, cols:6, x:0, y:0}, {name:'Papers', blocks:PAPERS, cols:6, x:0, y:secH(2) + SGAP}]};
+const countOf = blocks => blocks.reduce((n, b) => n + (b.kind === 'list' ? b.rows.length : b.kind === 'card' ? 1 : 0), 0);
+const linksOf = blocks => blocks.flatMap(b => b.kind === 'card' ? [b.link] : b.kind === 'list' ? b.rows : []).map(id => LINKS[id]);
+const sitesOf = blocks => { const seen = new Set(), out = []; for (const l of linksOf(blocks)) { if (seen.has(l.site)) continue; seen.add(l.site); out.push(siteOf(l)); } return out; };
+BOARD.count = BOARD.secs.reduce((n, s) => n + countOf(s.blocks), 0);
+BOARD.links = BOARD.secs.flatMap(s => linksOf(s.blocks));
+BOARD.sites = sitesOf(BOARD.secs.flatMap(s => s.blocks));
+
+/* ---------- rendering ---------- */
+function cardEl(it){
+  const W = Wpx(it.w), H = Wpx(it.h), el = document.createElement('div');
+  el.className = `card k-${it.kind} w-${clamp(it.w, 1, 4)} h-${clamp(it.h, 1, 3)}`;
+  el.style.setProperty('--tint', tintOf(it));
+  el.style.transform = `translate(${PAD + X(it.x)}px,${LBL + PAD + X(it.y)}px)`; el.style.width = W + 'px'; el.style.height = H + 'px';
+  el.innerHTML = `<div class="in m-${modeOf(it, W, H)}">${cardHTML(it, W, H)}</div>`;
+  return el;
+}
+function secEl(s){
+  const el = document.createElement('div');
+  el.className = 'sec'; el.dataset.name = s.name;
+  el.style.transform = `translate(${s.x}px,${s.y}px)`; el.style.width = secW(s.cols) + 'px'; el.style.height = secH(rowsOf(s.blocks)) + 'px';
+  el.innerHTML = `<div class="sec-frame"><div class="gridlines"></div></div><div class="sec-lbl"><b>${esc(s.name)}</b><span class="n">${countOf(s.blocks)}</span></div><div class="cards"></div>`;
+  const cards = $('.cards', el); for (const b of s.blocks) cards.appendChild(cardEl(b));
+  return el;
+}
+const ARROW = '<svg class="ic" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>';
+const CHEV = '<svg class="ic" viewBox="0 0 16 16"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>';
+
+/* ---------- cover variants: each returns {h, html, after?} ---------- */
+const COVERS = [
+  {id:'a', k:'A', name:'纯标题', why:'只剩名字。名字本身就是记忆点，其余信息进去再看。底边两层叠纸说明"这里还有一层"。', h:112, html:b => `<div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
+  {id:'b', k:'B', name:'窥视', why:'封面就是子画布本身，缩小放在玻璃后面。看到的是真实卡片，不是色块。', h:168, html:b => `<div class="peek"></div><div class="fade"></div><div class="foot"><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`, after:(body, b) => { const pk = $('.peek', body); const s = secEl(b.secs[0]); pk.appendChild(s); pk.style.transform = 'scale(.46)'; pk.style.left = '14px'; pk.style.top = '-6px'; }},
+  {id:'c', k:'C', name:'封面图', why:'取里面第一张图片卡的封面铺满，像 Pinterest 的 board。有图的子画布最好认，没图的退回到站点色渐变。', h:168, html:b => `<div class="img"><img src="https://picsum.photos/seed/ifanr-pm/640/360" alt="" onerror="this.remove()" loading="lazy"></div><div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
+  {id:'d', k:'D', name:'文件夹', why:'像 iOS 的 App 文件夹：站点标记排成整齐的小方块，不叠不挤，最多四个，剩下的计数。', h:104, html:b => `<div class="tiles">${b.sites.slice(0, 3).map(s => `<span class="tile" style="--t:${s.t}">${esc(s.g)}</span>`).join('')}<span class="tile more">+${Math.max(0, b.count - 3)}</span></div><div class="nmx"><b>${esc(b.name)}</b><span>${b.count} 个链接 · ${b.secs.length} 个 Section</span></div>`},
+  {id:'e', k:'E', name:'目录', why:'列出里面的 Section 名和数量。子画布是靠结构记住的，不是靠某一个链接。', h:118, html:b => `<div class="toc">${b.secs.map(s => `<span class="sub">${esc(s.name)}<i>${countOf(s.blocks)}</i></span>`).join('')}</div><div class="sum">共 ${b.count} 个链接</div>`}
+];
+const FOLDS = [
+  {id:'1', k:'1', name:'仅标题', why:'框整个消失，只留标题、数量和一条细线。画布上最安静的折叠。', h:LBL + 10, html:s => `<div class="rule"></div>`},
+  {id:'2', k:'2', name:'薄条', why:'留一条 36px 的框，只写里面有什么，没有图标。', h:LBL + 36, html:s => `<span>${countOf(s.blocks)} 个链接</span><span class="n">· ${s.blocks.filter(b => b.kind === 'note').length} 张便签</span>`},
+  {id:'3', k:'3', name:'标记行', why:'站点标记排成一行，等距、不重叠，统一成圆角小方块。', h:LBL + 44, html:s => { const st = sitesOf(s.blocks); return `<div class="marks">${st.slice(0, 5).map(x => `<i style="--t:${x.t}">${esc(x.g)}</i>`).join('')}${st.length > 5 ? `<i class="more">+${st.length - 5}</i>` : ''}</div><span class="n">${countOf(s.blocks)} 个链接</span>`; }},
+  {id:'4', k:'4', name:'摘要', why:'把前两张卡的标题当作摘要。文字比图标更能唤起"里面是什么"。', h:LBL + 60, html:s => { const ls = linksOf(s.blocks).slice(0, 2); return `<div class="lines"><b>${ls.map(l => esc(l.title)).join('<i>·</i>')}</b><span>${countOf(s.blocks)} 个链接 · ${s.blocks.filter(b => b.kind === 'note').length} 张便签</span></div>`; }}
+];
+
+/* ---------- stage: a small window onto the canvas ---------- */
+let trans = 'morph';
+try { trans = localStorage.getItem('cover-lab-trans') || 'morph'; } catch(e) {}
+$$('#trans button').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.t === trans)); b.addEventListener('click', () => { trans = b.dataset.t; $$('#trans button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); try { localStorage.setItem('cover-lab-trans', trans); } catch(e) {} }); });
+const stages = [];
+function fit(st){
+  const w = st.el.clientWidth - 48, s = Math.min(1, w / st.w);
+  st.s = s; for (const wd of $$('.world', st.el)) wd.style.transform = `scale(${s})`;
+  st.el.style.height = Math.round(st.h * s + 48 + (st.inner ? 40 : 0)) + 'px';
+}
+addEventListener('resize', () => stages.forEach(fit));
+
+function coverStage(v){
+  const el = document.createElement('div'); el.className = 'lab';
+  const outer = document.createElement('div'); outer.className = 'view v-outer'; const w1 = document.createElement('div'); w1.className = 'world'; outer.appendChild(w1);
+  const inner = document.createElement('div'); inner.className = 'view v-inner'; inner.hidden = true; const w2 = document.createElement('div'); w2.className = 'world'; inner.appendChild(w2);
+  // the cover sits where the Reading Section was, Learning below it
+  const cover = document.createElement('div'); cover.className = `sec cover cv-${v.id}`; cover.setAttribute('role', 'button'); cover.tabIndex = 0; cover.setAttribute('aria-label', `进入子画布 ${BOARD.name}`);
+  cover.style.transform = 'translate(0px,0px)'; cover.style.width = secW(6) + 'px'; cover.style.height = (LBL + v.h) + 'px';
+  cover.innerHTML = `<div class="sec-frame"><div class="body">${v.html(BOARD)}</div><button class="go" tabindex="-1">进入${ARROW}</button></div><div class="sec-lbl"><b>${esc(BOARD.name)}</b><span class="n">${BOARD.count}</span>${v.id === 'e' ? '<span class="bd">子画布</span>' : ''}</div>`;
+  if (v.after) v.after($('.body', cover), BOARD);
+  const learn = secEl({name:'Learning', blocks:LEARN, cols:6, x:0, y:LBL + v.h + SGAP});
+  w1.append(cover, learn);
+  // inside: the board's own Sections and a breadcrumb
+  const crumb = document.createElement('div'); crumb.className = 'crumbbar'; crumb.innerHTML = `<button class="back">全部</button><i>›</i><b>${esc(BOARD.name)}</b>`;
+  for (const s of BOARD.secs) w2.appendChild(secEl(s));
+  inner.appendChild(crumb);
+  const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '点封面进入';
+  el.append(outer, inner, hint);
+  const innerH = Math.max(...BOARD.secs.map(s => s.y + secH(rowsOf(s.blocks))));
+  const st = {el, w:secW(6), h:Math.max(LBL + v.h + SGAP + secH(2), innerH), s:1, inner:false, busy:false};
+  stages.push(st);
+  const secRect = node => { const r = node.getBoundingClientRect(), R = el.getBoundingClientRect(); return {x:r.left - R.left, y:r.top - R.top, w:r.width, h:r.height}; };
+  async function enter(){
+    if (st.busy || st.inner) return; st.busy = true; st.inner = true;
+    hint.textContent = '点"全部"返回';
+    const from = secRect($('.sec-frame', cover));
+    inner.hidden = false; fit(st);
+    const target = $('.sec', w2), to = secRect($('.sec-frame', target));
+    const cx = (from.x + from.w / 2) / el.clientWidth * 100, cy = (from.y + from.h / 2) / el.clientHeight * 100;
+    const E = 'cubic-bezier(.2,.8,.2,1)';
+    if (reduce) { outer.hidden = true; st.busy = false; return; }
+    if (trans === 'zoom') {
+      outer.style.transformOrigin = inner.style.transformOrigin = `${cx}% ${cy}%`;
+      const a = outer.animate([{transform:'scale(1)', opacity:1}, {transform:'scale(1.6)', opacity:0}], {duration:300, easing:'cubic-bezier(.4,0,.6,1)', fill:'forwards'});
+      const b = inner.animate([{transform:'scale(.86)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:380, delay:60, easing:E, fill:'backwards'});
+      await Promise.all([a.finished, b.finished]); a.cancel();
+    } else if (trans === 'fade') {
+      const a = outer.animate([{opacity:1}, {opacity:0}], {duration:200, easing:'ease-out', fill:'forwards'});
+      const b = inner.animate([{opacity:0, transform:'translateY(14px)'}, {opacity:1, transform:'translateY(0)'}], {duration:300, delay:80, easing:E, fill:'backwards'});
+      await Promise.all([a.finished, b.finished]); a.cancel();
+    } else {
+      // morph: the cover's frame grows in place into the Section it stands for; the rest fades out, the cards fade in
+      const m = document.createElement('div'); m.className = 'morph'; el.appendChild(m);
+      m.style.width = from.w + 'px'; m.style.height = from.h + 'px'; m.style.borderRadius = 26 * st.s + 'px';
+      $('.sec-frame', cover).style.visibility = 'hidden';
+      const a = m.animate([{transform:`translate(${from.x}px,${from.y}px)`}, {transform:`translate(${to.x}px,${to.y}px)`, width:to.w + 'px', height:to.h + 'px'}], {duration:420, easing:E, fill:'forwards'});
+      const b = outer.animate([{opacity:1}, {opacity:0}], {duration:220, easing:'ease-out', fill:'forwards'});
+      const cards = [...$$('.card', target), ...$$('.sec:not(:first-child)', w2), crumb];
+      const c = cards.map((n, i) => n.animate([{opacity:0, transform:(n.style.transform || '') + ' scale(.97)'}, {opacity:1, transform:n.style.transform || 'none'}], {duration:320, delay:180 + Math.min(i, 6) * 25, easing:E, fill:'backwards'}));
+      await Promise.all([a.finished, b.finished, ...c.map(x => x.finished)]);
+      m.remove(); b.cancel(); $('.sec-frame', cover).style.visibility = '';
+    }
+    outer.hidden = true; st.busy = false;
+  }
+  async function leave(){
+    if (st.busy || !st.inner) return; st.busy = true;
+    hint.textContent = '点封面进入';
+    outer.hidden = false;
+    const E = 'cubic-bezier(.2,.8,.2,1)';
+    if (reduce) { inner.hidden = true; st.inner = false; fit(st); st.busy = false; return; }
+    if (trans === 'zoom') {
+      const a = inner.animate([{transform:'scale(1)', opacity:1}, {transform:'scale(.86)', opacity:0}], {duration:260, easing:'cubic-bezier(.4,0,.6,1)', fill:'forwards'});
+      const b = outer.animate([{transform:'scale(1.6)', opacity:0}, {transform:'scale(1)', opacity:1}], {duration:380, delay:40, easing:E, fill:'backwards'});
+      await Promise.all([a.finished, b.finished]); a.cancel();
+    } else if (trans === 'fade') {
+      const a = inner.animate([{opacity:1}, {opacity:0}], {duration:180, easing:'ease-out', fill:'forwards'});
+      const b = outer.animate([{opacity:0, transform:'translateY(-10px)'}, {opacity:1, transform:'translateY(0)'}], {duration:300, delay:60, easing:E, fill:'backwards'});
+      await Promise.all([a.finished, b.finished]); a.cancel();
+    } else {
+      const target = $('.sec', w2), from = secRect($('.sec-frame', target)), to = secRect($('.sec-frame', cover));
+      const m = document.createElement('div'); m.className = 'morph'; el.appendChild(m);
+      m.style.width = from.w + 'px'; m.style.height = from.h + 'px'; m.style.borderRadius = 26 * st.s + 'px';
+      $('.sec-frame', cover).style.visibility = 'hidden';
+      const a = m.animate([{transform:`translate(${from.x}px,${from.y}px)`}, {transform:`translate(${to.x}px,${to.y}px)`, width:to.w + 'px', height:to.h + 'px'}], {duration:400, easing:E, fill:'forwards'});
+      const b = inner.animate([{opacity:1}, {opacity:0}], {duration:200, easing:'ease-out', fill:'forwards'});
+      const c = outer.animate([{opacity:0}, {opacity:1}], {duration:300, delay:140, easing:E, fill:'backwards'});
+      await Promise.all([a.finished, b.finished, c.finished]);
+      m.remove(); b.cancel(); $('.sec-frame', cover).style.visibility = '';
+    }
+    inner.hidden = true; st.inner = false; fit(st); st.busy = false;
+  }
+  cover.addEventListener('click', enter);
+  cover.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); } });
+  $('.back', crumb).addEventListener('click', leave);
+  return el;
+}
+
+function foldStage(v){
+  const el = document.createElement('div'); el.className = 'lab';
+  const outer = document.createElement('div'); outer.className = 'view'; const w1 = document.createElement('div'); w1.className = 'world'; outer.appendChild(w1);
+  const work = {name:'Work', blocks:WORK, cols:6, x:0, y:0};
+  const sec = secEl(work); sec.classList.add('fold', 'fd-' + v.id); sec.setAttribute('role', 'button'); sec.tabIndex = 0; sec.setAttribute('aria-expanded', 'true');
+  const openH = secH(rowsOf(WORK)), capH = v.h;
+  const cb = document.createElement('div'); cb.className = 'capb'; cb.innerHTML = v.html(work);
+  if (v.id === '1') { const lx = document.createElement('div'); lx.className = 'lblx'; lx.innerHTML = `<span class="chev">${CHEV}</span>`; sec.appendChild(lx); }
+  else { cb.insertAdjacentHTML('beforeend', `<span class="chev">${CHEV}</span>`); }
+  $('.sec-frame', sec).appendChild(cb);
+  const insp = secEl({name:'Inspiration', blocks:INSP, cols:6, x:0, y:openH + SGAP});
+  w1.append(sec, insp);
+  const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '点标题栏折叠';
+  el.append(outer, hint);
+  const st = {el, w:secW(6), h:openH + SGAP + secH(3), s:1, inner:false};
+  stages.push(st);
+  let open = true;
+  function toggle(){
+    open = !open;
+    sec.classList.toggle('cap', !open); sec.setAttribute('aria-expanded', String(open));
+    sec.style.height = (open ? openH : capH) + 'px';
+    insp.style.transform = `translate(0px,${(open ? openH : capH) + SGAP}px)`;
+    hint.textContent = open ? '点标题栏折叠' : '点标题栏展开';
+  }
+  sec.addEventListener('click', e => { if (open && !e.target.closest('.sec-lbl,.chev,.lblx')) return; toggle(); });
+  sec.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  return el;
+}
+
+function block(v, stage){
+  const el = document.createElement('section'); el.className = 'var'; el.id = 'v' + v.id;
+  el.innerHTML = `<div class="nm"><span class="k">方案 ${v.k}</span><b>${esc(v.name)}</b><p>${esc(v.why)}</p></div>`;
+  el.appendChild(stage); return el;
+}
+for (const v of COVERS) $('#covers').appendChild(block(v, coverStage(v)));
+for (const v of FOLDS) $('#folds').appendChild(block(v, foldStage(v)));
+stages.forEach(fit);
+document.fonts && document.fonts.ready.then(() => stages.forEach(fit));
+</script>

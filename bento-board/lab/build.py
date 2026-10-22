@@ -1,0 +1,11 @@
+import re
+src = open('/home/claude/links/bento-board/index.html').read().split('\n')
+def L(a, b): return '\n'.join(src[a-1:b])
+css = L(10, 442)
+helpers = L(535, 541)
+data = L(544, 593)
+render = L(834, 907)
+tpl = open('/home/claude/links/bento-board/lab/cover-lab.tpl.html').read()
+out = tpl.replace('/*BOARD_CSS*/', css).replace('/*BOARD_HELPERS*/', helpers).replace('/*BOARD_DATA*/', data).replace('/*BOARD_RENDER*/', render)
+open('/home/claude/links/bento-board/cover-lab.html', 'w').write(out)
+print(len(out))
