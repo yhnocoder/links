@@ -324,7 +324,7 @@ svg{-webkit-user-drag:none;display:block}
     </div>
     <div class="pgroup">网格</div>
     <div class="fld"><label for="cols">列数</label><output id="colsO"></output><input type="range" id="cols" min="4" max="10" step="1"></div>
-    <div class="fld"><label for="gap">间距</label><output id="gapO"></output><input type="range" id="gap" min="6" max="28" step="1"></div>
+    <div class="fld"><label for="gap">间距</label><output id="gapO"></output><input type="range" id="gap" min="2" max="28" step="1"></div>
     <div class="pgroup">拖动卡片跟随</div>
     <label class="sw"><span>弹簧跟随（关掉就是 1:1 跟手）</span><input type="checkbox" id="follow"></label>
     <div class="fld"><label for="fk">跟随刚度 stiffness</label><output id="fkO"></output><input type="range" id="fk" min="200" max="2400" step="20"></div>
@@ -429,11 +429,11 @@ const PRESETS = {
   soft:{k:300, c:30, fk:600, fc:40, follow:true, hyst:0.14, tilt:true},
   bouncy:{k:420, c:20, fk:800, fc:30, follow:true, hyst:0.12, tilt:true}
 };
-const DEFAULTS = {cols:8, gap:14, k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
+const DEFAULTS = {cols:8, gap:6, k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
 let cfg = {...DEFAULTS};
 let items = [];
 const persisted = (() => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
-if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; items = persisted.items; }
+if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; items = persisted.items; if (!persisted.cfg.gapSet) cfg.gap = DEFAULTS.gap; }
 else items = SEED.map(o => ({...o}));
 function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:1, cfg, items})); } catch(e) {} }
 if (cfg.theme) document.documentElement.dataset.theme = cfg.theme;
@@ -792,7 +792,7 @@ function reflect(){
   sec.classList.toggle('grid-always', cfg.gridAlways);
 }
 for (const key of ['k','c','fk','fc','hyst']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; reflect(); save(); });
-for (const key of ['cols','gap']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); });
+for (const key of ['cols','gap']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; if (key === 'gap') cfg.gapSet = true; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); });
 ctl.mode.addEventListener('change', () => { cfg.mode = ctl.mode.value; save(); });
 ctl.compact.addEventListener('change', () => { cfg.compact = ctl.compact.checked; settleAll(); syncAll(false); save(); });
 ctl.follow.addEventListener('change', () => { cfg.follow = ctl.follow.checked; save(); });
