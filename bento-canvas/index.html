@@ -5,57 +5,63 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bento Canvas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Noto+Serif+SC:wght@500;600&display=swap">
 <style>
-/* Layout concept: one Section on a coarse cell grid. Cards sit on whole cells; the pointer drags a lifted card freely,
-   a placeholder shows where it will land, and every other card springs out of the way. */
+/* Layout concept: one Section on the card lab's grid (84px cells, 6px gaps, 7 card sizes). Cards are the lab's renderers;
+   the pointer drags a lifted card freely, a placeholder shows where it will land, and every other card springs out of the way. */
 :root{
-  --bg:oklch(0.945 0.006 265);
-  --surface:oklch(1 0 0);
-  --surface-2:oklch(0.975 0.004 265);
-  --glass:oklch(0.98 0.004 265 / 0.78);
-  --ink:oklch(0.22 0.012 265);
-  --ink-2:oklch(0.43 0.012 265);
-  --ink-3:oklch(0.58 0.01 265);
-  --line:oklch(0.25 0.02 265 / 0.09);
-  --line-2:oklch(0.25 0.02 265 / 0.16);
-  --accent:oklch(0.6 0.19 255);
-  --accent-ink:oklch(0.99 0 0);
-  --accent-soft:oklch(0.6 0.19 255 / 0.13);
-  --sec-fill:oklch(0.99 0.002 265 / 0.6);
-  --sec-line:oklch(0.25 0.02 265 / 0.06);
-  --note:oklch(0.97 0.05 95);
-  --note-ink:oklch(0.36 0.06 85);
-  --dot:oklch(0.25 0.02 265 / 0.16);
-  --scrim:oklch(0.15 0.01 265 / 0.55);
-  --shadow:0 0 0 .5px oklch(0.2 0.02 265 / .08),0 1px 2px oklch(0.2 0.02 265 / .05),0 10px 24px -14px oklch(0.2 0.02 265 / .18);
-  --shadow-hover:0 0 0 .5px oklch(0.2 0.02 265 / .1),0 2px 4px oklch(0.2 0.02 265 / .06),0 18px 36px -16px oklch(0.2 0.02 265 / .26);
-  --shadow-lift:0 0 0 .5px oklch(0.2 0.02 265 / .1),0 8px 16px -6px oklch(0.2 0.02 265 / .18),0 36px 72px -20px oklch(0.2 0.02 265 / .42);
-  --hl:inset 0 1px 0 oklch(1 0 0 / .9);
-  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Noto Sans SC","Segoe UI",system-ui,sans-serif;
-  --serif:"Newsreader","Songti SC","Noto Serif SC","STSong",Georgia,serif;
-  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
-  --r-card:18px;
-  color-scheme:light;
+  --bg:#eceef1; --canvas:#eceef1; --dot:#cfd4db; --sheet:#f5f6f8;
+  --lt:.045; --wmo:.14;
+  --paper:#FBFAF6; --paper-ink:#1b1b1b; --paper-line:#E7E3DA; --chat:#F7F7F8; --chat-q:#E9E9EB;
+  --card:#ffffff; --ph:#e3e6ea; --sec:#f8f9fb; --sec-line:#dde1e7;
+  --ink:#1b1f24; --ink2:#59626e; --ink3:#8b94a0; --line:#e1e5ea; --hover:#eef1f5;
+  --accent:#2f5bd3; --accent-ink:#ffffff; --accent-soft:#e6ecfb;
+  --note:oklch(0.97 0.05 95); --note-ink:oklch(0.36 0.06 85);
+  --n1:#fff0a6; --n2:#ffd9dc; --n3:#d3efd6; --n4:#d6e6ff; --n-ink:#3a3322;
+  --demo:#1f2329; --demo-ink:#c9ced6; --demo-line:#343a43; --mk-ring:rgba(0,0,0,.1);
+  --card-sh:0 0 0 1px rgba(20,30,45,.06),0 1px 2px rgba(20,30,45,.05),0 6px 14px -8px rgba(20,30,45,.14);
+  --card-sh-h:0 0 0 1px rgba(20,30,45,.08),0 2px 4px rgba(20,30,45,.06),0 14px 30px -12px rgba(20,30,45,.26);
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Noto Serif SC","Songti SC","STSong",Georgia,serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:oklch(0.17 0.006 265);--surface:oklch(0.235 0.008 265);--surface-2:oklch(0.21 0.008 265);--glass:oklch(0.2 0.008 265 / 0.78);
-  --ink:oklch(0.95 0.004 265);--ink-2:oklch(0.78 0.008 265);--ink-3:oklch(0.62 0.01 265);
-  --line:oklch(1 0 0 / 0.08);--line-2:oklch(1 0 0 / 0.14);--accent:oklch(0.7 0.16 255);--accent-ink:oklch(0.16 0.02 265);--accent-soft:oklch(0.7 0.16 255 / 0.18);
-  --sec-fill:oklch(1 0 0 / 0.035);--sec-line:oklch(1 0 0 / 0.07);--note:oklch(0.32 0.04 90);--note-ink:oklch(0.93 0.05 92);--dot:oklch(1 0 0 / 0.14);--scrim:oklch(0.1 0.01 265 / 0.6);
-  --shadow:0 0 0 .5px oklch(1 0 0 / .09),0 1px 2px oklch(0 0 0 / .3),0 10px 24px -14px oklch(0 0 0 / .6);
-  --shadow-hover:0 0 0 .5px oklch(1 0 0 / .14),0 2px 4px oklch(0 0 0 / .3),0 18px 36px -16px oklch(0 0 0 / .7);
-  --shadow-lift:0 0 0 .5px oklch(1 0 0 / .16),0 8px 16px -6px oklch(0 0 0 / .4),0 36px 72px -20px oklch(0 0 0 / .85);
-  --hl:inset 0 1px 0 oklch(1 0 0 / .06);color-scheme:dark}}
+  --bg:#121418; --canvas:#14171b; --dot:#262b32; --sheet:#171a1f;
+  --lt:.08; --wmo:.14;
+  --paper:#26251f; --paper-ink:#ece8dc; --paper-line:#3a382f; --chat:#202123; --chat-q:#343541;
+  --card:#1f2329; --ph:#2a2f36; --sec:#1a1e23; --sec-line:#2b3139;
+  --ink:#e6e9ed; --ink2:#a0a9b4; --ink3:#727b87; --line:#2b3139; --hover:#252a31;
+  --accent:#8ea8ee; --accent-ink:#0f1520; --accent-soft:#232c42;
+  --note:oklch(0.32 0.04 90); --note-ink:oklch(0.93 0.05 92);
+  --n1:#d6ca8e; --n2:#d9b1b5; --n3:#a8cbb0; --n4:#a9bfdc; --n-ink:#24201a;
+  --demo:#0b0d10; --demo-ink:#c9ced6; --demo-line:#22262c; --mk-ring:rgba(255,255,255,.22);
+  --card-sh:0 0 0 1px rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.4),0 8px 18px -10px rgba(0,0,0,.6);
+  --card-sh-h:0 0 0 1px rgba(255,255,255,.1),0 2px 4px rgba(0,0,0,.4),0 16px 32px -12px rgba(0,0,0,.75);
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:oklch(0.17 0.006 265);--surface:oklch(0.235 0.008 265);--surface-2:oklch(0.21 0.008 265);--glass:oklch(0.2 0.008 265 / 0.78);
-  --ink:oklch(0.95 0.004 265);--ink-2:oklch(0.78 0.008 265);--ink-3:oklch(0.62 0.01 265);
-  --line:oklch(1 0 0 / 0.08);--line-2:oklch(1 0 0 / 0.14);--accent:oklch(0.7 0.16 255);--accent-ink:oklch(0.16 0.02 265);--accent-soft:oklch(0.7 0.16 255 / 0.18);
-  --sec-fill:oklch(1 0 0 / 0.035);--sec-line:oklch(1 0 0 / 0.07);--note:oklch(0.32 0.04 90);--note-ink:oklch(0.93 0.05 92);--dot:oklch(1 0 0 / 0.14);--scrim:oklch(0.1 0.01 265 / 0.6);
-  --shadow:0 0 0 .5px oklch(1 0 0 / .09),0 1px 2px oklch(0 0 0 / .3),0 10px 24px -14px oklch(0 0 0 / .6);
-  --shadow-hover:0 0 0 .5px oklch(1 0 0 / .14),0 2px 4px oklch(0 0 0 / .3),0 18px 36px -16px oklch(0 0 0 / .7);
-  --shadow-lift:0 0 0 .5px oklch(1 0 0 / .16),0 8px 16px -6px oklch(0 0 0 / .4),0 36px 72px -20px oklch(0 0 0 / .85);
-  --hl:inset 0 1px 0 oklch(1 0 0 / .06);color-scheme:dark}
+  --bg:#121418; --canvas:#14171b; --dot:#262b32; --sheet:#171a1f;
+  --lt:.08; --wmo:.14;
+  --paper:#26251f; --paper-ink:#ece8dc; --paper-line:#3a382f; --chat:#202123; --chat-q:#343541;
+  --card:#1f2329; --ph:#2a2f36; --sec:#1a1e23; --sec-line:#2b3139;
+  --ink:#e6e9ed; --ink2:#a0a9b4; --ink3:#727b87; --line:#2b3139; --hover:#252a31;
+  --accent:#8ea8ee; --accent-ink:#0f1520; --accent-soft:#232c42;
+  --note:oklch(0.32 0.04 90); --note-ink:oklch(0.93 0.05 92);
+  --n1:#d6ca8e; --n2:#d9b1b5; --n3:#a8cbb0; --n4:#a9bfdc; --n-ink:#24201a;
+  --demo:#0b0d10; --demo-ink:#c9ced6; --demo-line:#22262c; --mk-ring:rgba(255,255,255,.22);
+  --card-sh:0 0 0 1px rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.4),0 8px 18px -10px rgba(0,0,0,.6);
+  --card-sh-h:0 0 0 1px rgba(255,255,255,.1),0 2px 4px rgba(0,0,0,.4),0 16px 32px -12px rgba(0,0,0,.75);
+  color-scheme:dark}
+
+/* aliases: the canvas chrome (bar, section, panel) reads the lab's tokens through these names */
+:root{
+  --surface:var(--card);--surface-2:var(--sec);--glass:color-mix(in srgb,var(--card) 80%,transparent);
+  --ink-2:var(--ink2);--ink-3:var(--ink3);--line-2:color-mix(in srgb,var(--ink) 16%,transparent);
+  --sec-fill:var(--sec);--shadow:var(--card-sh);--shadow-hover:var(--card-sh-h);
+  --shadow-lift:0 0 0 1px rgba(20,30,45,.08),0 8px 16px -6px rgba(20,30,45,.18),0 36px 72px -20px rgba(20,30,45,.42);
+  --ui:var(--sans);--display:"Newsreader","Songti SC","Noto Serif SC",Georgia,serif;--r-card:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--shadow-lift:0 0 0 1px rgba(255,255,255,.14),0 8px 16px -6px rgba(0,0,0,.4),0 36px 72px -20px rgba(0,0,0,.85)}}
+:root[data-theme="dark"]{--shadow-lift:0 0 0 1px rgba(255,255,255,.14),0 8px 16px -6px rgba(0,0,0,.4),0 36px 72px -20px rgba(0,0,0,.85)}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
@@ -64,38 +70,36 @@ body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:13px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:default}
 a{color:inherit;text-decoration:none;-webkit-user-drag:none}
-svg{-webkit-user-drag:none;display:block}
+svg{-webkit-user-drag:none}
 .ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ---------- top bar ---------- */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;display:flex;align-items:center;gap:14px;height:52px;margin:0 -16px;padding:0 20px;
   background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 1px 0 var(--line)}
-.top .brand{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.top .brand{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.01em}
 .top .crumb{color:var(--ink-3);display:flex;align-items:center;gap:8px;font-size:12.5px}
 .top .crumb b{color:var(--ink-2);font-weight:550}
 .top .sp{flex:1}
 .tb{height:30px;padding:0 11px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:550;color:var(--ink-2);transition:background .15s,color .15s}
-.tb:hover{background:var(--line);color:var(--ink)}
+.tb:hover{background:var(--hover);color:var(--ink)}
 .tb:active{transform:scale(.97)}
-.tb.on{background:var(--accent-soft);color:var(--accent)}
 .tb .ic{width:14px;height:14px}
 
 /* ---------- section ---------- */
 .wrap{max-width:1120px;margin:0 auto;padding-top:34px}
 .sec-head{display:flex;align-items:baseline;gap:10px;padding:0 8px 12px}
-.sec-head h1{margin:0;font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.015em;line-height:1.1;text-wrap:balance}
+.sec-head h1{margin:0;font-family:var(--display);font-weight:500;font-size:30px;letter-spacing:-.015em;line-height:1.1;text-wrap:balance}
 .sec-head .n{font-size:14px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .sec-head .hint{margin-left:auto;font-size:12.5px;color:var(--ink-3);display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end}
-.sec-head kbd{font:inherit;font-size:11px;padding:1px 5px;border-radius:5px;background:var(--line);color:var(--ink-2)}
-.sec{position:relative;border-radius:32px;background:var(--sec-fill);box-shadow:inset 0 0 0 1px var(--sec-line);padding:var(--pad);
-  transition:height .34s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
-.sec.dragging{box-shadow:inset 0 0 0 1.5px var(--line-2)}
-.board{position:relative}
-/* grid dots: one dot per cell corner, visible while a card is in the air (or always, from the panel) */
-.gridlines{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;
-  background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.6px);background-size:var(--step) var(--step);background-position:calc(var(--gap) * -1) calc(var(--gap) * -1);
-  margin:calc(var(--gap) * .5 * -1);}
+.sec-head kbd{font:inherit;font-size:11px;padding:1px 5px;border-radius:5px;background:var(--hover);color:var(--ink-2)}
+.sec{position:relative;width:max-content;max-width:100%;margin:0 auto;border-radius:14px;background:var(--sec);border:1px solid var(--sec-line);padding:10px;
+  box-shadow:0 1px 2px rgba(20,30,45,.05);transition:box-shadow .25s}
+.sec.dragging{border-color:color-mix(in srgb,var(--accent) 40%,var(--sec-line))}
+.board{position:relative;transition:height .34s cubic-bezier(.2,.8,.2,1)}
+/* grid dots: one per cell corner, visible while a card is in the air (or always, from the panel) */
+.gridlines{position:absolute;inset:-3px;pointer-events:none;opacity:0;transition:opacity .25s;
+  background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.6px);background-size:90px 90px;background-position:0 0}
 .sec.dragging .gridlines,.sec.grid-always .gridlines{opacity:1}
 
 /* placeholder: where the lifted card will land */
@@ -103,147 +107,312 @@ svg{-webkit-user-drag:none;display:block}
   opacity:0;transition:opacity .18s;pointer-events:none;will-change:transform}
 .ph.on{opacity:1}
 
-/* ---------- cards ---------- */
+/* ---------- card frame (the lab's .c is the visible card; .card is the engine's box) ---------- */
 .card{position:absolute;left:0;top:0;will-change:transform;touch-action:pan-y;z-index:1}
 .card.pressed .in{scale:.985}
 .card.lift{z-index:30}
 .card.settling{z-index:20}
-.card .in{position:absolute;inset:0;border-radius:var(--r-card);background:var(--surface);box-shadow:var(--shadow),var(--hl);overflow:hidden;
-  display:flex;transform-origin:50% 50%;transition:scale .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;
-  corner-shape:squircle}
-.card:hover .in{box-shadow:var(--shadow-hover),var(--hl)}
-.card.lift .in{scale:1.035;box-shadow:var(--shadow-lift),var(--hl);transition:scale .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
-.card.lift.rs .in{scale:1}
+.card .in{position:absolute;inset:0;transform-origin:50% 50%;transition:scale .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
+.card.lift .in{scale:1.035;box-shadow:var(--shadow-lift);transition:scale .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+.card.lift.rs .in{scale:1;box-shadow:0 0 0 2px var(--accent),var(--card-sh-h)}
 .card.lift,.card.lift *{cursor:grabbing}
 .card.lift.rs,.card.lift.rs *{cursor:nwse-resize}
-.sec.dragging .card:not(.lift) .in{box-shadow:var(--shadow),var(--hl)}
+.sec.dragging .card:not(.lift) .in{box-shadow:var(--card-sh)}
+.szt{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:6;font-family:var(--mono);font-size:12px;font-weight:500;padding:3px 8px;border-radius:6px;background:var(--accent);color:var(--accent-ink);pointer-events:none}
 /* resize handle */
 .rz{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;opacity:0;transition:opacity .15s;z-index:5}
-.rz::after{content:"";position:absolute;right:7px;bottom:7px;width:9px;height:9px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);border-radius:0 0 3px 0;opacity:.7}
+.rz::after{content:"";position:absolute;right:6px;bottom:6px;width:8px;height:8px;border-right:2px solid rgba(127,127,127,.9);border-bottom:2px solid rgba(127,127,127,.9);border-radius:0 0 3px 0}
 .card:hover .rz{opacity:1}
 .sec.dragging .rz{opacity:0}
 
-/* card content (ported from the Links design: art + txt, modes tiny / wide / hero / tall / media) */
-.card .in{flex-direction:column}
-.art{position:relative;flex:1;min-height:0;margin:6px 6px 0;border-radius:12px;overflow:hidden;background:var(--tint);container-type:size;color:#fff;display:block}
-@supports (corner-shape:squircle){.art{border-radius:16px;corner-shape:squircle}}
-.txt{flex:none;padding:9px 12px 11px;display:flex;flex-direction:column;gap:3px;min-width:0}
-.ttl{--ln:2;font-size:13.5px;font-weight:600;letter-spacing:-.008em;line-height:1.28;display:block;max-height:calc(var(--ln) * 1lh);overflow:hidden;overflow-wrap:anywhere;word-break:normal}
-.meta{display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:11.5px;min-width:0;white-space:nowrap;overflow:hidden}
-.meta > span:not(.chip):not(.fav){flex:0 1 auto;min-width:0;overflow:hidden}
-.chip{flex:none;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--line);color:var(--ink-2)}
-.chip.warn{background:oklch(0.8 0.12 75 / .22);color:oklch(0.5 0.12 65)}
-.chip.ok{background:oklch(0.7 0.15 150 / .16);color:oklch(0.5 0.13 150)}
-.fav{width:16px;height:16px;border-radius:4.5px;display:grid;place-items:center;font-size:9.5px;font-weight:700;color:#fff;background:var(--tint);flex:none;box-shadow:inset 0 0 0 .5px oklch(0 0 0 / .14);font-family:var(--ui)}
-.note-q{--ln:2;font-size:12.5px;color:var(--ink-2);line-height:1.45;max-height:calc(var(--ln) * 1lh);overflow:hidden}
-.note-q:before{content:"";display:inline-block;width:3px;height:.9em;margin-right:6px;border-radius:2px;background:var(--note-ink);opacity:.35;vertical-align:-1px}
-.m-tiny .txt{flex:1;padding:10px 11px;justify-content:space-between}
-.m-tiny .ttl{font-size:12.5px;--ln:3}
-.m-tiny .fav{width:20px;height:20px;border-radius:6px;font-size:11px}
-.in.m-wide{flex-direction:row}
-.m-wide .art{flex:none;margin:6px 0 6px 6px}
-.m-wide .txt{flex:1;justify-content:center;padding:8px 12px}
-.in.m-hero{flex-direction:row}
-.m-hero .art{flex:none;width:58%;margin:6px 0 6px 6px}
-.m-hero .txt{flex:1;justify-content:flex-end;padding:14px 16px 16px;gap:6px}
-.m-hero .ttl{font-size:19px;letter-spacing:-.02em;--ln:4;line-height:1.2}
-.m-tall .ttl.big{font-size:17px;letter-spacing:-.016em;line-height:1.22}
-.m-tall .txt{gap:4px}
-/* covers */
-.art.img{container-type:size}
-.art .cv{position:absolute;left:50%;top:50%;translate:-50% -50%;container-type:size;overflow:hidden}
-.art .cv.tl{left:0;top:0;translate:none}
-.a-gh{background:#0D1117;color:#E6EDF3;padding:12px 14px;display:flex;flex-direction:column;gap:7px;font-family:var(--mono)}
-.a-gh .r{display:flex;align-items:center;gap:6px;font-size:clamp(9px,6cqw,13px);color:#9198A1;white-space:nowrap;overflow:hidden}
-.a-gh .r i{width:clamp(10px,7cqw,16px);height:clamp(10px,7cqw,16px);border-radius:50%;background:#E6EDF3;flex:none;box-shadow:inset 0 0 0 3px #0D1117,0 0 0 1px #E6EDF3}
-.a-gh .t{font-family:var(--ui);font-size:clamp(10px,8.4cqw,22px);font-weight:600;line-height:1.22;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.a-gh .s{margin-top:auto;display:inline-flex;align-self:flex-start;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;background:#238636;color:#fff;font-family:var(--ui);font-size:clamp(9px,5cqw,12px);font-weight:600}
-.a-gh .s.merged{background:#8957E5}
-@container (max-height:130px){.a-gh .t{-webkit-line-clamp:2}.a-gh .r{display:none}}
-.a-paper{background:#FBFAF6;color:#1B1B1B;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
-.a-paper .id{font-family:var(--mono);font-size:clamp(8px,4.6cqw,11px);color:#B31B1B;letter-spacing:.02em}
-.a-paper .t{font-family:var(--serif);font-size:clamp(12px,11cqw,30px);font-weight:500;line-height:1.08;letter-spacing:-.01em}
-.a-paper .au{font-family:var(--serif);font-style:italic;font-size:clamp(8px,4.8cqw,12px);color:#5A5A5A;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.a-paper .ln{margin-top:auto;display:flex;flex-direction:column;gap:3cqh}
-.a-paper .ln i{height:max(2px,1.4cqh);border-radius:2px;background:#E7E3DA}
-.a-paper .ln i:nth-child(2){width:86%}.a-paper .ln i:nth-child(3){width:64%}
-.a-video{background:radial-gradient(120% 90% at 20% 15%,color-mix(in oklch,var(--tint) 85%,#fff),transparent 60%),linear-gradient(160deg,color-mix(in oklch,var(--tint) 70%,#000),#141414)}
-.a-video .orb{position:absolute;border-radius:50%;filter:blur(18px);opacity:.55;pointer-events:none}
-.a-video .orb.a{width:70cqw;height:70cqw;left:-12cqw;top:-24cqw;background:color-mix(in oklch,var(--tint) 70%,#fff)}
-.a-video .orb.b{width:60cqw;height:60cqw;right:-18cqw;bottom:-30cqw;background:color-mix(in oklch,var(--tint) 55%,#000);opacity:.7}
-.a-video .pl{position:absolute;left:7cqw;bottom:8cqh;width:clamp(22px,16cqw,40px);height:clamp(22px,16cqw,40px);border-radius:50%;display:grid;place-items:center;background:oklch(0 0 0 / .45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.a-video .pl:after{content:"";margin-left:12%;border-left:clamp(7px,4.6cqw,12px) solid #fff;border-top:clamp(5px,3cqw,8px) solid transparent;border-bottom:clamp(5px,3cqw,8px) solid transparent}
-.a-video .du{position:absolute;right:6cqw;bottom:8cqh;padding:2px 6px;border-radius:5px;background:oklch(0 0 0 / .6);font-size:clamp(9px,5cqw,12px);font-weight:600;font-variant-numeric:tabular-nums}
-.a-video .pt{position:absolute;right:6cqw;top:7cqh;padding:2px 6px;border-radius:5px;background:oklch(1 0 0 / .9);color:#111;font-size:clamp(8px,4.4cqw,11px);font-weight:700}
-.a-photo{background:radial-gradient(60% 50% at 78% 22%,#FFE9C2 0,#FFD7A0 18%,transparent 60%),radial-gradient(90% 70% at 10% 100%,#5B3A2A,transparent 70%),linear-gradient(180deg,#E7B88A,#A9724C 70%,#6E4430)}
-.a-photo:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 14%,oklch(0.2 0.03 50 / .22) 14% 19%,transparent 19% 30%);mix-blend-mode:multiply}
-.a-photo:after{content:"";position:absolute;left:18%;right:30%;bottom:9%;height:26%;border-radius:50% 50% 10% 10%;background:radial-gradient(60% 80% at 50% 30%,#F3E6D4,#CDB79B);box-shadow:0 8px 18px oklch(0.2 0.05 50 / .45)}
-.xh{position:absolute;left:6cqw;bottom:5cqh;z-index:1;font-size:clamp(9px,5cqw,12px);font-weight:600;color:#fff;text-shadow:0 1px 6px oklch(0 0 0 / .4);display:flex;align-items:center;gap:4px}
-.a-shot{background:#F2F2F4;color:#111;display:flex;flex-direction:column}
-.a-shot .ch{height:max(14px,9cqh);display:flex;align-items:center;gap:4px;padding:0 5cqw;background:#E4E4E8;flex:none}
-.a-shot .ch i{width:max(5px,2.2cqw);height:max(5px,2.2cqw);border-radius:50%;background:#C9C9CE}
-.a-shot .ch span{margin-left:3cqw;flex:1;height:58%;border-radius:4px;background:#F7F7F9;font-size:clamp(7px,3cqw,10px);color:#8A8A90;display:flex;align-items:center;padding:0 2cqw;overflow:hidden;white-space:nowrap}
-.a-shot .pg{flex:1;padding:6cqh 6cqw;display:grid;grid-template-columns:1.1fr .9fr;gap:4cqw;align-items:center}
-.a-shot .h{font-size:clamp(10px,5.6cqw,26px);font-weight:750;letter-spacing:-.03em;line-height:1.05}
-.a-shot .h em{font-style:normal;color:#7C5CFF}
-.a-shot .sub{margin-top:3cqh;display:flex;flex-direction:column;gap:2cqh}
-.a-shot .sub i{height:max(3px,1.6cqh);border-radius:3px;background:#D9D9DE}
-.a-shot .sub i:last-child{width:70%}
-.a-shot .cta{margin-top:4cqh;width:44%;height:max(10px,7cqh);border-radius:99px;background:#111}
-.a-shot .mock{height:78%;border-radius:8px;background:linear-gradient(180deg,#fff,#EDEAFF);box-shadow:0 6px 18px -6px oklch(0.3 0.1 290 / .35),inset 0 0 0 1px #E2DEFF;display:flex;gap:4%;padding:5%}
-.a-shot .mock b{width:28%;border-radius:5px;background:#EFEDFB;display:block}
-.a-shot .mock u{flex:1;border-radius:5px;background:repeating-linear-gradient(to bottom,#F6F5FE 0 16%,#fff 16% 22%);display:block}
-.a-chat{background:#F7F7F8;padding:12px 12px;display:flex;flex-direction:column;gap:7px;color:#111}
-.a-chat .u{align-self:flex-end;max-width:78%;padding:3cqh 4cqw;border-radius:12px;background:#E9E9EB;font-size:clamp(8px,5cqw,13px);line-height:1.3}
-.a-chat .b{display:flex;gap:3cqw;font-size:clamp(8px,4.6cqw,12px);line-height:1.4;color:#333}
-.a-chat .b i{flex:none;width:clamp(12px,7cqw,20px);height:clamp(12px,7cqw,20px);border-radius:50%;background:#10A37F}
-.a-chat .b span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
-.a-stock{background:radial-gradient(70% 60% at 30% 40%,#A9B8C9,transparent 70%),radial-gradient(60% 60% at 75% 70%,#58677A,transparent 70%),linear-gradient(135deg,#C9D2DC,#7E8B9B)}
-.a-stock:after{content:"";position:absolute;left:26%;top:22%;width:30%;height:58%;border-radius:40% 40% 8% 8%;background:linear-gradient(180deg,#2D3440,#465061);filter:blur(1.5px);opacity:.75}
-.wm{position:absolute;right:5cqw;bottom:5cqh;font-size:clamp(8px,4cqw,11px);font-weight:700;color:#fff;opacity:.8;letter-spacing:.04em}
-.a-type{background:color-mix(in oklch,var(--tint) 10%,var(--surface));color:var(--ink);padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
-.a-type .t{font-size:clamp(12px,10.5cqw,30px);font-weight:700;letter-spacing:-.025em;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere}
-.a-type .d{font-size:clamp(8px,4.6cqw,12px);color:color-mix(in oklch,var(--tint) 70%,var(--ink));font-weight:600;display:flex;align-items:center;gap:5px}
-.a-brand{background:linear-gradient(150deg,color-mix(in oklch,var(--tint) 88%,#fff),var(--tint) 60%,color-mix(in oklch,var(--tint) 75%,#000));display:grid;place-items:center}
-.a-brand .g{font-size:clamp(18px,24cqmin,64px);font-weight:800;letter-spacing:-.04em;color:#fff;text-shadow:0 4px 18px oklch(0 0 0 / .18)}
-.a-unclear{background:repeating-linear-gradient(-45deg,transparent 0 7px,oklch(0.5 0 0 / .07) 7px 8px),color-mix(in oklch,var(--tint) 7%,var(--surface));display:grid;place-items:center;color:var(--ink-3)}
-.a-unclear div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:clamp(9px,4.6cqw,12px);text-align:center;padding:0 8%}
-.a-unclear .ic{width:clamp(16px,10cqw,26px);height:clamp(16px,10cqw,26px)}
-/* media mode: the cover fills the card, the title sits once on a scrim */
-.in.m-media{padding:0}
-.m-media > .art{position:absolute;inset:0;margin:0;border-radius:0}
-.m-media > .art:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 38%,oklch(0.12 0.01 265 / .78));pointer-events:none}
-.m-media .a-video .pl{left:50%;top:40%;bottom:auto;translate:-50% -50%;width:clamp(36px,17cqw,58px);height:clamp(36px,17cqw,58px);background:oklch(1 0 0 / .16);box-shadow:inset 0 0 0 1px oklch(1 0 0 / .28);transition:scale .3s cubic-bezier(.2,.8,.2,1),background .2s}
-.card:hover .m-media .a-video .pl{scale:1.07;background:oklch(1 0 0 / .24)}
-.m-media .a-video .du,.m-media .a-video .pt{display:none}
-.mo{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:0 16px 13px;display:flex;flex-direction:column;gap:6px;color:#fff;pointer-events:none}
-.mo .mt{font-size:15px;font-weight:650;line-height:1.28;letter-spacing:-.01em;text-shadow:0 1px 10px oklch(0 0 0 / .35);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.mo .mm{display:flex;align-items:center;gap:8px;min-width:0}
-.mo .meta{color:oklch(1 0 0 / .8)}
-.mo .mdu{flex:none;padding:1px 6px;border-radius:5px;background:oklch(1 0 0 / .18);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+/* ---------- card base ---------- */
+.c{position:relative;flex:none;border-radius:12px;background:var(--card);box-shadow:var(--card-sh);overflow:hidden;display:flex;flex-direction:column;color:var(--ink);transition:box-shadow .2s,transform .2s;cursor:pointer;text-decoration:none}
+.c:hover{box-shadow:var(--card-sh-h)}
+.c.row{flex-direction:row}
+.cv{position:relative;flex:none;margin:4px 4px 0;border-radius:8px;overflow:hidden;background:var(--ph)}
+.c.row>.cv{margin:4px 0 4px 4px}
+.c.col>.cv{margin:4px 4px 0}
+.c.col>.tx{padding:7px 8px 8px}
+.cv img{display:block;position:absolute;pointer-events:none;max-width:none}
+.cv.flush{margin:0;border-radius:0}
+.band{flex:1;min-height:0;display:flex;align-items:center;padding:0 8px}
+.fill{flex:1 1 0;min-height:0}
+.cv.bl{position:absolute;inset:0;margin:0;border-radius:0}
+.c.bleed{background:var(--ph);color:#fff}
+.shd{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 34%,rgba(0,0,0,.66));pointer-events:none}
+.shd.top{background:linear-gradient(to bottom,rgba(0,0,0,.28),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 40%,rgba(0,0,0,.7))}
+.ov{position:absolute;left:0;right:0;bottom:0;padding:0 10px 9px;display:flex;flex-direction:column;gap:4px;color:#fff;min-width:0}
+.ov .tt{text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.ov .mt{color:rgba(255,255,255,.82)}
+.tx{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px;padding:8px 10px 9px}
+.c.row>.tx{justify-content:center;padding:6px 10px 6px 9px}
+.tx .mt:last-child{margin-top:auto}
+.c.row>.tx .mt:last-child{margin-top:0}
+.tt{--l:2;--fs:13px;font-size:var(--fs);font-weight:600;line-height:1.3;letter-spacing:-.005em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden;overflow-wrap:anywhere}
+.ds{--l:3;font-size:12px;line-height:1.5;color:var(--ink2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden;overflow-wrap:anywhere}
+.mt{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;min-width:0;line-height:16px}
+.mt>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mt .r{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:3px}
+.mt .dot{flex:none;opacity:.6}
+.mk{width:16px;height:16px;flex:none;display:block}
+.mk.sq{border-radius:4.5px;color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;line-height:1;box-shadow:inset 0 0 0 1px var(--mk-ring)}
+.mk.lg{width:22px;height:22px;border-radius:6px;font-size:12px}
+.av{width:16px;height:16px;border-radius:50%;background:var(--c);color:#fff;font-size:8.5px;font-weight:600;display:grid;place-items:center;flex:none;line-height:1}
+.up{flex:none;font-size:9px;font-weight:700;line-height:12px;padding:0 3px;border-radius:3px;border:1px solid currentColor;opacity:.85}
+.corner{position:absolute;left:6px;top:6px;display:flex}
+.corner .mk{filter:drop-shadow(0 1px 3px rgba(0,0,0,.35))}
+.dur{position:absolute;right:5px;bottom:5px;padding:0 5px;border-radius:4px;background:rgba(0,0,0,.74);color:#fff;font-size:10.5px;font-weight:600;line-height:17px;font-variant-numeric:tabular-nums}
+.pg{position:absolute;left:0;bottom:0;height:3px;width:calc(var(--p) * 100%);background:#FF0033}
+.pg.bili{background:#FB7299}
+.cv:has(.pg) .dur{bottom:8px}
+.bst{position:absolute;left:0;right:0;bottom:0;display:flex;gap:7px;white-space:nowrap;align-items:center;padding:16px 7px 5px;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.62));color:#fff;font-size:10.5px;font-weight:500;font-variant-numeric:tabular-nums;line-height:14px}
+.bst span{display:inline-flex;align-items:center;gap:3px}
+.bst svg{width:12px;height:12px}
+.bst b{margin-left:auto;font-weight:600}
+.cv:has(.pg) .bst{padding-bottom:7px}
+.pt{position:absolute;right:5px;top:5px;padding:0 5px;border-radius:4px;background:rgba(255,255,255,.92);color:#18191c;font-size:10px;font-weight:700;line-height:16px;font-variant-numeric:tabular-nums}
+.nimg{position:absolute;right:6px;top:6px;padding:0 6px;border-radius:9px;background:rgba(0,0,0,.42);color:#fff;font-size:10px;font-weight:600;line-height:17px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-variant-numeric:tabular-nums}
+.heart{width:12px;height:12px;flex:none}
+.stat{display:flex;gap:10px;font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.c.pad{padding:10px 11px}
+.c.pad>.tx{padding:0}
 
-/* note */
-.k-note .in{background:var(--note);padding:12px 14px;gap:6px}
-.note-l{font-size:10.5px;font-weight:650;color:var(--note-ink);opacity:.7;letter-spacing:.03em;text-transform:uppercase}
-.note-t{font-size:14px;line-height:1.5;color:var(--note-ink);overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+/* typographic web card */
+.ty-top{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink3);min-width:0;white-space:nowrap}
+.ty-top span{overflow:hidden;text-overflow:ellipsis}
 
-/* list */
-.k-list .in{padding:6px 6px 4px}
-.lh{flex:none;display:flex;align-items:center;gap:7px;height:32px;width:100%;padding:0 6px 0 8px;border-radius:9px;color:var(--ink-3);text-align:left}
-.lh b{color:var(--ink);font-size:13px;font-weight:650;letter-spacing:-.005em;white-space:nowrap;overflow:hidden}
-.lh .n{font-size:12px;font-variant-numeric:tabular-nums}
-.rows{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
-.row{flex:none;display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:9px;min-width:0;transition:background .2s}
-.row:hover{background:var(--accent-soft)}
-.row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;font-weight:500;font-size:12.5px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
-.row .s{flex:none;font-size:11px;color:var(--ink-3);max-width:34%;overflow:hidden;white-space:nowrap}
-.k-list.w-1 .row .s{display:none}
-.more{flex:none;height:24px;padding:0 10px;display:flex;align-items:center;font-size:11.5px;color:var(--ink-3)}
+/* variant: quote */
+.c.v-quote .q{font-family:var(--serif);font-weight:500;color:var(--ink);line-height:1.55;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l,4);overflow:hidden;position:relative}
+.c.v-quote .qm{font-family:var(--serif);font-size:34px;line-height:.7;height:16px;color:var(--tint);opacity:.85}
+.c.v-quote .src{font-size:11.5px;font-weight:600;color:var(--ink2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}
+/* variant: brand */
+.c.v-logo{isolation:isolate;background:color-mix(in srgb,var(--tint) calc(var(--lt) * 100%),var(--card))}
+.c.v-logo>:not(.wm){position:relative;z-index:1}
+.c.v-logo>.wm{position:absolute;z-index:0;pointer-events:none;opacity:var(--wmo)}
+.c.v-brand{background:linear-gradient(155deg,color-mix(in srgb,var(--tint) 82%,#fff),var(--tint) 55%,color-mix(in srgb,var(--tint) 78%,#000));color:#fff}
+.c.v-brand .bw{flex:1;display:grid;place-items:center;font-weight:750;letter-spacing:-.035em;text-shadow:0 4px 18px rgba(0,0,0,.16)}
+.c.v-brand .mt{color:rgba(255,255,255,.86)}
+.c.v-brand .tt{color:#fff}
+
+/* video card from the board: full-bleed cover, centred play, title and duration on the dark foot */
+.mshd{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(18,20,26,0) 38%,rgba(18,20,26,.8));pointer-events:none}
+.play{position:absolute;left:50%;top:40%;translate:-50% -50%;width:var(--ps,46px);height:var(--ps,46px);border-radius:50%;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:scale .3s cubic-bezier(.2,.8,.2,1),background .3s}
+.play::after{content:"";position:absolute;left:54%;top:50%;translate:-50% -50%;border-left:calc(var(--ps,46px) * .26) solid #fff;border-top:calc(var(--ps,46px) * .16) solid transparent;border-bottom:calc(var(--ps,46px) * .16) solid transparent}
+.c:hover .play{scale:1.07;background:rgba(255,255,255,.24)}
+.mo{position:absolute;left:0;right:0;bottom:0;padding:0 var(--mp,14px) calc(var(--mp,14px) - 2px);display:flex;flex-direction:column;gap:7px;color:#fff;min-width:0}
+.mo .mt2{font-size:var(--mf,15px);font-weight:650;line-height:1.28;letter-spacing:-.01em;text-shadow:0 1px 10px rgba(0,0,0,.35);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.mo .mm{display:flex;align-items:center;gap:7px;min-width:0;font-size:11.5px;color:rgba(255,255,255,.8);line-height:18px}
+.mo .mm .mk{width:18px;height:18px}
+.mo .mm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mo .mdu{margin-left:auto;flex:none;padding:0 6px;border-radius:5px;background:rgba(255,255,255,.18);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.media .pg{height:3px}
+
+/* GitHub */
+.gh-h{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;min-width:0;white-space:nowrap}
+.gh-h span{color:var(--ink3);overflow:hidden;text-overflow:ellipsis;flex:0 1000 auto;min-width:0;max-width:45%}
+.gh-h span.nm{max-width:none;flex:0 1 auto}
+.gh-h b{font-weight:600;white-space:nowrap;flex:none}
+.rn{display:block;font-size:11px;letter-spacing:-.01em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c.pp{background:var(--paper);color:var(--paper-ink)}
+.pid{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;color:#B31B1B;white-space:nowrap;overflow:hidden}
+.pid .mk{width:13px;height:13px}
+.ptt{font-family:var(--serif);font-weight:600;line-height:1.15;letter-spacing:-.01em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden}
+.pau{font-family:var(--serif);font-style:italic;font-size:11px;color:color-mix(in srgb,var(--paper-ink) 62%,transparent);line-height:1.35;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden}
+.pab{font-family:var(--serif);line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden;min-height:0;color:color-mix(in srgb,var(--paper-ink) 80%,transparent)}
+.pln{margin-top:auto;display:flex;flex-direction:column;gap:5px}
+.pln i{height:3px;border-radius:2px;background:var(--paper-line)}
+.pln i:nth-child(2){width:86%}.pln i:nth-child(3){width:64%}
+.c.cc{background:var(--chat)}
+.cmk{flex:none;width:14px;height:14px;border-radius:50%;background:#10A37F;display:inline-block}
+.cq{align-self:flex-end;max-width:84%;padding:5px 9px;border-radius:12px;background:var(--chat-q);font-size:12px;line-height:1.35;flex:none}
+.cq span{overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden}
+.ca{position:relative;display:flex;flex-direction:column;padding-left:21px;min-width:0;min-height:0;flex:1}
+.ca>i{position:absolute;left:0;top:2px;width:14px;height:14px;border-radius:50%;background:#10A37F}
+.ca span{font-size:12px;line-height:1.45;color:var(--ink2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--l);overflow:hidden;min-height:0;overflow-wrap:anywhere}
+.ca span.fill{flex:1}
+.url{font-family:var(--mono);font-size:10.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.skl{display:flex;flex-direction:column;gap:7px}
+.skl i,.skb{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--ph) 0 40%,color-mix(in srgb,var(--ph) 50%,var(--card)) 50%,var(--ph) 60% 100%);background-size:300% 100%;animation:shim 1.4s ease-in-out infinite}
+.skb{height:auto;border-radius:8px;margin:4px 4px 0;flex:none}
+@keyframes shim{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.skl i,.skb{animation:none}}
+.pst{margin-left:auto;flex:none;display:grid;place-items:center}
+.pst svg{width:14px;height:14px}
+.gf .mk{width:14px;height:14px}
+.grp{font-size:12px;font-weight:600;color:var(--ink2);margin-top:4px}
+.sti{width:16px;height:16px;border-radius:50%;background:#8250df;color:#fff;display:grid;place-items:center;flex:none}
+.sti svg{width:10px;height:10px}
+.mk.xs{width:12px;height:12px;font-size:7.5px;border-radius:3px}
+.na{border:1.5px dashed var(--sec-line);border-radius:12px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.stack{display:flex;flex-direction:column;gap:18px}
+.av.big{width:24px;height:24px;font-size:10px}
+.rows{display:flex;flex-direction:column}
+.bt.ico{padding:0;width:30px;justify-content:center;cursor:pointer}
+.gav{flex:none;width:20px;height:20px;border-radius:6px;background:linear-gradient(140deg,#6965db,#3f3ca8);color:#fff;font:700 10px/20px var(--sans);text-align:center}
+.gav.lg{width:30px;height:30px;border-radius:8px;font-size:13px;line-height:30px}
+.gf{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.gf span{display:inline-flex;align-items:center;gap:4px}
+.gf i{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}
+.gf svg{width:12px;height:12px}
+.lbar{position:absolute;left:0;right:0;bottom:0;height:3px;display:flex}
+.lbar i{display:block;height:100%}
+.tops{display:flex;gap:4px;flex-wrap:wrap;max-height:20px;overflow:hidden}
+.tops span{font-size:10.5px;line-height:18px;padding:0 7px;border-radius:9px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.st-pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:9px;color:#fff;background:#8250df;flex:none}
+.st-pill svg{width:11px;height:11px}
+
+/* notes */
+.c.note{cursor:text}
+.c.n-bd{background:var(--note);color:var(--note-ink);padding:11px 13px;gap:5px}
+.c.n-bd .note-l{flex:none;font-size:10px;font-weight:650;opacity:.7;letter-spacing:.03em;text-transform:uppercase;line-height:1.2}
+.c.n-bd .fit{line-height:1.5}
+.c.n-bd .nh{font-weight:650}
+.c.note .fit{flex:1;min-height:0;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap;text-wrap:pretty;line-break:strict}
+.c.n-a{background:var(--n1);color:var(--n-ink);box-shadow:0 0 0 1px rgba(60,45,0,.06),0 1px 2px rgba(60,45,0,.06),0 8px 16px -10px rgba(60,45,0,.22);padding:11px 12px}
+.c.n-a[data-c="2"]{background:var(--n2)} .c.n-a[data-c="3"]{background:var(--n3)} .c.n-a[data-c="4"]{background:var(--n4)}
+.c.n-a .fit{font-weight:500;line-height:1.42}
+.c.n-b{padding:12px 13px 10px}
+.c.n-b .fit{font-family:var(--serif);font-weight:500;line-height:1.55;color:var(--ink)}
+.c.n-b .nd{flex:none;font-size:10.5px;color:var(--ink3);padding-top:6px;display:flex;gap:6px;font-variant-numeric:tabular-nums}
+.c.n-c{background:transparent;box-shadow:none;padding:6px 4px;color:var(--ink)}
+.c.n-c:hover{box-shadow:inset 0 0 0 1.5px var(--sec-line);transform:none}
+.c.n-c .fit{font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.chk{list-style:none;margin:.3em 0 0;padding:0;display:flex;flex-direction:column;gap:.28em}
+.chk li{display:flex;gap:.45em;align-items:flex-start;line-height:1.35}
+.chk li i{flex:none;width:.95em;height:.95em;margin-top:.2em;border-radius:.25em;border:1.5px solid currentColor;opacity:.55}
+.chk li.dn{opacity:.5;text-decoration:line-through}
+.chk li.dn i{background:currentColor;opacity:.7}
+.nh{font-weight:700}
+.n-c .chk{font-weight:500;letter-spacing:0}
+
+/* link list */
+.c.lst{padding:4px 4px 2px;cursor:default}
+.lh{flex:none;display:flex;align-items:center;gap:7px;height:30px;padding:0 6px 0 7px;min-width:0}
+.lh b{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lh .n{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums;flex:none}
+.lr{flex:none;display:flex;align-items:center;gap:8px;height:var(--rh,28px);padding:0 7px;border-radius:8px;min-width:0;color:var(--ink);text-decoration:none;cursor:pointer}
+.lr:hover{background:var(--hover)}
+.lr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;font-weight:500}
+.lr .s{flex:none;font-size:11px;color:var(--ink3);max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr .ck{flex:none;width:15px;height:15px;border-radius:50%;border:1.5px solid var(--ink3);display:grid;place-items:center}
+.lr.dn .ck{background:var(--accent);border-color:var(--accent)}
+.lr.dn .ck::after{content:"";width:6px;height:3.5px;border-left:1.6px solid var(--accent-ink);border-bottom:1.6px solid var(--accent-ink);rotate:-45deg;margin-top:-1.5px}
+.lr.dn .t{color:var(--ink3);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink3) 60%,transparent);font-weight:400}
+.lr.th{height:var(--rh,48px);gap:9px;padding:0 6px 0 5px}
+.lr.th .tw{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lr.th .t{flex:none;line-height:17px}
+.lr.th .s{max-width:none;display:flex;align-items:center;gap:5px;line-height:15px}
+.tn{flex:none;width:40px;height:40px;border-radius:7px;overflow:hidden;position:relative;background:var(--ph);display:grid;place-items:center}
+.tn img{display:block}
+.tn .mk.sq{width:40px;height:40px;border-radius:7px;font-size:17px}
+.tile{width:40px;height:40px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 12%,var(--card))}
+.tile .mk{width:20px;height:20px}
+.tile .mk.sq{width:22px;height:22px;font-size:11px;border-radius:6px}
+.lr.th.sh{height:30px}
+.lr.th.sh .t{flex:1}
+.tn0{flex:none;width:40px;display:grid;place-items:center}
+.c.lst.v-logo .lr:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.lpop{width:300px;height:444px;flex:none;border-radius:14px;background:var(--card);box-shadow:var(--card-sh-h);display:flex;flex-direction:column;padding:6px 6px 0;overflow:hidden}
+.lp-h{flex:none;display:flex;align-items:center;gap:7px;height:34px;padding:0 4px 0 8px}
+.lp-h b{font-size:14px;font-weight:650}
+.lp-h .n{font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.lp-x{margin-left:auto;width:26px;height:26px;border:0;border-radius:7px;background:transparent;color:var(--ink3);font-size:18px;line-height:1;cursor:pointer}
+.lp-x:hover{background:var(--hover)}
+.lp-q{flex:none;display:flex;align-items:center;gap:6px;height:30px;margin:2px 4px 6px;padding:0 9px;border-radius:8px;background:var(--hover);color:var(--ink3)}
+.lp-q svg{width:13px;height:13px;flex:none}
+.lp-q input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--ink);outline:none}
+.lp-f{flex:none;display:flex;gap:5px;padding:0 4px 6px;overflow-x:auto;scrollbar-width:none}
+.lp-f button{flex:none;height:24px;padding:0 8px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-size:11.5px;display:inline-flex;gap:4px;align-items:center;cursor:pointer;white-space:nowrap}
+.lp-f button span{color:var(--ink3);font-variant-numeric:tabular-nums}
+.lp-f button.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.lp-f button.on span{color:color-mix(in srgb,var(--card) 65%,transparent)}
+.lp-rows{flex:1;min-height:0;overflow-y:auto;padding-bottom:6px;overscroll-behavior:contain}
+.lp-rows .lr .s{font-variant-numeric:tabular-nums}
+.c.lst.la{padding:6px}
+.la .lh{height:42px;padding-bottom:2px}
+.la .lr{height:30px}
+.c.lst.lc{padding:4px}
+.lc .lh{height:31px}
+.lc .lr.th{height:45px}
+.lc .tn{width:36px;height:36px}
+.lc .tn img{margin:-2px}
+.lc .tile{width:36px;height:36px}
+.lr.lmore{color:var(--ink3);font-size:11.5px;padding-left:31px}
+.lr.lmore.one{padding-left:7px}
+.lc .lr.th.lmore{padding-left:5px}
+.lc .lmore .t{color:var(--ink);font-weight:500}
+.lmore .rb{display:inline-flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums}
+.lmore .s{gap:9px}
+.tn.mos{display:grid;grid-template-columns:repeat(2,17px);grid-auto-rows:17px;gap:2px;background:transparent;border-radius:7px}
+.tn.mos>span{width:17px;height:17px;border-radius:4px;overflow:hidden;display:grid;place-items:center;background:var(--ph)}
+.tn.mos img{margin:-11.5px}
+.tn.mos .tile{width:17px;height:17px}
+.tn.mos .tile .mk{width:10px;height:10px}
+.tn.mos .tile .mk.sq{width:11px;height:11px;font-size:6.5px;border-radius:3px}
+.l1a{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:8px 8px 7px 9px;min-width:0}
+.l1g{display:grid;grid-template-columns:repeat(2,22px);gap:3px}
+.l1g .tn{width:22px;height:22px;border-radius:6px}
+.l1g .tn img{margin:-9px}
+.l1g .tile{width:22px;height:22px}
+.l1g .tile .mk{width:13px;height:13px}
+.l1g.one{grid-template-columns:47px}
+.l1g.one .tn,.l1g.one .tile{width:47px;height:47px;border-radius:10px}
+.l1g.one .tile .mk{width:24px;height:24px}
+.l1g .tile .mk.sq{width:14px;height:14px;font-size:8px;border-radius:4px}
+.l1ft{display:flex;align-items:baseline;gap:4px;min-width:0}
+.l1ft b{flex:1;min-width:0;font-size:11.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.l1ft .n{flex:none;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.l1b{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:8px 9px}
+.l1b b{font-size:13px;font-weight:650;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.l1b .n{font-size:22px;font-weight:600;letter-spacing:-.02em;color:var(--ink3);line-height:1;font-variant-numeric:tabular-nums}
+.l1c{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:8px 9px}
+.l1t{position:relative;width:36px;height:36px}
+.l1t .tn{width:36px;height:36px;border-radius:9px}
+.l1t .tn img{margin:-2px}
+.l1t .tile{width:36px;height:36px}
+.l1t .bd{position:absolute;left:28px;top:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ink);color:var(--card);font-size:10.5px;font-weight:600;display:grid;place-items:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--card)}
+.l1c b{font-size:12px;font-weight:650;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.lmore{flex:none;height:24px;padding:0 8px;display:flex;align-items:center;font-size:11.5px;color:var(--ink3)}
+.stk{display:flex;padding-left:4px}
+.stk .si{margin-left:-4px;width:20px;height:20px;border-radius:6px;background:var(--card);box-shadow:0 0 0 1px var(--line);display:grid;place-items:center}
+.stk .si .mk{width:14px;height:14px}
+.stk .si .mk.sq{font-size:8px;border-radius:4px}
+.l1{flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:6px 6px 5px 7px;min-height:0}
+.l1 b{font-size:12.5px;font-weight:650;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.l1f{display:flex;align-items:center;gap:4px;min-width:0}
+.l1f .n{margin-left:auto;font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.lh.lh21{height:24px;padding:0 6px 0 7px}
+.lh .n{margin-left:auto}
+.lr.mini{height:24px}
+.lr.mini .mk{width:14px;height:14px}
+.lr.mini .t{font-size:12px}
+.l21{flex:1;display:flex;align-items:center;gap:10px;padding:4px 10px 4px 8px;min-width:0}
+.l21l{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.l21l b{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.l21 .n{flex:none;font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+
+/* native-look comparison */
+.nat{width:174px;flex:none;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.nat .ni{position:relative;border-radius:10px;overflow:hidden;background:var(--ph)}
+.nat .ni img{display:block}
+.nat-yt .row2{display:flex;gap:8px}
+.nat-yt .av{width:24px;height:24px;font-size:10px}
+.nat-yt .tt{font-size:13px;font-weight:600}
+.nat-yt .s{font-size:11px;color:var(--ink3);margin-top:3px;line-height:1.35}
+.nat-bili{background:var(--card);border-radius:6px;overflow:hidden;padding-bottom:8px;gap:6px}
+.nat-bili .ni{border-radius:6px 6px 0 0}
+.nat-bili .tt{font-size:13px;font-weight:500;padding:0 8px;line-height:1.4}
+.nat-bili .s{padding:0 8px;font-size:11px;color:var(--ink3);display:flex;gap:5px;align-items:center}
+.nat-xhs{background:#fff;border-radius:8px;overflow:hidden;padding-bottom:9px;gap:7px;color:#222}
+.nat-xhs .ni{border-radius:8px 8px 0 0}
+.nat-xhs .tt{font-size:13px;font-weight:500;padding:0 9px;color:#222}
+.nat-xhs .s{padding:0 9px;display:flex;gap:6px;align-items:center;font-size:11px;color:#666}
+.nat-xhs .s .r{margin-left:auto;display:inline-flex;gap:3px;align-items:center}
 
 /* ---------- tuning panel ---------- */
 .panel{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;width:290px;max-width:calc(100vw - 32px);
   border-radius:18px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
-  box-shadow:0 0 0 .5px var(--line-2),0 24px 48px -16px oklch(0.2 0.02 265 / .3);overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+  box-shadow:0 0 0 .5px var(--line-2),0 24px 48px -16px rgba(20,30,45,.3);overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .panel.closed{transform:translateY(calc(100% - 44px))}
 .panel header{height:44px;display:flex;align-items:center;gap:8px;padding:0 10px 0 16px;font-weight:650;font-size:13px;cursor:pointer}
 .panel header .sp{flex:1}
@@ -258,35 +427,23 @@ svg{-webkit-user-drag:none;display:block}
 .sw{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink-2);min-height:26px}
 .sw input{accent-color:var(--accent);width:16px;height:16px;margin:0}
 .pgroup{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-top:6px}
-.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.btn{height:30px;padding:0 11px;border-radius:9px;background:var(--line);font-size:12.5px;font-weight:550;color:var(--ink);transition:background .15s}
+.btn{height:30px;padding:0 11px;border-radius:9px;background:var(--hover);font-size:12.5px;font-weight:550;color:var(--ink);transition:background .15s}
 .btn:hover{background:var(--line-2)}
 .btn:active{transform:scale(.97)}
-.btn.pri{background:var(--accent);color:var(--accent-ink)}
 .presets{display:flex;gap:6px}
 .presets .btn{flex:1;padding:0;text-align:center}
-
-/* toast */
-.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:60;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);
-  font-size:12.5px;font-weight:550;box-shadow:var(--shadow-lift);opacity:0;transition:opacity .2s,translate .3s cubic-bezier(.2,.8,.2,1);pointer-events:none;translate:-50% 8px}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));translate:-50% 8px;z-index:60;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);
+  font-size:12.5px;font-weight:550;box-shadow:var(--shadow-lift);opacity:0;transition:opacity .2s,translate .3s cubic-bezier(.2,.8,.2,1);pointer-events:none}
 .toast.on{opacity:1;translate:-50% 0}
-
-@media (max-width:700px){
-  .top .crumb{display:none}
-  .sec-head h1{font-size:24px}
-  .sec-head .hint{display:none}
-  .sec{border-radius:24px}
-}
-@media (prefers-reduced-motion: reduce){
-  .card .in,.sec,.ph,.panel{transition:none}
-}
+@media (max-width:700px){ .top .crumb{display:none} .sec-head h1{font-size:24px} .sec-head .hint{display:none} }
+@media (prefers-reduced-motion: reduce){ .card .in,.board,.ph,.panel{transition:none} }
 </style>
 </head>
 <body>
 
 <div class="top">
   <span class="brand">Links</span>
-  <span class="crumb"><span>Bento Canvas</span><span>·</span><b>Work</b></span>
+  <span class="crumb"><span>Bento Canvas</span><span>·</span><b>周末</b></span>
   <span class="sp"></span>
   <button class="tb" id="addBtn" title="添加一张卡片"><svg class="ic" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>添加</button>
   <button class="tb" id="shuffleBtn" title="随机排布"><svg class="ic" viewBox="0 0 16 16"><path d="M2.5 4.5h2.2c1.2 0 2 .6 2.6 1.6l1.4 2.8c.6 1 1.4 1.6 2.6 1.6h2.2M2.5 11.5h2.2c1.2 0 2-.6 2.6-1.6M8.7 6.1c.6-1 1.4-1.6 2.6-1.6h2.2M11.5 2.5l2 2-2 2M11.5 8.5l2 2-2 2"/></svg>打乱</button>
@@ -294,9 +451,9 @@ svg{-webkit-user-drag:none;display:block}
   <button class="tb" id="themeBtn" title="切换深浅色"><svg class="ic" viewBox="0 0 16 16"><path d="M8 2.5v1M8 12.5v1M2.5 8h1M12.5 8h1M4.1 4.1l.7.7M11.2 11.2l.7.7M4.1 11.9l.7-.7M11.2 4.8l.7-.7"/><circle cx="8" cy="8" r="2.8"/></svg></button>
 </div>
 
-<main class="wrap">
+<main class="wrap" id="wrap">
   <div class="sec-head">
-    <h1>Work</h1>
+    <h1>周末</h1>
     <span class="n" id="count"></span>
     <span class="hint"><span>拖动卡片移动</span><span>拖右下角改大小</span><span><kbd>Esc</kbd> 取消</span></span>
   </div>
@@ -322,9 +479,6 @@ svg{-webkit-user-drag:none;display:block}
       <button class="btn" data-preset="soft">柔和</button>
       <button class="btn" data-preset="bouncy">Q 弹</button>
     </div>
-    <div class="pgroup">网格</div>
-    <div class="fld"><label for="cols">列数</label><output id="colsO"></output><input type="range" id="cols" min="4" max="10" step="1"></div>
-    <div class="fld"><label for="gap">间距</label><output id="gapO"></output><input type="range" id="gap" min="2" max="28" step="1"></div>
     <div class="pgroup">拖动卡片跟随</div>
     <label class="sw"><span>弹簧跟随（关掉就是 1:1 跟手）</span><input type="checkbox" id="follow"></label>
     <div class="fld"><label for="fk">跟随刚度 stiffness</label><output id="fkO"></output><input type="range" id="fk" min="200" max="2400" step="20"></div>
@@ -343,85 +497,441 @@ svg{-webkit-user-drag:none;display:block}
 
 <div class="toast" id="toast"></div>
 
+<script src="img.js"></script>
 <script>
 'use strict';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const KEY = 'links-bento-canvas-v1';
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* ============ card lab: marks, sample links, renderers (ported as-is from the 卡片样式 lab) ============ */
+const px = n => n * 84 + (n - 1) * 6;
+const SIZES = [[1,1],[2,1],[3,1],[1,2],[2,2],[3,2],[2,3]];
+const ALL = SIZES.map(s => s.join('x'));
 
-/* ============ sample data (from the Links design seed) ============ */
-const SITES = {
-  github:{n:'GitHub',t:'#24292F',g:'GH'}, nextjs:{n:'nextjs.org',t:'#111111',g:'N'}, vercel:{n:'vercel-status.com',t:'#000000',g:'▲'},
-  sentry:{n:'sentry.io',t:'#362D59',g:'S'}, geekbang:{n:'time.geekbang.org',t:'#E8890C',g:'极'}, bilibili:{n:'bilibili',t:'#FB7299',g:'b'},
-  ifanr:{n:'爱范儿',t:'#D6001C',g:'A'}, arxiv:{n:'arXiv',t:'#B31B1B',g:'χ'}, pg:{n:'paulgraham.com',t:'#B07D2A',g:'P'},
-  supasidebar:{n:'supasidebar.com',t:'#7C5CFF',g:'S'}, xhs:{n:'小红书',t:'#FF2442',g:'红'}, linear:{n:'linear.app',t:'#5E6AD2',g:'L'},
-  rauno:{n:'rauno.me',t:'#1F1F1F',g:'R'}, youtube:{n:'YouTube',t:'#FF0033',g:'▶'}, chatgpt:{n:'ChatGPT',t:'#10A37F',g:'G'},
-  raycast:{n:'raycast.com',t:'#FF6363',g:'R'}, excalidraw:{n:'excalidraw.com',t:'#6965DB',g:'E'}, dropover:{n:'dropoverapp.com',t:'#2D9CDB',g:'D'},
-  cloudflare:{n:'developers.cloudflare.com',t:'#F38020',g:'C'}, secretlives:{n:'thesecretlivesofdata.com',t:'#2F6FDB',g:'R'},
-  incomplete:{n:'incompleteideas.net',t:'#5B6470',g:'I'}, mcfunley:{n:'mcfunley.com',t:'#4B7F52',g:'M'}, zhihu:{n:'知乎',t:'#0066FF',g:'知'},
-  mit:{n:'pdos.csail.mit.edu',t:'#A31F34',g:'M'}, raft:{n:'raft.github.io',t:'#3A7BD5',g:'R'}, ddia:{n:'dataintensive.net',t:'#C2410C',g:'D'}, jepsen:{n:'jepsen.io',t:'#0F766E',g:'J'},
-  apple:{n:'developer.apple.com',t:'#1D1D1F',g:'A'}, hn:{n:'news.ycombinator.com',t:'#FF6600',g:'Y'}, solid:{n:'solidjs.com',t:'#2C4F7C',g:'S'}
+/* one master image per link; every slot is a window onto it at 1:1, positioned around the focal point */
+function I(id, w, h){
+  const m = (window.IMG || {})[id];
+  if (!m) return '';
+  const x = Math.round(clamp(w / 2 - m.fx * m.w, w - m.w, 0)), y = Math.round(clamp(h / 2 - m.fy * m.h, h - m.h, 0));
+  return `<img src="${m.s}" width="${m.w}" height="${m.h}" style="left:${x}px;top:${y}px" alt="" draggable="false" decoding="async">`;
+}
+const T = id => { const m = (window.IMG || {})[id + '_t']; return m ? `<img src="${m.s}" width="40" height="40" alt="" draggable="false">` : ''; };
+const slot = (id, w, h, extra = '', cls = '') => `<div class="cv ${cls}" style="width:${w}px;height:${h}px">${I(id, w, h)}${extra}</div>`;
+const bleed = (id, w, h, extra = '') => `<div class="cv bl">${I(id, w, h)}${extra}</div>`;
+
+/* ---------- marks ---------- */
+const SVG = {
+  yt:'<svg class="mk" viewBox="0 0 16 16"><rect x="0" y="2.5" width="16" height="11" rx="3.4" fill="#FF0033"/><path d="M6.4 5.4 10.6 8l-4.2 2.6z" fill="#fff"/></svg>',
+  bili:'<svg class="mk" viewBox="0 0 16 16"><rect width="16" height="16" rx="4.5" fill="#FB7299"/><path d="M5.2 3.2 6.8 4.8M10.8 3.2 9.2 4.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><rect x="2.6" y="4.9" width="10.8" height="7.8" rx="2" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M6 8v1.3M10 8v1.3" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>',
+  xhs:'<svg class="mk" viewBox="0 0 16 16"><rect width="16" height="16" rx="4.5" fill="#FF2442"/><text x="8" y="9.9" text-anchor="middle" font-size="5.3" font-weight="700" fill="#fff" font-family="PingFang SC,Hiragino Sans GB,Noto Sans SC,sans-serif">小红书</text></svg>',
+  gh:'<svg class="mk" viewBox="0 0 16 16"><path fill="var(--ink)" d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>',
+  pr:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"/></svg>',
+  prdraft:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M3.25 1A2.25 2.25 0 0 1 4 5.372v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.251 2.251 0 0 1 3.25 1Zm9.5 14a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5ZM2.5 3.25a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0ZM3.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm9.5 0a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM14 7.5a1.25 1.25 0 1 1-2.5 0 1.25 1.25 0 0 1 2.5 0Zm0-4.25a1.25 1.25 0 1 1-2.5 0 1.25 1.25 0 0 1 2.5 0Z"/></svg>',
+  prclosed:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M3.25 1A2.25 2.25 0 0 1 4 5.372v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.251 2.251 0 0 1 3.25 1Zm9.5 5.5a.75.75 0 0 1 .75.75v3.378a2.251 2.251 0 1 1-1.5 0V7.25a.75.75 0 0 1 .75-.75Zm-2.03-5.273a.75.75 0 0 1 1.06 0l.97.97.97-.97a.748.748 0 0 1 1.265.332.75.75 0 0 1-.205.729l-.97.97.97.97a.751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018l-.97-.97-.97.97a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l.97-.97-.97-.97a.75.75 0 0 1 0-1.06ZM2.5 3.25a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0ZM3.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm9.5 0a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"/></svg>',
+  issue:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/><path fill="currentColor" d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>',
+  issuedone:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/><path fill="currentColor" d="M11.28 6.78a.75.75 0 0 0-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5Z"/></svg>',
+  disc:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg>',
+  arxiv:'<svg class="mk" viewBox="0 0 24 24" style="color:#B31B1B"><path fill="currentColor" d="M3.8423 0a1.0037 1.0037 0 0 0-.922.6078c-.1536.3687-.0438.6275.2938 1.1113l6.9185 8.3597-1.0223 1.1058a1.0393 1.0393 0 0 0 .003 1.4229l1.2292 1.3135-5.4391 6.4444c-.2803.299-.4538.823-.2971 1.1986a1.0253 1.0253 0 0 0 .9585.635.9133.9133 0 0 0 .6891-.3405l5.783-6.126 7.4902 8.0051a.8527.8527 0 0 0 .6835.2597.9575.9575 0 0 0 .8777-.6138c.1577-.377-.017-.7502-.306-1.1407l-7.0518-8.3418 1.0632-1.13a.9626.9626 0 0 0 .0089-1.3165L4.6336.4639s-.3733-.4535-.768-.463zm0 .272h.0166c.2179.0052.4874.2715.5644.3639l.005.006.0052.0055 10.169 10.9905a.6915.6915 0 0 1-.0072.945l-1.0666 1.133-1.4982-1.7724-8.5994-10.39c-.3286-.472-.352-.6183-.2592-.841a.7307.7307 0 0 1 .6704-.4401Zm14.341 1.5701a.877.877 0 0 0-.6554.2418l-5.6962 6.1584 1.6944 1.8319 5.3089-6.5138c.3251-.4335.479-.6603.3247-1.0292a1.1205 1.1205 0 0 0-.9763-.689zm-7.6557 12.2823 1.3186 1.4135-5.7864 6.1295a.6494.6494 0 0 1-.4959.26.7516.7516 0 0 1-.706-.4669c-.1119-.2682.0359-.6864.2442-.9083l.0051-.0055.0047-.0055z"/></svg>',
+  merge:'<svg viewBox="0 0 16 16"><path fill="currentColor" d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/></svg>',
+  play:'<svg viewBox="0 0 12 12"><rect x="1" y="2" width="10" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M5 4.4 7.6 6 5 7.6z" fill="currentColor"/></svg>',
+  dm:'<svg viewBox="0 0 12 12"><rect x="1" y="2" width="10" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M3.4 5h3.2M3.4 7h5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>',
+  heart:'<svg class="heart" viewBox="0 0 12 12"><path d="M6 10.2S1.6 7.6 1.6 4.6A2.3 2.3 0 0 1 6 3.6a2.3 2.3 0 0 1 4.4 1c0 3-4.4 5.6-4.4 5.6z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/></svg>',
+  star:'<svg viewBox="0 0 12 12"><path d="m6 1.4 1.4 2.9 3.2.4-2.3 2.2.6 3.2L6 8.6 3.1 10.1l.6-3.2L1.4 4.7l3.2-.4z" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/></svg>',
+  fork:'<svg viewBox="0 0 12 12"><circle cx="3.2" cy="2.6" r="1.2" fill="none" stroke="currentColor"/><circle cx="8.8" cy="2.6" r="1.2" fill="none" stroke="currentColor"/><circle cx="6" cy="9.6" r="1.2" fill="none" stroke="currentColor"/><path d="M3.2 3.8v.8c0 .9.7 1.6 1.6 1.6h2.4c.9 0 1.6-.7 1.6-1.6v-.8M6 6.2v2.2" fill="none" stroke="currentColor"/></svg>',
+  merged:'<svg viewBox="0 0 12 12"><circle cx="3" cy="2.6" r="1.2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="3" cy="9.4" r="1.2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="7" r="1.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M3 3.8v4.4M3 3.8c0 2 1.6 3.2 4.8 3.2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>',
 };
+const sq = (g, c, cls = '') => `<span class="mk sq ${cls}" style="background:${c}">${esc(g)}</span>`;
+const SI = {"linear": {"d": "M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z", "hex": "#5E6AD2"}, "stripe": {"d": "M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z", "hex": "#635BFF"}, "notion": {"d": "M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.139c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z", "hex": "#000000"}, "vercel": {"d": "m12 1.608 12 20.784H0Z", "hex": "#000000"}, "figma": {"d": "M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117V7.51zm0 1.471H8.148c-2.476 0-4.49-2.014-4.49-4.49S5.672 0 8.148 0h4.588v8.981zm-4.587-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.354 3.02 3.019 3.02h3.117V1.471H8.148zm4.587 15.019H8.148c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.98zM8.148 8.981c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V8.981H8.148zM8.172 24c-2.489 0-4.515-2.014-4.515-4.49s2.014-4.49 4.49-4.49h4.588v4.441c0 2.503-2.047 4.539-4.563 4.539zm-.024-7.51a3.023 3.023 0 0 0-3.019 3.019c0 1.665 1.365 3.019 3.044 3.019 1.705 0 3.093-1.376 3.093-3.068v-2.97H8.148zm7.704 0h-.098c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h.098c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.49-4.49 4.49zm-.097-7.509c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h.098c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-.098z", "hex": "#F24E1E"}, "raycast": {"d": "M6.004 15.492v2.504L0 11.992l1.258-1.249Zm2.504 2.504H6.004L12.008 24l1.253-1.253zm14.24-4.747L24 11.997 12.003 0 10.75 1.251 15.491 6h-2.865L9.317 2.692 8.065 3.944l2.06 2.06H8.691v9.31H18v-1.432l2.06 2.06 1.252-1.252-3.312-3.32V8.506ZM6.63 5.372 5.38 6.625l1.342 1.343 1.251-1.253Zm10.655 10.655-1.247 1.251 1.342 1.343 1.253-1.251zM3.944 8.059 2.692 9.31l3.312 3.314v-2.506zm9.936 9.937h-2.504l3.314 3.312 1.25-1.252z", "hex": "#FF6363"}, "ycombinator": {"d": "M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z", "hex": "#F0652F"}, "substack": {"d": "M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z", "hex": "#FF6719"}};
+Object.assign(SI, {"youtube": {"d": "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z", "hex": "#FF0000"}, "github": {"d": "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12", "hex": "#181717"}, "bilibili": {"d": "M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c0-.373.129-.689.386-.947.258-.257.574-.386.947-.386zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373Z", "hex": "#FB7299"}});
+const brandOf = Lk => Lk.si || {yt:'youtube', yts:'youtube', bili:'bilibili', gh:'github', ghpr:'github'}[Lk.k] || null;
+const siteKey = Lk => brandOf(Lk) || Lk.site;
+const siDark = hex => { const v = parseInt(hex.slice(1), 16); return ((v >> 16) * .299 + (v >> 8 & 255) * .587 + (v & 255) * .114) < 40; };
+const siCol = k => siDark(SI[k].hex) ? 'var(--ink)' : SI[k].hex;
+const siSvg = (k, cls, style = '') => `<svg class="${cls}" viewBox="0 0 24 24" style="${style}" aria-hidden="true"><path fill="currentColor" d="${SI[k].d}"/></svg>`;
+function markOf(Lk, cls = ''){
+  if (Lk.si) return siSvg(Lk.si, 'mk ' + cls, `color:${siCol(Lk.si)}`);
+  const add = s => cls ? s.replace('class="mk"', `class="mk ${cls}"`) : s;
+  if (Lk.k === 'yt' || Lk.k === 'yts') return add(SVG.yt);
+  if (Lk.k === 'bili') return add(SVG.bili);
+  if (Lk.k === 'xhs') return add(SVG.xhs);
+  if (Lk.k === 'gh' || Lk.k === 'ghpr') return add(SVG.gh);
+  if (Lk.k === 'paper') return add(SVG.arxiv);
+  if (Lk.k === 'chat') return '<span class="cmk"></span>';
+  return sq(Lk.fc[0], Lk.fc[1], cls);
+}
+const av = (a) => `<span class="av" style="--c:${a[1]}">${esc(a[0])}</span>`;
+
+/* ---------- sample links ---------- */
 const L = {
-  l1:{site:'github',kind:'gh',repo:'vercel/next.js',state:'Open',url:'https://github.com/vercel/next.js/discussions/35773',title:'Hydration failed because the initial UI does not match what was rendered on the server',meta:'vercel/next.js · Discussion',desc:'Long-running discussion: mismatched markup between server render and the first client render.'},
-  l2:{site:'github',kind:'gh',repo:'yhnocoder/tongtu',state:'Merged',url:'https://github.com/yhnocoder/tongtu',title:'可选裁掉中文 PDF 的页边白边',meta:'yhnocoder/tongtu · PR #168'},
-  l3:{site:'github',kind:'gh',repo:'yhnocoder/tongtu',state:'File',url:'https://github.com/yhnocoder/tongtu',title:'tongtu/CLAUDE.md',meta:'github · File',note:'项目约定'},
-  l4:{site:'nextjs',kind:'type',url:'https://nextjs.org/docs/app/guides/upgrading/version-15',title:'Upgrading: Version 15 | Next.js',meta:'nextjs.org · Docs'},
-  l5:{site:'vercel',kind:'brand',url:'https://www.vercel-status.com',title:'Vercel Status',meta:'vercel-status.com'},
-  l6:{site:'sentry',kind:'brand',url:'https://sentry.io',title:'Issues · tongtu-web · Sentry',meta:'sentry.io'},
-  l7:{site:'geekbang',kind:'unclear',unclear:true,url:'https://time.geekbang.org',title:'极客时间-学 AI ，用极客时间',meta:'time.geekbang.org'},
-  l8:{site:'bilibili',kind:'video',url:'https://www.bilibili.com',title:'产品经理面试重点问题解析（下）',meta:'bilibili · P81/99',dur:'20:08',part:'P81'},
-  l9:{site:'ifanr',kind:'stock',url:'https://www.ifanr.com',title:'看完这 5 点，才知道产品经理这么难做',meta:'爱范儿'},
-  l10:{site:'arxiv',kind:'paper',url:'https://arxiv.org/abs/1706.03762',title:'Attention Is All You Need',meta:'arXiv · 2017',authors:'Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin'},
-  l11:{site:'secretlives',kind:'type',url:'https://thesecretlivesofdata.com/raft/',title:'Raft: Understandable Distributed Consensus',meta:'thesecretlivesofdata.com'},
-  l12:{site:'incomplete',kind:'type',url:'http://www.incompleteideas.net/IncIdeas/BitterLesson.html',title:'The Bitter Lesson',meta:'incompleteideas.net · Rich Sutton'},
-  l13:{site:'pg',kind:'type',url:'https://paulgraham.com/greatwork.html',title:'How to Do Great Work',meta:'paulgraham.com',note:'读完写 3 条自己的结论'},
-  l14:{site:'mcfunley',kind:'type',url:'https://mcfunley.com/choose-boring-technology',title:'Choose Boring Technology',meta:'mcfunley.com'},
-  l15:{site:'supasidebar',kind:'shot',url:'https://supasidebar.com',title:'Supa Sidebar',meta:'supasidebar.com · Screenshot'},
-  l16:{site:'xhs',kind:'photo',url:'https://www.xiaohongshu.com',title:'武康路这家咖啡店，下午三点的光太好了',meta:'小红书 · 2.3k likes'},
-  l17:{site:'linear',kind:'brand',url:'https://linear.app/changelog',title:'Changelog – Linear',meta:'linear.app'},
-  l18:{site:'rauno',kind:'type',url:'https://rauno.me/craft/interaction-design',title:'Invisible Details of Interaction Design',meta:'rauno.me',note:'拖拽、惯性、可中断动画，全是我们要的'},
-  l19:{site:'mit',kind:'type',url:'https://pdos.csail.mit.edu/6.824/',title:'6.5840: Distributed Systems',meta:'pdos.csail.mit.edu'},
-  l20:{site:'raft',kind:'paper',url:'https://raft.github.io/raft.pdf',title:'In Search of an Understandable Consensus Algorithm (Extended Version)',meta:'raft.github.io · PDF',authors:'Diego Ongaro, John Ousterhout'},
-  l21:{site:'ddia',kind:'type',url:'https://dataintensive.net',title:'Designing Data-Intensive Applications',meta:'dataintensive.net'},
-  l22:{site:'jepsen',kind:'type',url:'https://jepsen.io/analyses',title:'Jepsen: Analyses',meta:'jepsen.io'},
-  l23:{site:'youtube',kind:'video',url:'https://www.youtube.com/watch?v=aircAruvnKk',title:'But what is a neural network? | Deep learning chapter 1',meta:'YouTube · 3Blue1Brown',dur:'18:40'},
-  l24:{site:'chatgpt',kind:'chat',url:'https://chatgpt.com',title:'CRDT 和 OT 的区别，用一个协同编辑的例子讲清楚',meta:'ChatGPT · Shared chat',q:'CRDT 和 OT 的区别？',a:'OT 依赖一个中心服务器给操作排序并做变换；CRDT 让每个副本独立合并，最终一致……'},
-  l25:{site:'raycast',kind:'brand',url:'https://www.raycast.com',title:'Raycast',meta:'raycast.com'},
-  l26:{site:'excalidraw',kind:'brand',url:'https://excalidraw.com',title:'Excalidraw',meta:'excalidraw.com'},
-  l27:{site:'dropover',kind:'brand',url:'https://dropoverapp.com',title:'Dropover - Easier Drag and Drop on your Mac.',meta:'dropoverapp.com',note:'Shelf 的交互参考'},
-  l28:{site:'cloudflare',kind:'type',url:'https://developers.cloudflare.com/cloudflare-one/policies/access/',title:'Access policies · Cloudflare Zero Trust docs',meta:'developers.cloudflare.com'},
-  l29:{site:'solid',kind:'brand',url:'https://www.solidjs.com',title:'SolidJS · Reactive Javascript Library',meta:'solidjs.com'},
-  l31:{site:'hn',kind:'unclear',unclear:true,url:'https://news.ycombinator.com',title:'Hacker News',meta:'news.ycombinator.com'},
-  l32:{site:'apple',kind:'type',url:'https://developer.apple.com/documentation/technologyoverviews/liquid-glass',title:'Liquid Glass | Apple Developer Documentation',meta:'developer.apple.com'},
-  l34:{site:'zhihu',kind:'type',url:'https://www.zhihu.com',title:'为什么很多人收藏了，却从来不看？',meta:'知乎 · Question'}
+  yt1:{k:'yt',img:'yt1',t:'Why Steam Locomotives Vanished in Just 20 Years',by:'Rail Archive',av:['R','#7a5a3c'],dur:'18:40',st:['120万次观看','3 周前'],d:'From 1945 to 1965, almost every steam engine in America was scrapped. Diesel was cheaper to run, but that was only half of it.'},
+  yt2:{k:'yt',img:'yt2',t:'Coral Reef 4K · 3 Hours of Calm Ocean Sounds',by:'Slow Planet',av:['S','#2a7f9e'],dur:'3:02:11',st:['480万次观看','1 年前'],d:'Filmed over six dives in the Red Sea. No music, no narration.'},
+  yt3:{k:'yt',img:'yt3',t:'Restoring a 1950s Royal Typewriter',by:'Workshop Notes',av:['W','#5b6b4a'],dur:'24:16',st:['38万次观看','2 个月前'],prog:.34,d:'Forty years in a garage. Every key stuck. This is the full restoration, start to finish, including the platen I had to recover by hand.'},
+  yts:{k:'yts',img:'yts',t:'Two corgis vs. the first rain of autumn',by:'Mochi & Bean',av:['M','#d08a3a'],views:'210万次观看',dur:'0:32'},
+  bl1:{k:'bili',img:'bl1',t:'【4K】大熊猫和花吃竹子 · 40 分钟沉浸观察',by:'熊猫观察日记',play:'86.2万',dm:'1.1万',dur:'40:12',ago:'10-08',d:'成都大熊猫繁育研究基地，上午九点半。全程无配乐，只有竹子的声音。'},
+  bl2:{k:'bili',img:'bl2',t:'别再放奶油了！正宗罗马 Carbonara 只要 5 样东西',by:'阿离的厨房',play:'12.3万',dm:'2034',dur:'08:41',ago:'09-27',d:'蛋黄、佩科里诺、猪脸肉、黑胡椒、意面。关火之后再下蛋液。'},
+  bl3:{k:'bili',img:'bl3',t:'产品经理面试重点问题解析（下）',by:'产品小课',play:'3.4万',dm:'512',dur:'20:08',ago:'25-11-02',part:'P81',parts:99,prog:.62,d:'合集第 81 集：如何回答「你做过最失败的项目」。重点不是失败本身，是你从里面改掉了什么。'},
+  xh1:{k:'xhs',img:'xh1',t:'武康路这家蛋糕，下午三点去刚好｜上海',by:'阿梨不吃梨',av:['梨','#e08f97'],like:'2.3万',n:9,d:'覆盆子奶油一点都不腻，海绵很湿润。靠窗那张桌子下午有光，工作日去不用排队，周末大概四十分钟。'},
+  xh2:{k:'xhs',img:'xh2',t:'橘猫的脸到底能有多圆',by:'毛毛和土豆',av:['毛','#d39a5a'],like:'8412',n:6,d:'第六张是它发现我在拍它。'},
+  xh3:{k:'xhs',img:'xh3',t:'徒步｜夏天的阿尔卑斯山谷，比照片还绿',by:'走路的鲸',av:['鲸','#5f93b6'],like:'1.2万',n:12,d:'从 Lauterbrunnen 出发，单程三小时，路很好走。带一件薄外套，山谷里风大。'},
+  xh4:{k:'xhs',img:'xh4',t:'成都动物园的小熊猫，正好醒着',by:'周末去哪儿',av:['周','#b9744f'],like:'5630',n:4,d:'下午两点后最活跃，饲养员会在三点喂苹果。'},
+  xh5:{k:'xhs',img:'xh5',t:'京都町屋民宿，推门就是榻榻米',by:'京都慢慢走',av:['京','#8a7a5c'],like:'1.6万',n:8,d:'离四条只有十分钟。晚上很安静，早餐是房东做的。'},
+  xh6:{k:'xhs',img:'xh6',t:'无花果季｜一颗做三种早餐',by:'早餐研究所',av:['早','#9b5a7a'],like:'9104',n:5,d:'切片配酸奶、烤吐司、和蜂蜜一起煮成酱。'},
+  ga1:{k:'web',img:'ga1',site:'sspai.com',sn:'少数派',fc:['派','#D71A1B'],t:'我的稍后读系统：三年、四千条链接之后',ex:'三年里我收藏了四千多条链接，真正回去读的不到一成。后来我发现问题不在收藏，而在「再见到它」这件事。',hl:'收藏只是开始。真正让一条链接有用的，是你下一次在什么时候、因为什么再见到它。'},
+  ga2:{k:'web',img:'ga2',site:'kinfolk.com',sn:'Kinfolk',fc:['K','#3a3a3a'],t:'A Slower Afternoon: Notes on Tea and Time',ex:'The second steeping is always better. It asks you to wait a little longer than you want to.'},
+  ga3:{k:'web',img:'ga3',site:'archdaily.cn',sn:'ArchDaily',fc:['A','#1f1f1f'],t:'为什么日本老房子的屋檐这么深',ex:'深檐挡住夏天高角度的日照，却让冬天低角度的阳光照进屋里。'},
+  ga4:{k:'web',img:'ga4',site:'theguardian.com',sn:'The Guardian',fc:['G','#052962'],t:'Lisbon’s Tram 28, stop by stop',ex:'Get on at Martim Moniz before nine, sit on the left, and the whole old city goes past the window.'},
+  gt1:{k:'web',site:'paulgraham.com',sn:'Paul Graham',fc:['P','#7a6a52'],t:'How to Do Great Work',ex:'If you collected lists of techniques for doing great work in a lot of different fields, what would the intersection look like? I decided to find out by making it.',hl:'If you collected lists of techniques for doing great work in a lot of different fields, what would the intersection look like?'},
+  gt2:{k:'web',site:'mcfunley.com',sn:'mcfunley.com',fc:['M','#3d6b8f'],t:'Choose Boring Technology',ex:'Let’s say every company gets about three innovation tokens. You can spend these however you want, but the supply is fixed for a long while.'},
+  gt3:{k:'web',site:'every-layout.dev',sn:'Every Layout',fc:['E','#1a1a1a'],t:'The Stack',ex:'Flow elements require space to physically and conceptually divide them from the elements that come before and after them.'},
+  sl1:{k:'web',si:'linear',site:'linear.app',sn:'Linear',fc:['L','#5E6AD2'],t:'Linear Method: Practices for building',ex:'Build momentum by working in short, focused cycles. Scope projects down, ship small, and write the issue before you write the code.'},
+  sl2:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Accept a payment',ex:'Build a payment form or use a prebuilt checkout page to start accepting online payments. Collect card details, handle 3D Secure and confirm on the server.'},
+  sl3:{k:'web',si:'notion',site:'notion.so',sn:'Notion',fc:['N','#000'],t:'2026 Q4 设计评审节奏',ex:'每周二下午集中评审，提前一天把链接贴进本页。只看方向，不抠像素；像素问题在 Figma 里留评论。'},
+  sl4:{k:'web',si:'vercel',site:'vercel.com',sn:'Vercel',fc:['V','#000'],t:'How we made our dashboard twice as fast',ex:'We cut the critical path by streaming the shell first, moving data fetching to the server and deleting forty kilobytes of client JavaScript nobody needed.'},
+  sl5:{k:'web',si:'figma',site:'figma.com',sn:'Figma',fc:['F','#F24E1E'],t:'Auto layout 的 hug 和 fill 到底有什么区别',ex:'Hug 让容器跟着内容走，Fill 让子元素吃掉剩余空间。嵌套的时候先想清楚谁决定尺寸，再决定谁让步。'},
+  sl6:{k:'web',si:'substack',site:'substack.com',sn:'Substack',fc:['S','#FF6719'],t:'在东京租房的第三年',ex:'第一年嫌小，第二年嫌吵，第三年终于明白，离车站七分钟、朝南、二楼，就是这座城市能给的全部温柔。'},
+  st1:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Accept a payment'},
+  st2:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Receive Stripe events in your webhook endpoint'},
+  st3:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Test card numbers'},
+  st4:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Idempotent requests'},
+  st5:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Build a subscriptions integration'},
+  st6:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Radar rules reference'},
+  st7:{k:'web',si:'stripe',site:'docs.stripe.com',sn:'Stripe Docs',fc:['S','#635BFF'],t:'Handle failed payments with Smart Retries'},
+  br1:{k:'web',site:'raycast.com',sn:'Raycast',fc:['R','#FF6363'],t:'Raycast – Your shortcut to everything',ex:'A collection of powerful productivity tools all within an extendable launcher.'},
+  br2:{k:'web',site:'linear.app',sn:'Linear',fc:['L','#5E6AD2'],t:'Linear – Plan and build products',ex:'Linear is a purpose-built tool for planning and building products.'},
+  gh1:{k:'gh',owner:'excalidraw',repo:'excalidraw',d:'Virtual whiteboard for sketching hand-drawn like diagrams',lang:[['TypeScript','#3178c6',.93],['SCSS','#c6538c',.05],['Other','#8b949e',.02]],star:'9.1万',fork:'9.8k',up:'2 天前更新',topics:['whiteboard','canvas','collaboration'],readme:'Excalidraw Editor is an open source virtual hand-drawn style whiteboard. Collaborative and end-to-end encrypted.'},
+  pa1:{k:'paper',site:'arxiv.org',sn:'arXiv',id:'arXiv:1706.03762',t:'Attention Is All You Need',au:'Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin',ab:'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.'},
+  ch1:{k:'chat',site:'chatgpt.com',sn:'ChatGPT',q:'CRDT 和 OT 的区别？用一个协同编辑的例子讲清楚',a:'OT 在服务器上把并发的操作互相变换，保证大家最后看到同一份文档；CRDT 让每个副本自己合并，不需要中心服务器。比如两个人同时在“你好”后面打字：OT 会先排出先后顺序再改写位置，CRDT 则给每个字一个全局唯一的位置标识，合并时按标识排序。'},
+  sx1:{k:'web',site:'figma.com',sn:'Figma',si:'figma',fc:['F','#F24E1E'],path:'figma.com/design/8K2xQ/Links-Bento',host:'figma.com',img:'ga3',t:''},
+  sx2:{k:'web',site:'mp.weixin.qq.com',sn:'微信公众号',fc:['微','#07C160'],path:'mp.weixin.qq.com/s/Xb3kQ9pLw2',host:'mp.weixin.qq.com',t:''},
+  sx3:{k:'web',site:'news.ycombinator.com',sn:'Hacker News',si:'ycombinator',fc:['Y','#F0652F'],path:'news.ycombinator.com/item?id=41234567',host:'news.ycombinator.com',t:'Hacker News'},
+  sx4:{k:'web',site:'time.geekbang.org',sn:'极客时间',fc:['极','#F08A24'],path:'time.geekbang.org/column/article/89231',host:'time.geekbang.org',t:'极客时间-学 AI，用极客时间'},
+  gh3:{k:'ghpr',state:'open',owner:'yhnocoder',repo:'tongtu',num:171,t:'导出时保留 PDF 书签和目录层级',diff:['+96','−12'],up:'2 小时前更新',body:''},
+  gh4:{k:'ghpr',state:'draft',owner:'yhnocoder',repo:'tongtu',num:172,t:'实验：用 WebGPU 渲染缩略图',diff:['+1,204','−318'],up:'昨天更新',body:''},
+  gh5:{k:'ghpr',state:'closed',owner:'yhnocoder',repo:'tongtu',num:160,t:'把字体子集化挪到 Worker 里',diff:['+58','−40'],up:'10 月 12 日关闭',body:''},
+  gh6:{k:'ghpr',state:'issue',owner:'yhnocoder',repo:'tongtu',num:174,t:'竖排中文的页码位置不对',cm:6,up:'3 小时前',body:''},
+  gh7:{k:'ghpr',state:'disc',owner:'vercel',repo:'next.js',num:35773,t:'Hydration failed because the initial UI does not match what was rendered on the server',cm:214,up:'上周活跃',body:''},
+  gh2:{k:'ghpr',owner:'yhnocoder',repo:'tongtu',num:168,t:'可选裁掉中文 PDF 的页边白边',diff:['+214','−37'],up:'10 月 20 日合并',body:'渲染前检测每页四周的空白，按内容边界裁掉。默认关闭，在导出设置里打开。扫描件和带页眉的 PDF 都测过。'},
 };
-// 8-column seed. x,y,w,h in cells.
-const SEED = [
-  {id:'b1', kind:'card', link:'l1',  x:0,y:0,w:2,h:2},
-  {id:'b2', kind:'list', title:'PRs this week', rows:['l2','l3','l4','l6'], x:2,y:0,w:2,h:2},
-  {id:'b3', kind:'note', text:'周五前把 #167、#168 都合掉', x:4,y:0,w:2,h:1},
-  {id:'b4', kind:'card', link:'l7',  x:4,y:1,w:2,h:1},
-  {id:'b5', kind:'card', link:'l5',  x:6,y:0,w:1,h:1},
-  {id:'b6', kind:'card', link:'l6',  x:7,y:0,w:1,h:1},
-  {id:'b7', kind:'card', link:'l17', x:6,y:1,w:2,h:1},
-  {id:'b8', kind:'card',link:'l8',  x:0,y:2,w:2,h:2},
-  {id:'b9', kind:'card', link:'l9',  x:2,y:2,w:2,h:1},
-  {id:'b10',kind:'card', link:'l10', x:2,y:3,w:2,h:1},
-  {id:'b11',kind:'card',link:'l15', x:4,y:2,w:4,h:2},
-  {id:'b12',kind:'card',link:'l16', x:0,y:4,w:2,h:3},
-  {id:'b13',kind:'card', link:'l18', x:2,y:4,w:2,h:2},
-  {id:'b14',kind:'list', title:'To read this weekend', rows:['l11','l12','l13','l14','l34'], x:4,y:4,w:2,h:2},
-  {id:'b15',kind:'card',link:'l23', x:6,y:4,w:2,h:2},
-  {id:'b16',kind:'card', link:'l25', x:2,y:6,w:1,h:1},
-  {id:'b17',kind:'card', link:'l26', x:3,y:6,w:1,h:1},
-  {id:'b18',kind:'card', link:'l24', x:4,y:6,w:2,h:1},
-  {id:'b19',kind:'card', link:'l27', x:6,y:6,w:2,h:1}
-];
-const EXTRA = ['l13','l28','l19','l20','l21','l22','l32','l31','l29'];
+
+/* which sizes each kind opens; anything else snaps to the nearest open one */
+const NO = (...x) => ALL.filter(s => !x.includes(s));
+const OPEN = {paper:ALL, chat:ALL, yt:ALL, bili:ALL, yts:ALL, xhs:ALL, web:ALL, gh:NO('1x2','2x3'), ghpr:NO('3x2','2x3'), note:ALL, list:ALL, listc:['2x2','3x2','2x3']};
+const openOf = spec => spec[0] === 'link' ? OPEN[L[spec[1]].k] : spec[0] === 'note' ? OPEN.note : spec[2] === 'c' ? OPEN.listc : OPEN.list;
+function snapTo(open, w, h){
+  let best = null, bd = 1e9;
+  for (const s of open) { const [a, b] = s.split('x').map(Number), d = (a - w) ** 2 + (b - h) ** 2 + (a * b) * .01; if (d < bd) { bd = d; best = [a, b]; } }
+  return best;
+}
+
+/* ---------- renderers: each returns {cls, html} for a w×h card ---------- */
+const tt = (t, l, fs, extra = '') => `<div class="tt" style="--l:${l};--fs:${fs}px${extra}">${esc(t)}</div>`;
+const ttf = (t, fs) => `<div class="tt fill" style="--fs:${fs}px">${esc(t)}</div>`;
+const ds = (t, l, fs = 12) => t ? `<div class="ds" style="--l:${l};font-size:${fs}px">${esc(t)}</div>` : '';
+const dsf = (t, fs = 12) => t ? `<div class="ds fill" style="font-size:${fs}px">${esc(t)}</div>` : '';
+const mt = (inner, st = '') => `<div class="mt"${st ? ` style="${st}"` : ''}>${inner}</div>`;
+const pgOf = Lk => Lk.prog ? `<i class="pg ${Lk.k === 'bili' ? 'bili' : ''}" style="--p:${Lk.prog}"></i>` : '';
+
+function vidOver(Lk, w){
+  let o = '';
+  if (Lk.k === 'bili') {
+    if (Lk.part && w >= 130) o += `<span class="pt">${Lk.part}</span>`;
+    o += w >= 130 ? `<div class="bst"><span>${SVG.play}${Lk.play}</span><span>${SVG.dm}${Lk.dm}</span><b>${Lk.dur}</b></div>` : `<b class="dur">${Lk.dur}</b>`;
+  } else o += `<b class="dur">${Lk.dur}</b>`;
+  return o + pgOf(Lk);
+}
+const who = Lk => `${markOf(Lk)}<span>${esc(Lk.by)}</span>`;
+function media(Lk, w, h){
+  const big = w * h >= 6, sub = Lk.part || Lk.by;
+  const name = {yt:'YouTube', yts:'YouTube', bili:'bilibili'}[Lk.k];
+  const st = `--ps:${big ? 54 : 44}px;--mf:${big ? 15.5 : 14}px;--mp:${big ? 14 : 11}px`;
+  return {cls:'bleed media', style:st, html: bleed(Lk.img, px(w), px(h), `<div class="mshd"></div><span class="play"></span>${pgOf(Lk)}`)
+    + `<div class="mo"><div class="mt2">${esc(Lk.t)}</div><div class="mm">${markOf(Lk)}<span>${name} · ${esc(sub)}</span><b class="mdu">${Lk.dur}</b></div></div>`};
+}
+function statLine(Lk){
+  if (Lk.k === 'bili') return `<div class="stat"><span>${Lk.play} 播放</span><span>${Lk.dm} 弹幕</span><span>${Lk.ago}</span></div>`;
+  return `<div class="stat"><span>${Lk.st[0]}</span><span>${Lk.st[1]}</span></div>`;
+}
+function video(Lk, w, h){
+  const im = Lk.img;
+  if (h >= 2 && w >= 2) return media(Lk, w, h);
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'bleed', html: bleed(im, 84, 84, `<b class="dur">${Lk.dur}</b>${pgOf(Lk)}`)};
+    case '2x1': return {cls:'row', html: slot(im, 76, 76, `<b class="dur">${Lk.dur}</b>${pgOf(Lk)}`) + `<div class="tx">${tt(Lk.t, 2, 12)}${mt(who(Lk))}</div>`};
+    case '3x1': return {cls:'row', html: slot(im, 136, 76, vidOver(Lk, 136)) + `<div class="tx">${tt(Lk.t, 2, 12.5)}${mt(who(Lk))}</div>`};
+    case '1x2': return {cls:'', html: slot(im, 76, 100, `<b class="dur">${Lk.dur}</b>${pgOf(Lk)}`) + `<div class="tx" style="padding:8px 8px 9px">${tt(Lk.t, 2, 12)}${mt(who(Lk))}</div>`};
+
+
+
+  }
+}
+function band(t){ return `<div class="band">${tt(t, 2, 11, ';line-height:1.3')}</div>`; }
+function xhs(Lk, w, h){
+  const im = Lk.img, like = `<span class="r">${SVG.heart}${Lk.like}</span>`;
+  const by = `${av(Lk.av)}<span>${esc(Lk.by)}</span>${like}`;
+  const n = Lk.n > 1 ? `<span class="nimg">1/${Lk.n}</span>` : '';
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'bleed', html: bleed(im, 84, 84, `<div class="shd"></div>`) + `<div class="ov" style="padding:0 7px 6px">${mt(`${SVG.heart}<span>${Lk.like}</span>`)}</div>`};
+    case '2x1': return {cls:'row', html: slot(im, 76, 76) + `<div class="tx">${tt(Lk.t, 2, 12)}${mt(`${SVG.xhs}${like}`)}</div>`};
+    case '3x1': return {cls:'row', html: slot(im, 76, 76) + `<div class="tx">${tt(Lk.t, 2, 12.5)}${mt(by)}</div>`};
+    case '1x2': return {cls:'', html: slot(im, 76, 100) + `<div class="tx" style="padding:8px 8px 9px">${tt(Lk.t, 2, 12)}${mt(`${SVG.xhs}${like}`)}</div>`};
+    case '2x2': return {cls:'bleed', html: bleed(im, 174, 174, `<div class="shd"></div>${n}`) + `<div class="ov">${tt(Lk.t, 2, 13)}${mt(by)}</div>`};
+    case '3x2': return {cls:'row', html: slot(im, 124, 166, n) + `<div class="tx" style="justify-content:flex-start;padding:10px 11px 9px;gap:6px">${tt(Lk.t, 2, 14)}${dsf(Lk.d)}${mt(by)}</div>`};
+    case '2x3': return {cls:'', html: slot(im, 166, 188, n) + `<div class="tx" style="gap:6px;padding:8px 10px 9px">${tt(Lk.t, 2, 13)}${mt(by)}</div>`};
+  }
+}
+/* generic page: one look, decided by content (cover image / none / a highlighted sentence) */
+function web(Lk, w, h, v = 'auto'){
+  const s = w + 'x' + h, im = Lk.img;
+  if (v === 'auto') v = im ? 'image' : 'text';
+  if (v === 'logo') {
+    if (!Lk.si) v = 'text';
+    else {
+      const r0 = web(Lk, w, h, 'text'), W = px(w), H = px(h), side = Math.min(W, H) * (w === h ? 1 : 1.2), col = siCol(Lk.si);
+      const wm = w * h >= 2 ? siSvg(Lk.si, 'wm', `width:${side}px;height:${side}px;right:${-side * .22}px;bottom:${-side * .22}px;color:${col}`) : '';
+      return {cls: r0.cls + ' v-logo', style: `--tint:${col}`, html: wm + r0.html};
+    }
+  }
+  const site = `${markOf(Lk)}<span>${esc(Lk.sn)}</span>`;
+  const top = `<div class="ty-top">${markOf(Lk)}<span>${esc(Lk.sn)}</span></div>`;
+  if (v === 'brand') {
+    const fs = {'1x1':30,'2x1':20,'3x1':22,'1x2':30,'2x2':26,'3x2':30,'2x3':28}[s];
+    return {cls:'v-brand', style:`--tint:${Lk.fc[1]}`, html:`<div class="bw" style="font-size:${fs}px">${esc(w >= 2 ? Lk.sn : Lk.fc[0])}</div>` + (h >= 2 ? `<div class="tx" style="flex:none;padding:0 11px 10px">${mt(`<span>${esc(Lk.site)}</span>`)}</div>` : '')};
+  }
+  if (s === '1x1') return {cls:'pad', html:`<div class="tx" style="gap:6px">${markOf(Lk)}${tt(Lk.t, 3, 11.5, ';line-height:1.25')}</div>`};
+  if (v === 'quote' && Lk.hl) {
+    const q = {'2x1':[2,12.5],'3x1':[2,13],'1x2':[6,12],'2x2':[4,13.5],'3x2':[4,15],'2x3':[8,14.5]}[s];
+    const big = w * h > 2;
+    return {cls:'pad v-quote', style:`--tint:${Lk.fc[1]}`, html:`<div class="tx" style="gap:6px">${big ? '<div class="qm">“</div>' : ''}<div class="q" style="--l:${q[0]};font-size:${q[1]}px">${esc(Lk.hl)}</div>${big ? `<div class="mt" style="margin-top:auto">${markOf(Lk)}<span class="src">${esc(Lk.t)}</span></div>` : ''}</div>`};
+  }
+  if (v === 'image') switch (s) {
+    case '2x1': return {cls:'row', html: slot(im, 76, 76) + `<div class="tx">${tt(Lk.t, 2, 12)}${mt(site)}</div>`};
+    case '3x1': return {cls:'row', html: slot(im, 112, 76) + `<div class="tx">${tt(Lk.t, 2, 12.5)}${mt(site)}</div>`};
+    /* all two-tall cards share one image height, so titles line up side by side */
+    case '1x2': return {cls:'', html: slot(im, 76, 100) + `<div class="tx" style="padding:8px 8px 9px">${tt(Lk.t, 2, 12)}${mt(site)}</div>`};
+    case '2x2': return {cls:'', html: slot(im, 166, 100) + `<div class="tx">${tt(Lk.t, 2, 13)}${mt(site)}</div>`};
+    case '3x2': return {cls:'', html: slot(im, 256, 100) + `<div class="tx">${tt(Lk.t, 2, 13)}${mt(site)}</div>`};
+    case '2x3': return {cls:'', html: slot(im, 166, 124) + `<div class="tx" style="gap:5px">${tt(Lk.t, 3, 13.5)}${dsf(Lk.ex)}${mt(site)}</div>`};
+  }
+  switch (s) {
+    case '2x1': return {cls:'pad', html:`<div class="tx" style="gap:6px">${top}${tt(Lk.t, 2, 13)}</div>`};
+    case '3x1': return {cls:'pad', html:`<div class="tx" style="gap:4px">${top}${tt(Lk.t, 1, 13.5)}${ds(Lk.ex, 1)}</div>`};
+    case '1x2': return {cls:'pad', html:`<div class="tx" style="gap:8px">${markOf(Lk, 'lg')}${ttf(Lk.t, 14)}<div class="mt"><span>${esc(Lk.sn)}</span></div></div>`};
+    case '2x2': return {cls:'pad', html:`<div class="tx" style="gap:8px">${top}${tt(Lk.t, 3, 17)}${dsf(Lk.ex)}</div>`};
+    case '3x2': return {cls:'pad', html:`<div class="tx" style="gap:8px">${top}${tt(Lk.t, 2, 19)}${dsf(Lk.ex, 12.5)}</div>`};
+    case '2x3': return {cls:'pad', html:`<div class="tx" style="gap:9px">${top}${tt(Lk.t, 4, 19)}${dsf(Lk.ex, 12.5)}</div>`};
+  }
+}
+function gh(Lk, w, h){
+  const showOwner = Lk.owner !== Lk.repo && w >= 3;
+  const head = `<div class="gh-h">${SVG.gh}${showOwner ? `<span>${esc(Lk.owner)}/</span>` : ''}<b>${esc(Lk.repo)}</b></div>`;
+  const lang = Lk.lang[0];
+  const foot = (more) => `<div class="gf"><span><i style="--c:${lang[1]}"></i>${lang[0]}</span><span>${SVG.star}${Lk.star}</span>${more ? `<span>${SVG.fork}${Lk.fork}</span><span>${Lk.up}</span>` : ''}</div>`;
+  const bar = `<div class="lbar">${Lk.lang.map(l => `<i style="width:${l[2] * 100}%;background:${l[1]}"></i>`).join('')}</div>`;
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'pad', html:`<div class="tx" style="gap:5px">${SVG.gh}<b class="rn">${esc(Lk.repo)}</b><div class="gf"><span>${SVG.star}${Lk.star}</span></div></div>${bar}`};
+    case '2x1': return {cls:'pad', html:`<div class="tx" style="gap:4px">${head}${ds(Lk.d, 1)}${foot()}</div>${bar}`};
+    case '3x1': return {cls:'pad', html:`<div class="tx" style="gap:4px">${head}${ds(Lk.d, 1)}${foot(true)}</div>${bar}`};
+    case '2x2': return {cls:'pad', html:`<div class="tx" style="gap:7px">${head}${ds(Lk.d, 3, 12.5)}${dsf(Lk.readme, 11.5)}${foot()}</div>${bar}`};
+    case '3x2': return {cls:'pad', html:`<div class="tx" style="gap:7px">${head}${ds(Lk.d, 2, 12.5)}${dsf(Lk.readme, 11.5)}<div class="tops">${Lk.topics.map(t => `<span>${t}</span>`).join('')}</div>${foot(true)}</div>${bar}`};
+  }
+}
+/* arXiv / PDF papers: the board's paper cover — cream sheet, serif title, italic authors */
+function paper(Lk, w, h){
+  const id = `<div class="pid">${SVG.arxiv}<span>${esc(Lk.id)}</span></div>`;
+  const T = (l, fs) => `<div class="ptt" style="--l:${l};font-size:${fs}px">${esc(Lk.t)}</div>`, A = l => `<div class="pau" style="--l:${l}">${esc(Lk.au)}</div>`;
+  const ab = (fs) => `<div class="pab fill" style="font-size:${fs}px">${esc(Lk.ab)}</div>`;
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'pad pp', html:`<div class="tx" style="gap:5px">${SVG.arxiv}${T(3, 12)}</div>`};
+    case '2x1': return {cls:'pad pp', html:`<div class="tx" style="gap:5px">${id}${T(2, 14.5)}</div>`};
+    case '3x1': return {cls:'pad pp', html:`<div class="tx" style="gap:4px">${id}${T(1, 15.5)}${A(1)}</div>`};
+    case '1x2': return {cls:'pad pp', html:`<div class="tx" style="gap:6px">${SVG.arxiv}${T(4, 12.5)}<div style="margin-top:auto">${A(3)}</div></div>`};
+    case '2x2': return {cls:'pad pp', html:`<div class="tx" style="gap:6px">${id}${T(3, 18)}${A(2)}<div class="pln"><i></i><i></i><i></i></div></div>`};
+    case '3x2': return {cls:'pad pp', html:`<div class="tx" style="gap:6px">${id}${T(2, 19)}${A(1)}${ab(12)}</div>`};
+    case '2x3': return {cls:'pad pp', html:`<div class="tx" style="gap:7px">${id}${T(4, 20)}${A(2)}${ab(12)}</div>`};
+  }
+}
+/* shared AI chats: the board's chat cover — question bubble on the right, answer below */
+function chat(Lk, w, h){
+  const q = (l) => `<div class="cq" style="--l:${l}"><span>${esc(Lk.q)}</span></div>`, a = (l, fill) => `<div class="ca"><i></i><span${fill ? ' class="fill"' : ''} style="--l:${l}">${esc(Lk.a)}</span></div>`;
+  const foot = mt(`<span class="cmk"></span><span>${esc(Lk.sn)}</span>`);
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'pad cc', html:`<div class="tx" style="gap:6px"><span class="cmk"></span>${tt(Lk.q, 3, 11.5)}</div>`};
+    case '2x1': return {cls:'pad cc', html:`<div class="tx" style="gap:6px">${q(1)}${a(2)}</div>`};
+    case '3x1': return {cls:'pad cc', html:`<div class="tx" style="gap:6px">${q(1)}${a(2)}</div>`};
+    case '1x2': return {cls:'pad cc', html:`<div class="tx" style="gap:7px">${q(2)}${a(0, 1)}${foot}</div>`};
+    default: return {cls:'pad cc', html:`<div class="tx" style="gap:8px">${q(2)}${a(0, 1)}${foot}</div>`};
+  }
+}
+/* before the page is read, and when it can't be (login wall, blocked crawler, 404) or its title says nothing */
+function pending(Lk, w, h, st){
+  const s = w + 'x' + h, top = `<div class="ty-top">${markOf(Lk)}<span>${esc(Lk.sn)}</span></div>`;
+  const url = `<div class="url">${esc(Lk.path.slice(Lk.host.length))}</div>`;
+  if (st === 'loading') {
+    const bars = n => `<div class="skl">${Array.from({length:n}, (_, i) => `<i style="width:${[92, 70, 84][i]}%"></i>`).join('')}</div>`;
+    if (s === '2x2') return {cls:'ld', html: `<div class="cv skb" style="width:166px;height:100px"></div><div class="tx" style="gap:8px">${bars(2)}${top}</div>`};
+    if (s === '1x2') return {cls:'ld', html: `<div class="cv skb" style="width:76px;height:100px"></div><div class="tx" style="gap:8px;padding:8px 8px 9px">${bars(2)}${top}</div>`};
+    return {cls:'pad ld', html:`<div class="tx" style="gap:8px">${top}${bars(w >= 3 ? 1 : 2)}</div>`};
+  }
+  const title = st === 'failed' ? Lk.host.replace(/\./g, '.\u200b') : Lk.t;
+  if (s === '1x2') return {cls:'pad', html:`<div class="tx" style="gap:7px">${markOf(Lk, 'lg')}${tt(title, 3, 13)}${url}<div class="mt" style="margin-top:auto"><span>${esc(Lk.sn)}</span></div></div>`};
+  if (s === '2x2') return {cls:'pad', html:`<div class="tx" style="gap:7px">${top}<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">${tt(title, 3, 16.5)}${url}</div></div>`};
+  return {cls:'pad', html:`<div class="tx" style="gap:5px">${top}${tt(title, 1, 13.5)}${url}</div>`};
+}
+function ghpr(Lk, w, h){
+  const S = {merged:[SVG.merge,'#8250df','Merged'], open:[SVG.pr,'#1a7f37','Open'], draft:[SVG.prdraft,'var(--ink3)','Draft'], closed:[SVG.prclosed,'#cf222e','Closed'],
+             issue:[SVG.issue,'#1a7f37','Open'], issuedone:[SVG.issuedone,'#8250df','Closed'], disc:[SVG.disc,'var(--ink3)','Discussion']}[Lk.state || 'merged'];
+  const st = `<span class="pst" title="${S[2]}" style="color:${S[1]}">${S[0]}</span>`;
+  const diff = Lk.diff ? `<span style="color:#1a7f37">${Lk.diff[0]}</span><span style="color:#cf222e">${Lk.diff[1]}</span>` : `<span>${Lk.cm} 条评论</span>`;
+  const row = (repo) => `<div class="gf">${SVG.gh}${repo ? `<span>${repo} #${Lk.num}</span>` : ''}${st}</div>`;
+  switch (w + 'x' + h) {
+    case '1x1': return {cls:'pad', html:`<div class="tx" style="gap:6px">${row('')}${tt(Lk.t, 3, 12)}</div>`};
+    case '2x1': return {cls:'pad', html:`<div class="tx" style="gap:6px">${row(esc(Lk.repo))}${tt(Lk.t, 2, 12.5)}</div>`};
+    case '3x1': return {cls:'pad', html:`<div class="tx" style="gap:6px">${row(`${esc(Lk.owner)}/${esc(Lk.repo)}`)}${tt(Lk.t, 1, 12.5)}<div class="gf" style="margin-top:auto">${diff}<span>${Lk.up}</span></div></div>`};
+    case '1x2': return {cls:'pad', html:`<div class="tx" style="gap:6px">${row('')}${tt(Lk.t, 5, 12.5)}<div class="gf" style="margin-top:auto">${diff}</div></div>`};
+    case '2x2': return {cls:'pad', html:`<div class="tx" style="gap:6px">${row(esc(Lk.repo))}${tt(Lk.t, 2, 12.5)}${dsf(Lk.body, 11.5)}<div class="gf" style="margin-top:auto">${diff}<span>${Lk.up}</span></div></div>`};
+  }
+}
+
+/* ---------- notes ---------- */
+const NOTES = {
+  n1:{text:'灵感', c:1},
+  n2:{text:'周五前把 #167、#168 都合掉', c:1},
+  n3:{title:'京都行李', items:[['转换插头',0],['JR Pass',1],['御朱印帐',0],['折叠伞',0]], c:3},
+  n4:{text:'读完 How to Do Great Work 写 3 条自己的结论，别只摘抄。\n第二遍再看「好奇心」那一节。', c:4},
+  n5:{text:'周六上午先去武康路，下午留给书店', c:2},
+  n6:{text:'十一月', c:1},
+};
+const STEP = {'1x1':22,'2x1':17,'3x1':17,'1x2':16,'2x2':17,'3x2':15,'2x3':15};
+/* same as the board's note: soft yellow paper, small NOTE label, 14px text; shrinks only on overflow */
+function note(N, w, h){
+  const body = N.items
+    ? `<div class="nh">${esc(N.title)}</div><ul class="chk">${N.items.map(i => `<li class="${i[1] ? 'dn' : ''}"><i></i>${esc(i[0])}</li>`).join('')}</ul>`
+    : esc(N.text);
+  return {cls:'note n-bd', html:`<div class="note-l">Note</div><div class="fit" data-min="11" data-max="${w * h === 1 ? 13 : 14}">${body}</div>`};
+}
+
+/* ---------- link lists ---------- */
+const LISTS = {
+  read:{name:'这周要读', items:['gt1','ga1','gt2','gh1','ga3','gt3','ga4','ga2'], done:['gt2','gt3']},
+  watch:{name:'周末想看', items:['bl1','yt1','xh3','bl3','yt2','xh4','bl2']},
+  mix:{name:'装修灵感', items:['ga3','gt3','xh4','sl5','yt3','gt1','ga2','sl3']},
+  stripe:{name:'Stripe 接入', items:['st1','st2','st3','st4','st5','st6','st7']},
+  ytl:{name:'修东西', items:['yt3','yt1','yts','yt2']},
+};
+const BIG = (() => {
+  const out = [], dur = i => `${8 + (i * 7) % 47}:${String((i * 13) % 60).padStart(2, '0')}`;
+  const place = ['京都','大理','伊斯坦布尔','冰岛环岛','成都','里斯本','新疆独库','清迈','北海道','厦门','西班牙南部','川西','东京','香港','台南','苏州'];
+  const bili = ['自驾 Vlog 全记录','穷游攻略：一天花多少钱','街头小吃一口气吃完','航拍 4K','住了一周的真实感受','避坑指南'];
+  const yt = ['Travel Guide: 3 Days','Street Food Tour','Walking Tour 4K','What Nobody Tells You','Hidden Gems','Budget Breakdown'];
+  const xhs = ['小众机位合集','三天两晚怎么排','这家民宿我愿称之为天花板','拍照穿搭参考','本地人才知道的早餐'];
+  const webs = [['theguardian.com','The Guardian',['G','#052962']],['sspai.com','少数派',['派','#D71A1B']],['archdaily.cn','ArchDaily',['A','#1f1f1f']],['kinfolk.com','Kinfolk',['K','#3a3a3a']]];
+  const art = ['在{p}慢下来的一周','{p}：一座城市的另一面','为什么大家又开始去{p}','{p}建筑散步路线'];
+  for (let i = 0; out.length < 128; i++) {
+    const pl = place[i % place.length], j = Math.floor(i / place.length);
+    if (j < bili.length) out.push({k:'bili', t:`${pl}${bili[j]}`, dur:dur(i)});
+    if (j < yt.length) out.push({k:'yt', t:`${pl} ${yt[j]}`, dur:dur(i + 3)});
+    if (j < xhs.length) out.push({k:'xhs', t:`${pl}｜${xhs[j]}`, like:String(200 + (i * 373) % 9800)});
+    if (j < art.length) { const w = webs[(i + j) % webs.length]; out.push({k:'web', site:w[0], sn:w[1], fc:w[2], t:art[j].replace('{p}', pl)}); }
+    if (i > 400) break;
+  }
+  return out.slice(0, 128).map((Lk, i) => (L['bg' + i] = Lk, 'bg' + i));
+})();
+LISTS.trip = {name:'旅行收藏', items:BIG};
+LISTS.longn = {name:'2026 年秋天想去但大概率去不了的地方', items:BIG};
+LISTS.few = {name:'周末想看', items:['bl1','yt1','xh3']};
+function rowMeta(Lk){
+  if (Lk.k === 'yt' || Lk.k === 'yts' || Lk.k === 'bili') return Lk.dur;
+  if (Lk.k === 'xhs') return `♡ ${Lk.like}`;
+  if (Lk.k === 'gh') return `★ ${Lk.star}`;
+  return Lk.sn || '';
+}
+const siteName = Lk => ({paper:'arXiv', chat:'ChatGPT', yt:'YouTube', yts:'YouTube', bili:'哔哩哔哩', xhs:'小红书', gh:'GitHub', ghpr:'GitHub'}[Lk.k] || Lk.sn);
+const titleOf = Lk => (Lk.t || `${Lk.owner}/${Lk.repo}`).replace(/^【[^】]*】\s*/, '');
+/* o: 'a' rows | 'c' thumbnails. x: 'brand' (same-site list in brand colour) | 'short' (C: rows without image stay short) */
+function list(Ls, w, h, o, x){
+  const items = Ls.items.map(id => ({id, Lk:L[id]})), n = items.length;
+  const k0 = siteKey(items[0].Lk), one = items.every(i => siteKey(i.Lk) === k0) ? items[0].Lk : null;
+  const bk = one && brandOf(one), brand = x === 'brand' && bk;
+  const stack = one ? `<span class="stk"><span class="si">${markOf(one)}</span></span>`
+    : `<span class="stk">${items.slice(0, 4).map(i => `<span class="si">${markOf(i.Lk)}</span>`).join('')}</span>`;
+  let res;
+  const stack3 = one ? stack : `<span class="stk">${items.slice(0, n >= 100 ? 2 : 3).map(i => `<span class="si">${markOf(i.Lk)}</span>`).join('')}</span>`;
+  const tileOf = (Lk, sz) => { if (Lk.img) return T(Lk.img); const bt = brandOf(Lk); return `<span class="tile" style="--tc:${bt ? siCol(bt) : Lk.fc ? Lk.fc[1] : Lk.k === 'xhs' ? '#FF2442' : 'var(--ink3)'}">${bt ? siSvg(bt, 'mk', `color:${siCol(bt)}`) : markOf(Lk)}</span>`; };
+  if (w === 1 && h === 1) {
+    const v = x && x[0] === '1' ? x : '1b';
+    if (v === '1a') res = `<div class="l1a">${one && !items.some(i => i.Lk.img) ? `<div class="l1g one"><span class="tn">${tileOf(one)}</span></div>` : `<div class="l1g">${items.slice(0, 4).map(i => `<span class="tn">${tileOf(i.Lk)}</span>`).join('')}</div>`}<div class="l1ft"><b>${esc(Ls.name)}</b><span class="n">${n}</span></div></div>`;
+    else if (v === '1b') res = `<div class="l1b"><b>${esc(Ls.name)}</b><span class="n">${n}</span></div>`;
+    else res = `<div class="l1c"><div class="l1t"><span class="tn">${tileOf(items[0].Lk)}</span><span class="bd">${n}</span></div><b>${esc(Ls.name)}</b></div>`;
+  }
+  else if (h === 1) {
+    const mini = items.slice(0, w === 3 ? 2 : 2).map(({Lk}) => `<a class="lr mini">${one ? '' : markOf(Lk)}<span class="t">${esc(titleOf(Lk))}</span>${w >= 3 && !one ? `<span class="s">${esc(rowMeta(Lk) === siteName(Lk) ? '' : rowMeta(Lk))}</span>` : ''}</a>`).join('');
+    res = `<div class="lh lh21">${one ? markOf(one) : ''}<b>${esc(Ls.name)}</b><span class="n">${n}</span></div><div class="rows">${mini}</div>`;
+  }
+  else {
+    /* fixed pitch per style so cards of the same height line up row for row:
+       list  = 6 + 42 header + k×30 + 6  → 4 rows at 2 tall, 7 at 3 tall
+       thumb = 4 + 31 header + k×45 + 4  → 3 rows at 2 tall, 5 at 3 tall */
+    const head = `<div class="lh">${one ? markOf(one) : ''}<b>${esc(Ls.name)}</b></div>`;
+    const slots = o === 'c' ? (px(h) - 8 - 31) / 45 : (px(h) - 12 - 42) / 30;
+    const shown = n > slots ? slots - 1 : n;
+    const rows = items.slice(0, shown).map(({Lk}) => {
+      const meta = rowMeta(Lk), sub = one ? (meta === siteName(Lk) ? '' : meta) : `${siteName(Lk)}${meta && meta !== siteName(Lk) ? ' · ' + meta : ''}`;
+      if (o === 'c') return `<a class="lr th"><span class="tn">${tileOf(Lk)}</span><span class="tw"><span class="t">${esc(titleOf(Lk))}</span><span class="s">${one ? '' : markOf(Lk, 'xs')}<span>${esc(sub)}</span></span></span></a>`;
+      return `<a class="lr">${one ? '' : markOf(Lk)}<span class="t">${esc(titleOf(Lk))}</span>${w >= 3 && meta && !one ? `<span class="s">${esc(meta)}</span>` : ''}</a>`;
+    }).join('');
+    res = head + `<div class="rows">${rows}${shown < n ? (o === 'c'
+      ? `<a class="lr th lmore"><span class="tn mos">${items.slice(shown, shown + 4).map(i => `<span>${tileOf(i.Lk)}</span>`).join('')}</span><span class="tw"><span class="t">还有 ${n - shown} 条</span><span class="s">${restBy(items.slice(shown), one)}</span></span></a>`
+      : `<a class="lr lmore${one ? ' one' : ''}">还有 ${n - shown} 条</a>`) : ''}</div>`;
+    if (!brand) return {cls:'lst ' + (o === 'c' ? 'lc' : 'la'), html:res};
+  }
+  if (!brand) return {cls:'lst', html:res};
+  const W = px(w), Hh = px(h), side = Math.min(W, Hh) * (w === h ? 1 : 1.2), col = siCol(bk);
+  const wm = w * h >= 2 ? siSvg(bk, 'wm', `width:${side}px;height:${side}px;right:${-side * .22}px;bottom:${-side * .22}px;color:${col}`) : '';
+  return {cls:'lst v-logo', style:`--tint:${col}`, html: wm + res};
+}
+
+/* ---------- card wrapper ---------- */
+function render(spec, w, h){
+  const [type, ref, opt] = spec;
+  if (type === 'link') { const Lk = L[ref]; return ({yt:video, bili:video, yts:video, xhs:xhs, web:(a, b, c) => ['loading', 'failed', 'unclear'].includes(opt) ? pending(a, b, c, opt) : web(a, b, c, opt), gh:gh, ghpr:ghpr, paper:paper, chat:chat})[Lk.k](Lk, w, h); }
+  if (type === 'note') return note(NOTES[ref], w, h, opt);
+  return list(LISTS[ref], w, h, opt, spec[3]);
+}
+function card(spec, w, h, live){
+  const r = render(spec, w, h);
+  const st = `width:${px(w)}px;height:${px(h)}px;--gw:${w};--gh:${h};${r.style || ''}`;
+  return `<div class="c ${r.cls}" style="${st}" ${r.attr || ''} data-w="${w}" data-h="${h}"${live ? ` data-spec='${JSON.stringify(spec)}'` : ''}>${r.html}${live ? '<span class="rz"></span>' : ''}</div>`;
+}
+function fig(spec, w, h, def){
+  const open = openOf(spec);
+  if (!open.includes(w + 'x' + h)) { const t = snapTo(open, w, h); return `<figure class="sp"><div class="na" style="width:${px(w)}px;height:${px(h)}px">→ ${t[0]}×${t[1]}</div><figcaption>${w}×${h} 不开放</figcaption></figure>`; }
+  return `<figure class="sp">${card(spec, w, h)}<figcaption>${w}×${h}${def ? '<i>默认</i>' : ''}</figcaption></figure>`;
+}
+const specRows = (f) => `<div class="specs">${SIZES.slice(0, 3).map(f).join('')}</div><div class="specs">${SIZES.slice(3).map(f).join('')}</div>`;
+
+/* second line of the 'more' row: where the hidden links come from, most first */
+function restBy(rest, one){
+  if (one) { const k = rest.filter(i => i.Lk.img).length; return k ? `${k} 条有封面` : ''; }
+  const by = new Map();
+  rest.forEach(({Lk}) => { const k = siteName(Lk); if (!by.has(k)) by.set(k, {Lk, n:0}); by.get(k).n++; });
+  return [...by.values()].sort((a, b) => b.n - a.n).slice(0, 3).map(({Lk, n}) => `<span class="rb">${markOf(Lk, 'xs')}${n}</span>`).join('') + (by.size > 3 ? `<span class="rb">+${by.size - 3}</span>` : '');
+}
+/* ---------- text that fills its box: clamp to whole lines; notes shrink only when they overflow ---------- */
+function fitAll(root){
+  root.querySelectorAll('.fill').forEach(el => {
+    el.hidden = false; el.style.flex = ''; el.style.maxHeight = ''; el.style.removeProperty('--l');
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 18, n = Math.floor((el.clientHeight + 1) / lh);
+    if (n < 1) { el.hidden = true; return; }
+    el.style.setProperty('--l', n); el.style.flex = 'none'; el.style.maxHeight = (n * lh) + 'px';
+  });
+  root.querySelectorAll('.fit').forEach(el => {
+    const lo = +el.dataset.min; let f = +el.dataset.max;
+    el.style.fontSize = f + 'px';
+    while (f > lo && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) { f -= .5; el.style.fontSize = f + 'px'; }
+  });
+}
 
 /* ============ settings ============ */
 const PRESETS = {
@@ -429,30 +939,39 @@ const PRESETS = {
   soft:{k:300, c:30, fk:600, fc:40, follow:true, hyst:0.14, tilt:true},
   bouncy:{k:420, c:20, fk:800, fc:30, follow:true, hyst:0.12, tilt:true}
 };
-const DEFAULTS = {cols:8, gap:6, k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
+const DEFAULTS = {k:420, c:30, fk:900, fc:48, follow:true, hyst:0.12, mode:'smart', compact:true, tilt:true, gridAlways:false, theme:null};
+const CELL = 84, GAP = 6, CSTEP = CELL + GAP;
 let cfg = {...DEFAULTS};
 let items = [];
+// the seed: the lab's two live Sections side by side (周末计划 cols 0–5, 在读 cols 6–11) plus its loose cards
+const SEED = [
+  {spec:['link','xh1'],w:2,h:3,x:0,y:0},{spec:['note','n5'],w:2,h:1,x:2,y:0},{spec:['link','bl2'],w:2,h:2,x:4,y:0},{spec:['link','yt1'],w:2,h:2,x:2,y:1},{spec:['link','ga2'],w:2,h:1,x:4,y:2},
+  {spec:['list','watch','a'],w:2,h:2,x:0,y:3},{spec:['link','xh6'],w:1,h:2,x:2,y:3},{spec:['link','xh5'],w:1,h:2,x:3,y:3},{spec:['link','xh4'],w:2,h:1,x:4,y:3},{spec:['link','ga4'],w:2,h:1,x:4,y:4},
+  {spec:['link','ga1'],w:3,h:2,x:6,y:0},{spec:['list','read','a'],w:2,h:3,x:9,y:0},{spec:['link','br1'],w:1,h:1,x:11,y:0},{spec:['link','gt3'],w:1,h:1,x:11,y:1},{spec:['link','gh1'],w:3,h:1,x:6,y:2},{spec:['link','br2'],w:1,h:1,x:11,y:2},
+  {spec:['link','gt1'],w:2,h:2,x:6,y:3},{spec:['link','ga3'],w:2,h:2,x:8,y:3},{spec:['link','gh2'],w:2,h:1,x:10,y:3},{spec:['link','gt2'],w:2,h:1,x:10,y:4},
+  {spec:['note','n6'],w:2,h:1,x:0,y:5},{spec:['link','yt3'],w:1,h:2,x:2,y:5},{spec:['link','bl3'],w:2,h:2,x:3,y:5},{spec:['note','n2'],w:2,h:1,x:5,y:5},{spec:['link','pa1'],w:2,h:2,x:7,y:5},{spec:['link','ch1'],w:2,h:1,x:9,y:5},{spec:['link','gh3'],w:2,h:1,x:9,y:6}
+].map((o, i) => ({id:'b' + (i + 1), ...o}));
+// links that can still be added from the top bar, with their default size
+const EXTRA = [['xh2',2,3],['xh3',2,3],['yt2',2,2],['bl1',2,2],['sl1',2,1],['sl2',2,1],['sl4',2,2],['sl5',2,1],['sl6',2,2],['gh4',2,1],['gh6',2,1],['gh7',2,1],['sx2',2,1],['sx4',2,1]];
+const KEY = 'links-bento-canvas-v2';
 const persisted = (() => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) { return null; } })();
-if (persisted && persisted.v === 1) { cfg = {...DEFAULTS, ...persisted.cfg}; items = persisted.items; if (!persisted.cfg.gapSet) cfg.gap = DEFAULTS.gap; }
+if (persisted && persisted.v === 2) { cfg = {...DEFAULTS, ...persisted.cfg}; items = persisted.items; }
 else items = SEED.map(o => ({...o}));
-function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:1, cfg, items})); } catch(e) {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify({v:2, cfg, items})); } catch(e) {} }
 if (cfg.theme) document.documentElement.dataset.theme = cfg.theme;
 
-/* ============ grid geometry ============ */
-const sec = $('#sec'), board = $('#board'), layer = $('#cards'), ph = $('#ph');
-let cell = 100, PAD = 18;
+/* ============ grid geometry: the lab's fixed 84px cells, 6px gaps; columns come from the width ============ */
+const sec = $('#sec'), board = $('#board'), layer = $('#cards'), ph = $('#ph'), wrap = $('#wrap');
+let cols = 12;
 function measure(){
-  PAD = innerWidth < 700 ? 12 : 18;
-  sec.style.setProperty('--pad', PAD + 'px');
-  const W = sec.clientWidth - PAD * 2;
-  cell = (W - (cfg.cols - 1) * cfg.gap) / cfg.cols;
-  board.style.setProperty('--step', (cell + cfg.gap) + 'px');
-  board.style.setProperty('--gap', cfg.gap + 'px');
+  const avail = wrap.clientWidth - 2 * 10;
+  cols = clamp(Math.floor((avail + GAP) / CSTEP), 3, 14);
+  board.style.width = (cols * CSTEP - GAP) + 'px';
 }
-const X = gx => gx * (cell + cfg.gap);
-const Wpx = gw => gw * cell + (gw - 1) * cfg.gap;
+const X = gx => gx * CSTEP;
+const Wpx = gw => gw * CELL + (gw - 1) * GAP;
 const rowsOf = list => Math.max(1, ...list.map(i => i.y + i.h));
-function setBoardHeight(list){ const r = rowsOf(list); board.style.height = Wpx(r) + 'px'; }
+function setBoardHeight(list){ board.style.height = Wpx(rowsOf(list)) + 'px'; }
 
 /* ============ layout: make room ============ */
 const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -464,7 +983,7 @@ function resolve(L0, id, tx, ty, tw, th){
   const d = id ? list.find(i => i.id === id) : null;
   let origin = null;
   if (d) { origin = {x:d.x, y:d.y, w:d.w, h:d.h}; d.x = tx; d.y = ty; d.w = tw; d.h = th; }
-  for (const it of list) { it.w = clamp(it.w, 1, cfg.cols); it.x = clamp(it.x, 0, cfg.cols - it.w); it.y = Math.max(0, it.y); it.h = Math.max(1, it.h); }
+  for (const it of list) { it.w = clamp(it.w, 1, cols); it.x = clamp(it.x, 0, cols - it.w); it.y = Math.max(0, it.y); it.h = Math.max(1, it.h); }
   const placed = d ? [d] : [];
   const others = list.filter(i => i !== d).sort(byPos);
   const movingDown = d && ty > origin.y;
@@ -504,90 +1023,30 @@ function resolve(L0, id, tx, ty, tw, th){
 }
 function settleAll(){ items = resolve(items, null); }
 
-/* ============ cards ============ */
+/* ============ cards: rendered by the card lab's renderers at the card's exact cell size ============ */
 const nodes = new Map();
-const IC_ALERT = '<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5.2v3.3M8 10.8h.01"/></svg>';
-const siteOf = l => SITES[l.site];
-const fav = l => `<span class="fav" style="--tint:${siteOf(l).t}">${esc(siteOf(l).g)}</span>`;
-function metaLine(l){
-  let chip = '';
-  if (l.unclear) chip = `<span class="chip warn">Unclear</span>`;
-  else if (l.state === 'Open') chip = `<span class="chip ok">Open</span>`;
-  return `<div class="meta">${fav(l)}<span>${esc(l.meta || siteOf(l).n)}</span>${chip}</div>`;
-}
-// the cover: a small rendition of the page itself, per link kind
-function art(l, style = ''){
-  const s = siteOf(l), t = esc(l.title), st = style ? ` style="${style}"` : '';
-  switch (l.kind) {
-    case 'gh': return `<div class="art a-gh"${st}><div class="r"><i></i>${esc(l.repo)}</div><div class="t">${t}</div><div class="s ${l.state === 'Merged' ? 'merged' : ''}">${esc(l.state)}</div></div>`;
-    case 'paper': return `<div class="art a-paper"${st}><div class="id">${l.site === 'arxiv' ? 'arXiv:1706.03762' : 'PDF'}</div><div class="t">${t}</div><div class="au">${esc(l.authors || '')}</div><div class="ln"><i></i><i></i><i></i></div></div>`;
-    // image-like covers keep their native pixel size and are cropped by the card, never scaled
-    case 'video': return `<div class="art img a-video"${st}><div class="cv" style="width:480px;height:270px"><i class="orb a"></i><i class="orb b"></i></div>${l.part ? `<div class="pt">${esc(l.part)}</div>` : ''}<div class="pl"></div><div class="du">${esc(l.dur || '')}</div></div>`;
-    case 'photo': return `<div class="art img"${st}><div class="cv a-photo" style="width:320px;height:427px"></div><div class="xh">♡ 2.3k</div></div>`;
-    case 'shot': return `<div class="art img"${st}><div class="cv tl a-shot" style="width:600px;height:375px"><div class="ch"><i></i><i></i><i></i><span>supasidebar.com</span></div><div class="pg"><div><div class="h">Your tabs, <em>finally</em> organized.</div><div class="sub"><i></i><i></i></div><div class="cta"></div></div><div class="mock"><b></b><u></u></div></div></div></div>`;
-    case 'chat': return `<div class="art a-chat"${st}><div class="u">${esc(l.q || l.title)}</div><div class="b"><i></i><span>${esc(l.a || '')}</span></div></div>`;
-    case 'stock': return `<div class="art img"${st}><div class="cv a-stock" style="width:420px;height:315px"></div><div class="wm">ifanr</div></div>`;
-    case 'brand': return `<div class="art a-brand"${st}><div class="g">${esc(s.g)}</div></div>`;
-    case 'unclear': return `<div class="art a-unclear"${st}><div>${IC_ALERT}<span>Unclear title</span></div></div>`;
-    default: return `<div class="art a-type"${st}><div class="t">${t}</div><div class="d"><span class="fav">${esc(s.g)}</span>${esc(s.n)}</div></div>`;
-  }
-}
-// pick the card's mode from its pixel size, same thresholds as the Links design
-function modeOf(it, W, H){
-  if (it.kind !== 'card') return it.kind;
-  const l = L[it.link];
-  if (W < 150 || H < 72) return 'tiny';
-  if (H < 150) return 'wide';
-  if (W >= 1.6 * H && W >= 320) return 'hero';
-  if (l.kind === 'video') return 'media';
-  return 'tall';
-}
-function cardHTML(it, W, H){
-  if (it.kind === 'note') return `<div class="note-l">Note</div><div class="note-t">${esc(it.text)}</div>`;
-  if (it.kind === 'list') {
-    let used = 6 + 32 + 4, shown = 0; const rows = [];
-    for (const id of it.rows) {
-      if (used + 30 > H - (shown < it.rows.length - 1 ? 24 : 0) && shown > 0) break;
-      used += 30; shown++;
-      const l = L[id], s = SITES[l.site];
-      rows.push(`<a class="row" href="${esc(l.url)}" target="_blank" rel="noopener" draggable="false">${fav(l)}<span class="t">${esc(l.title)}</span><span class="s">${esc(s.n)}</span></a>`);
-    }
-    const more = it.rows.length - shown;
-    return `<div class="lh"><svg class="ic" viewBox="0 0 16 16"><path d="M6 4.5h7M6 8h7M6 11.5h7M3 4.5h.01M3 8h.01M3 11.5h.01"/></svg><b>${esc(it.title)}</b><span class="n">${it.rows.length}</span></div><div class="rows">${rows.join('')}</div>${more > 0 ? `<div class="more">${more} more</div>` : ''}`;
-  }
-  const l = L[it.link], mode = modeOf(it, W, H);
-  const title = `<div class="ttl">${esc(l.title)}</div>`;
-  if (mode === 'tiny') return `<div class="txt">${fav(l)}${title}</div>`;
-  if (mode === 'wide') { const aw = Math.min(H - 12, Math.round(W * .4)); return `${art(l, `width:${aw}px`)}<div class="txt">${title}${metaLine(l)}</div>`; }
-  if (mode === 'hero') return `${art(l)}<div class="txt">${title}${metaLine(l)}${l.note ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
-  if (mode === 'media') return `${art(l)}<div class="mo"><div class="mt">${esc(l.title)}</div><div class="mm">${metaLine(l)}${l.dur ? `<span class="mdu">${esc(l.dur)}</span>` : ''}</div></div>`;
-  const big = W >= 260 && H >= 260, showNote = l.note && H >= 230;
-  return `${art(l)}<div class="txt">${title.replace('class="ttl"', `class="ttl${big ? ' big' : ''}"`)}${metaLine(l)}${showNote ? `<div class="note-q">${esc(l.note)}</div>` : ''}</div>`;
-}
 function fill(n, it, w, h){
-  const W = Wpx(w), H = Wpx(h);
-  sizeClass(n.el, w, h);
-  n.inn.className = 'in m-' + modeOf(it, W, H);
-  n.inn.innerHTML = cardHTML(it, W, H) + '<div class="rz" aria-hidden="true"></div>';
+  const r = render(it.spec, w, h);
+  n.inn.className = 'in c ' + r.cls;
+  n.inn.setAttribute('style', `width:${Wpx(w)}px;height:${Wpx(h)}px;${r.style || ''}`);
+  n.inn.innerHTML = r.html + '<span class="rz" aria-hidden="true"></span>';
+  fitAll(n.inn);
+  n.inn.style.width = ''; n.inn.style.height = '';
+  n.el.dataset.w = w; n.el.dataset.h = h;
 }
-function sizeClass(el, w, h){
-  el.className = el.className.replace(/\b[wh]-\d+\b/g, '').replace(/\s+/g, ' ').trim();
-  el.classList.add('w-' + clamp(w, 1, 4), 'h-' + clamp(h, 1, 3));
-}
-function tintOf(it){ if (it.kind === 'note') return '#E8C547'; if (it.kind === 'list') return '#9AA3B2'; return SITES[L[it.link].site].t; }
 function ensureNode(it){
   let n = nodes.get(it.id);
   if (!n) {
     const el = document.createElement('div');
-    el.className = 'card k-' + it.kind; el.dataset.id = it.id;
-    el.style.setProperty('--tint', tintOf(it));
-    el.innerHTML = '<div class="in"></div>';
+    el.className = 'card'; el.dataset.id = it.id;
+    el.innerHTML = '<div class="in c"></div>';
+    el.style.width = Wpx(it.w) + 'px'; el.style.height = Wpx(it.h) + 'px';
     layer.appendChild(el);
     n = {it, el, inn:$('.in', el), key:'', x:X(it.x), y:X(it.y), w:Wpx(it.w), h:Wpx(it.h), vx:0, vy:0, vw:0, vh:0, tx:0, ty:0, tw:0, th:0, r:0, vr:0, tr:0, free:false};
     nodes.set(it.id, n);
   }
   n.it = it;
-  const key = it.kind + '|' + it.w + '|' + it.h + '|' + Math.round(cell) + '|' + cfg.gap;
+  const key = JSON.stringify(it.spec) + '|' + it.w + '|' + it.h;
   if (n.key !== key) { n.key = key; fill(n, it, it.w, it.h); }
   return n;
 }
@@ -617,9 +1076,8 @@ function previewTargets(list, skipId){
 let raf = 0, last = 0;
 function kick(){ if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } }
 function spring(p, v, t, k, c, dt){ const a = k * (t - p) - c * v; v += a * dt; p += v * dt; return [p, v]; }
-function stepNode(n, dt){
+function stepNode(n, dt, k = cfg.k, c = cfg.c){
   if (reduceMotion.matches) { n.x = n.tx; n.y = n.ty; n.w = n.tw; n.h = n.th; n.vx = n.vy = n.vw = n.vh = 0; return false; }
-  const k = cfg.k, c = cfg.c;
   [n.x, n.vx] = spring(n.x, n.vx, n.tx, k, c, dt);
   [n.y, n.vy] = spring(n.y, n.vy, n.ty, k, c, dt);
   [n.w, n.vw] = spring(n.w, n.vw, n.tw, k * 1.3, c * 1.15, dt);
@@ -642,6 +1100,8 @@ function tick(now){
         [n.y, n.vy] = spring(n.y, n.vy, drag.py, cfg.fk, cfg.fc, dt);
         paint(n);
       }
+      // resizing: the card's box springs to the snapped size while its content is already laid out for it
+      if (drag && drag.rs) { if (stepNode(n, dt, cfg.fk, cfg.fc)) { busy = true; } paint(n); }
       [n.r, n.vr] = spring(n.r, n.vr, n.tr, 260, 22, dt);
       if (Math.abs(n.r - n.tr) < .02 && Math.abs(n.vr) < .5) { n.r = n.tr; n.vr = 0; } else busy = true;
       n.inn.style.transform = n.r ? `rotate(${n.r.toFixed(2)}deg)` : '';
@@ -673,7 +1133,7 @@ function boardOrigin(){ const r = board.getBoundingClientRect(); return {x:r.lef
 layer.addEventListener('pointerdown', e => {
   if (e.button !== 0 || drag || press) return;
   const el = e.target.closest('.card'); if (!el) return;
-  if (e.target.closest('a')) return;
+  if (e.target.closest('a[href]')) return;
   const n = nodes.get(el.dataset.id); if (!n) return;
   const p = pagePt(e);
   press = {n, rs:!!e.target.closest('.rz'), x0:p.x, y0:p.y, pid:e.pointerId, touch:e.pointerType !== 'mouse', timer:0};
@@ -709,26 +1169,26 @@ function begin(pr, p){
   drag = {
     n, rs:pr.rs, L0:items.map(i => ({...i})),
     origin:{x:it.x, y:it.y, w:it.w, h:it.h},
-    tx:it.x, ty:it.y, tw:it.w, th:it.h,
+    tx:it.x, ty:it.y, tw:it.w, th:it.h, rw:it.w, rh:it.h,
     offX:p.x - o.x - n.x, offY:p.y - o.y - n.y,
     w0:n.w, h0:n.h, x0:p.x, y0:p.y, px:n.x, py:n.y,
     last:p, samples:[{t:performance.now(), x:p.x, y:p.y}], layout:null, client:{x:p.cx, y:p.cy}
   };
-  n.el.classList.remove('pressed'); n.el.classList.add('lift'); if (pr.rs) n.el.classList.add('rs');
+  n.el.classList.remove('pressed'); n.el.classList.add('lift'); if (pr.rs) { n.el.classList.add('rs'); sizeTag(n, it.w, it.h); }
   sec.classList.add('dragging');
   Object.assign(phs, {x:n.x, y:n.y, w:n.w, h:n.h, tx:n.x, ty:n.y, tw:n.w, th:n.h, vx:0, vy:0, vw:0, vh:0});
-  ph.className = 'ph on'; ph.style.borderRadius = '';
+  ph.className = 'ph on';
   if (navigator.vibrate && pr.touch) { try { navigator.vibrate(8); } catch(e) {} }
   move(p);
   kick();
 }
+function sizeTag(n, w, h){ let t = $('.szt', n.el); if (!t) { t = document.createElement('span'); t.className = 'szt'; n.el.appendChild(t); } t.textContent = `${w}×${h}`; }
 // hysteresis: a cell only changes once the card is clearly past the boundary, so it never flickers on the edge
 function pick(f, cur){ return Math.abs(f - cur) <= 0.5 + cfg.hyst ? cur : Math.round(f); }
 function move(p){
   const d = drag, n = d.n, o = boardOrigin();
   d.last = p; d.client = {x:p.cx, y:p.cy};
   const now = performance.now(); d.samples.push({t:now, x:p.x, y:p.y}); while (d.samples.length > 6) d.samples.shift();
-  const step = cell + cfg.gap;
   if (!d.rs) {
     // where the hand is; the card either sits there (1:1) or springs after it
     d.px = p.x - o.x - d.offX; d.py = p.y - o.y - d.offY;
@@ -738,13 +1198,21 @@ function move(p){
     const vx = dtv > 0.016 ? (p.x - s0.x) / dtv : 0;
     n.tr = cfg.tilt ? clamp(vx / 90, -4, 4) : 0;
     // snapping reads the hand, not the lagging card, so the placeholder stays responsive
-    const nx = clamp(pick(d.px / step, d.tx), 0, cfg.cols - d.tw), ny = Math.max(0, pick(d.py / step, d.ty));
+    const nx = clamp(pick(d.px / CSTEP, d.tx), 0, cols - d.tw), ny = Math.max(0, pick(d.py / CSTEP, d.ty));
     if (nx !== d.tx || ny !== d.ty || !d.layout) { d.tx = nx; d.ty = ny; preview(); }
   } else {
-    n.w = Math.max(cell * .55, d.w0 + (p.x - d.x0)); n.h = Math.max(cell * .55, d.h0 + (p.y - d.y0));
-    paint(n);
-    const nw = clamp(pick((n.w + cfg.gap) / step, d.tw), 1, cfg.cols - d.tx), nh = Math.max(1, pick((n.h + cfg.gap) / step, d.th));
-    if (nw !== d.tw || nh !== d.th || !d.layout) { d.tw = nw; d.th = nh; n.key = ''; fill(n, n.it, nw, nh); preview(); }
+    // the hand picks a raw cell size; the card only takes sizes its content opens, so the result snaps to the nearest open one
+    const pw = Math.max(CELL * .55, d.w0 + (p.x - d.x0)), phh = Math.max(CELL * .55, d.h0 + (p.y - d.y0));
+    const rw = clamp(pick((pw + GAP) / CSTEP, d.rw), 1, 3), rh = clamp(pick((phh + GAP) / CSTEP, d.rh), 1, 3);
+    if (rw !== d.rw || rh !== d.rh || !d.layout) {
+      d.rw = rw; d.rh = rh;
+      const open = openOf(n.it.spec).filter(s => +s[0] <= cols - d.tx);
+      const [tw, th] = snapTo(open.length ? open : ['1x1'], rw, rh);
+      if (tw !== d.tw || th !== d.th || !d.layout) {
+        d.tw = tw; d.th = th; n.tw = Wpx(tw); n.th = Wpx(th);
+        n.key = ''; fill(n, n.it, tw, th); sizeTag(n, tw, th); preview();
+      }
+    }
   }
 }
 function preview(){
@@ -774,8 +1242,9 @@ function land(list){
   const s = d.samples, a = s[0], b = s[s.length - 1], dtv = (b.t - a.t) / 1000;
   if (!d.rs && !cfg.follow && dtv > 0.016) { n.vx = clamp((b.x - a.x) / dtv, -1800, 1800) * .6; n.vy = clamp((b.y - a.y) / dtv, -1800, 1800) * .6; }
   n.tr = 0;
-  n.el.classList.remove('lift', 'rs'); n.el.classList.add('settling');
+  n.el.classList.remove('lift', 'rs'); n.el.classList.add('settling'); $('.szt', n.el)?.remove();
   sec.classList.remove('dragging'); ph.className = 'ph';
+  if (d.rs) n.key = '';
   syncAll(false);
   save();
 }
@@ -785,14 +1254,13 @@ function cancel(){ const d = drag; land(d.L0); toast('已取消'); }
 /* ============ panel & actions ============ */
 const panel = $('#panel');
 $('#panelHead').addEventListener('click', () => panel.classList.toggle('closed'));
-const ctl = {cols:$('#cols'), gap:$('#gap'), k:$('#k'), c:$('#c'), fk:$('#fk'), fc:$('#fc'), follow:$('#follow'), hyst:$('#hyst'), mode:$('#mode'), compact:$('#compact'), tilt:$('#tilt'), gridAlways:$('#gridAlways')};
+const ctl = {k:$('#k'), c:$('#c'), fk:$('#fk'), fc:$('#fc'), follow:$('#follow'), hyst:$('#hyst'), mode:$('#mode'), compact:$('#compact'), tilt:$('#tilt'), gridAlways:$('#gridAlways')};
 function reflect(){
-  for (const key of ['cols','gap','k','c','fk','fc','hyst']) { ctl[key].value = cfg[key]; $('#' + key + 'O').textContent = key === 'hyst' ? cfg.hyst.toFixed(2) + ' 格' : key === 'gap' ? cfg.gap + ' px' : cfg[key]; }
+  for (const key of ['k','c','fk','fc','hyst']) { ctl[key].value = cfg[key]; $('#' + key + 'O').textContent = key === 'hyst' ? cfg.hyst.toFixed(2) + ' 格' : cfg[key]; }
   ctl.mode.value = cfg.mode; ctl.follow.checked = cfg.follow; ctl.compact.checked = cfg.compact; ctl.tilt.checked = cfg.tilt; ctl.gridAlways.checked = cfg.gridAlways;
   sec.classList.toggle('grid-always', cfg.gridAlways);
 }
 for (const key of ['k','c','fk','fc','hyst']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; reflect(); save(); });
-for (const key of ['cols','gap']) ctl[key].addEventListener('input', () => { cfg[key] = +ctl[key].value; if (key === 'gap') cfg.gapSet = true; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); });
 ctl.mode.addEventListener('change', () => { cfg.mode = ctl.mode.value; save(); });
 ctl.compact.addEventListener('change', () => { cfg.compact = ctl.compact.checked; settleAll(); syncAll(false); save(); });
 ctl.follow.addEventListener('change', () => { cfg.follow = ctl.follow.checked; save(); });
@@ -800,19 +1268,18 @@ ctl.tilt.addEventListener('change', () => { cfg.tilt = ctl.tilt.checked; save();
 ctl.gridAlways.addEventListener('change', () => { cfg.gridAlways = ctl.gridAlways.checked; reflect(); save(); });
 $$('[data-preset]').forEach(b => b.addEventListener('click', () => { Object.assign(cfg, PRESETS[b.dataset.preset]); reflect(); save(); toast('已切换到「' + b.textContent + '」'); }));
 
-$('#resetBtn').addEventListener('click', () => { items = SEED.map(o => ({...o})); cfg = {...DEFAULTS, theme:cfg.theme}; measure(); settleAll(); for (const n of nodes.values()) n.key = ''; syncAll(false); reflect(); save(); toast('已恢复初始布局'); });
+$('#resetBtn').addEventListener('click', () => { items = SEED.map(o => ({...o})); cfg = {...DEFAULTS, theme:cfg.theme}; settleAll(); syncAll(false); reflect(); save(); toast('已恢复初始布局'); });
 $('#shuffleBtn').addEventListener('click', () => {
   const pool = items.slice().sort(() => Math.random() - .5); const out = [];
-  for (const it of pool) { const c = {...it, w:Math.min(it.w, cfg.cols)}; let y = 0, done = false;
-    for (; y < 200 && !done; y++) for (let x = 0; x + c.w <= cfg.cols; x++) { const r = {...c, x, y}; if (!out.some(o => hit(r, o))) { out.push(r); done = true; break; } } }
+  for (const it of pool) { const c = {...it, w:Math.min(it.w, cols)}; let y = 0, done = false;
+    for (; y < 200 && !done; y++) for (let x = 0; x + c.w <= cols; x++) { const r = {...c, x, y}; if (!out.some(o => hit(r, o))) { out.push(r); done = true; break; } } }
   items = out; settleAll(); syncAll(false); save();
 });
 $('#addBtn').addEventListener('click', () => {
-  const used = new Set(items.map(i => i.link)); const free = EXTRA.filter(l => !used.has(l)); if (!free.length) return toast('样例链接用完了');
-  const link = free[Math.floor(Math.random() * free.length)]; const sizes = [[1,1],[2,1],[2,2]]; const [w, h] = sizes[Math.floor(Math.random() * sizes.length)];
-  const it = {id:'n' + Math.random().toString(36).slice(2, 7), kind:'card', link, x:0, y:rowsOf(items) + 2, w, h};
-  // find the first free slot in reading order
-  outer: for (let y = 0; y < 400; y++) for (let x = 0; x + w <= cfg.cols; x++) { const r = {...it, x, y}; if (!items.some(o => hit(r, o))) { it.x = x; it.y = y; break outer; } }
+  const used = new Set(items.map(i => i.spec[1])); const free = EXTRA.filter(e => !used.has(e[0])); if (!free.length) return toast('样例链接用完了');
+  const [link, w, h] = free[Math.floor(Math.random() * free.length)];
+  const it = {id:'n' + Math.random().toString(36).slice(2, 7), spec:['link', link], x:0, y:rowsOf(items) + 2, w, h};
+  outer: for (let y = 0; y < 400; y++) for (let x = 0; x + w <= cols; x++) { const r = {...it, x, y}; if (!items.some(o => hit(r, o))) { it.x = x; it.y = y; break outer; } }
   items.push(it); settleAll();
   const n = ensureNode(it); n.x = X(it.x); n.y = X(it.y) + 24; n.w = Wpx(it.w); n.h = Wpx(it.h); n.el.style.opacity = '0'; paint(n);
   requestAnimationFrame(() => { n.el.style.transition = 'opacity .25s'; n.el.style.opacity = '1'; });
@@ -824,11 +1291,13 @@ $('#themeBtn').addEventListener('click', () => {
 });
 let toastT = 0;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', e => { if (e.target.closest('.c a, a.lr')) e.preventDefault(); });
 
 /* ============ boot ============ */
 let rsT = 0;
-addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { measure(); for (const n of nodes.values()) n.key = ''; syncAll(true); }, 60); });
+addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { const c0 = cols; measure(); if (cols !== c0) settleAll(); syncAll(true); }, 60); });
 measure(); settleAll(); reflect(); syncAll(true);
+(document.fonts && document.fonts.ready || Promise.resolve()).then(() => { for (const n of nodes.values()) { n.key = ''; } syncAll(true); });
 </script>
 </body>
 </html>
