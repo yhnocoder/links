@@ -124,7 +124,7 @@ async function writeCache() {
 function remember(snap: Snapshot) {
   for (const t of TABLES) { saved[t].clear(); savedRows[t].clear(); for (const r of snap[t] as Row[]) { saved[t].set(r.id, strip(r)); savedRows[t].set(r.id, r); } }
 }
-const snapOf = (): Snapshot => ({ links: [...savedRows.links.values()] as LinkRow[], boards: [...savedRows.boards.values()] as BoardRow[], frames: [...savedRows.frames.values()] as FrameRow[], blocks: [...savedRows.blocks.values()] as BlockRow[] });
+export const snapOf = (): Snapshot => ({ links: [...savedRows.links.values()] as LinkRow[], boards: [...savedRows.boards.values()] as BoardRow[], frames: [...savedRows.frames.values()] as FrameRow[], blocks: [...savedRows.blocks.values()] as BlockRow[] });
 
 /* ---------- start: the cached copy first, then the server's ---------- */
 export async function boot(seed?: () => Snapshot | Promise<Snapshot>): Promise<Snapshot> {

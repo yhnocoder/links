@@ -3,8 +3,10 @@ import { For, Show, createSignal } from 'solid-js';
 import { S } from '../board/state';
 import { createItems, fitAll, goBoard, isFs, toggleFs, zoomStep } from '../board/engine';
 import { openInput } from '../data/save';
+import { exportBackup, pickFile } from '../data/transfer';
 import { crumbs, dropOn, inboxOpen, mapOpen, menu, modelVer, openMenu, closeMenus, setInboxOpen, setMapOpen, setPaletteOpen, syncState, viewId, zoomPct } from './bus';
 import { ic } from './icons';
+import { boardBare } from './Empty';
 
 const Html = (p: { h: string }) => <span style={{ display: 'contents' }} innerHTML={p.h} />;
 const fmt = (n: number) => n.toLocaleString('en-US');
@@ -31,6 +33,9 @@ export default function Chrome() {
       { t: '深色', ic: tick(theme() === 'dark'), act: () => setTheme('dark') },
       '-',
       { t: isFs() ? '退出全屏' : '全屏', ic: 'expand', kbd: '⌃⌘F', act: toggleFs },
+      '-',
+      { t: '导入书签…', ic: 'upload', act: pickFile },
+      { t: '导出备份', ic: 'download', act: exportBackup },
     ]);
   };
   const inboxN = () => (modelVer(), S ? S.inbox.length : 0);
@@ -55,9 +60,9 @@ export default function Chrome() {
         <button class="tb ib" id="inboxBtn" classList={{ on: inboxOpen(), drop: dropOn()?.type === 'inbox' }} data-tip="Inbox" aria-label="Inbox" onClick={toggleInbox}>
           <Html h={ic('inbox')} /><span class="cnt num">{inboxN() ? fmt(inboxN()) : ''}</span>
         </button>
-        <button class="tb" id="setBtn" data-tip="显示" aria-label="显示" onClick={e => settings(e.currentTarget)}><Html h={ic('sliders')} /></button>
+        <button class="tb" id="setBtn" data-tip="设置" aria-label="设置" onClick={e => settings(e.currentTarget)}><Html h={ic('sliders')} /></button>
       </div>
-      <div class="fl br glass hud" id="hud">
+      <div class="fl br glass hud" classList={{ idle: boardBare() }} id="hud">
         <button class="tb" data-tip="缩小" data-kbd="⌘−" aria-label="缩小" onClick={() => zoomStep(-1)}><Html h={ic('minus')} /></button>
         <button class="tb z num" data-tip="显示全部" data-kbd="⌘0" onClick={() => fitAll()}>{zoomPct()}%</button>
         <button class="tb" data-tip="放大" data-kbd="⌘+" aria-label="放大" onClick={() => zoomStep(1)}><Html h={ic('zin')} /></button>

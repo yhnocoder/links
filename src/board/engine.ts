@@ -1060,6 +1060,7 @@ export function revealLink(lid: string) {
 
 /* ================= saving a link into a place ================= */
 export function saveLinkTo(lid: string, where: string) {
+  if (where === 'here') return placeLinkAt(lid);
   pushUndo();
   if (where === 'inbox' || !S.frames[where]) {
     S.inbox = S.inbox.filter(x => x !== lid); S.inbox.unshift(lid); S.loc[lid] = 'inbox'; bump(); sync(false); flashInbox([lid]); return;
@@ -1084,6 +1085,29 @@ export function placeNear(ids: string[]) {
   const gx = Math.round(((SR.width / 2 - cam.x) / cam.z) / U) - 1, gy = Math.round(((SR.height / 2 - cam.y) / cam.z) / U) - 1;
   const lay = layoutFrom(S, null, { noSettle: true }), ob = [...lay.frames.map(fRect), ...lay.loose.filter(b => !ids.includes(b.id)).map(cRect)];
   for (const id of ids) { const b = S.blocks[id], s = freeCardSpot(gx, gy, b.w, b.h, ob); Object.assign(b, { board: V, sec: null, x: s.x, y: s.y }); ob.push(cRect(b)); }
+}
+/* a link saved straight onto the board, or dropped from another tab: into the Section under the point, else loose beside it */
+export function placeLinkAt(lid: string, cx?: number, cy?: number) {
+  const l = LK[lid]; if (!l) return;
+  measure();
+  const p = cx == null || cy == null ? { x: (SR.width / 2 - cam.x) / cam.z, y: (SR.height / 2 - cam.y) / cam.z } : wpt({ clientX: cx, clientY: cy });
+  const lay = layoutFrom(S, null, { noSettle: true });
+  const f = lay.frames.find(f => f.type === 'sec' && !isCap(f) && (r => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h)(fRect(f)));
+  if (f) { S.inbox = S.inbox.filter(x => x !== lid); return saveLinkTo(lid, f.id); }
+  pushUndo();
+  const id = newCardFor(l), b = S.blocks[id];
+  const s = freeCardSpot(Math.round(p.x / U - b.w / 2), Math.round(p.y / U - b.h / 2), b.w, b.h, [...lay.frames.map(fRect), ...lay.loose.map(cRect)]);
+  Object.assign(b, { x: s.x, y: s.y }); S.loc[lid] = id; S.inbox = S.inbox.filter(x => x !== lid);
+  bump(); sync(false);
+  const n = nodes.get(id);
+  if (n) { n.el.classList.add('born'); setTimeout(() => n.el.classList.remove('born'), 600); reveal({ x: n.tx, y: n.ty, w: n.tw, h: n.th }, cam.z); }
+}
+/* what is under a point while something is dragged in from outside, so the Section can show it will take it */
+export function dropHint(cx: number, cy: number) {
+  measure(); const p = wpt({ clientX: cx, clientY: cy });
+  let hit: string | null = null;
+  for (const n of fnodes.values()) { const r = fRect(n.f); if (n.f.type === 'sec' && !isCap(n.f) && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) hit = n.f.id; }
+  for (const n of fnodes.values()) n.el.classList.toggle('drop', n.f.id === hit);
 }
 export function inboxToBoard(lid: string) {
   const l = LK[lid]; if (!l) return;

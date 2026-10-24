@@ -295,6 +295,8 @@ export function render(b: Block, w: number, h: number, LINKS: Links): Rendered {
   const l = LINKS[b.link!];
   if (!l) return { cls: 'pad', html: '' };
   if (l.state === 'loading') return pending(l, w, h, 'loading');
+  /* nothing read from the page: the address stands in, whatever site it is */
+  if (!l.t && !l.q && !l.repo) return pending(l, w, h, 'failed');
   /* a picture-led card without its picture reads as a plain web card */
   if ((l.k === 'yt' || l.k === 'bili' || l.k === 'xhs') && !l.img) return web({ ...l, k: 'web' } as L, w, h, b.tint);
   if ((l.k !== 'web') && l.state === 'failed') return pending(l, w, h, 'failed');

@@ -3,8 +3,8 @@
 import { createSignal } from 'solid-js';
 import type { LinkRow, Unfurl } from '../../shared/types';
 import { hostOf, normalizeUrl, parseUrl } from '../../shared/url';
-import { S, LK, bump, uid, pathOf, type Frame } from '../board/state';
-import { refreshLink, revealLink, saveLinkTo } from '../board/engine';
+import { S, LK, V, bump, uid, pathOf, type Frame } from '../board/state';
+import { placeLinkAt, refreshLink, revealLink, saveLinkTo } from '../board/engine';
 import { closeMenus, closePop, closeToast, setSheet, sheet, toast } from '../ui/bus';
 import { mode, persist, putLinkRow, rows } from './store';
 import { toL } from './links';
@@ -16,6 +16,14 @@ export const [sheetVer, setSheetVer] = createSignal(0);
 let draft: LinkRow | null = null;
 export const sheetLink = () => (sheetVer(), draft && LK[draft.id]);
 export const sheetSuggest = (): Frame[] => { sheetVer(); const l = draft && LK[draft.id]; return l && l.t ? suggest(l) : []; };
+/* where Enter puts it: the likeliest Section; on a board with no Sections yet, the board itself; otherwise the Inbox */
+export type Spot = { id: string; name: string; ic: string };
+export const sheetSpots = (): Spot[] => {
+  const sg = sheetSuggest().map(f => ({ id: f.id, name: `「${f.name}」`, ic: 'sec' }));
+  const here = { id: 'here', name: `「${S.boards[V]?.name || '首页'}」`, ic: 'board' }, inbox = { id: 'inbox', name: ' Inbox', ic: 'inbox' };
+  const bare = !Object.values(S.frames).some(f => f.board === V);
+  return sg.length ? [...sg, here, inbox] : bare ? [here, inbox] : [inbox, here];
+};
 
 export function openInput() { closeMenus(); closePop(); closeToast(); draft = null; setSheet({ mode: 'input' }); }
 
@@ -24,17 +32,38 @@ export function startSave(text: string) {
   const url = normalizeUrl(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
   closeMenus(); closePop(); closeToast();
   /* already saved: show where it is */
-  const dup = Object.values(rows).find(r => r.url === url && !r.deleted && S.loc[r.id] && S.loc[r.id] !== 'del');
+  const dup = findSaved(url);
   if (dup) { setSheet(null); draft = null; revealLink(dup.id); toast(`已在「${pathOf(dup.id).join(' › ')}」`); return; }
-  const p = parseUrl(url), now = Date.now();
-  const row: LinkRow = { id: uid('l'), updatedAt: 0, url, host: hostOf(url), kind: p.kind, title: '', desc: '', siteName: '', image: null, meta: {}, status: 'loading', inboxAt: null, unimp: null, createdAt: now, openedAt: null, clicks: 0 };
+  const row = newRow(url);
+  /* a board with nothing to choose between: the link goes straight onto it */
+  if (!Object.values(S.frames).some(f => f.board === V)) {
+    setSheet(null); draft = null; putLinkRow(row); LK[row.id] = toL(row); placeLinkAt(row.id); read(row); return;
+  }
   draft = row; LK[row.id] = toL(row);
   setSheet({ mode: 'save', linkId: row.id }); setSheetVer(v => v + 1);
   read(row);
 }
 
+export function newRow(url: string, extra: Partial<LinkRow> = {}): LinkRow {
+  const p = parseUrl(url);
+  return { id: uid('l'), updatedAt: 0, url, host: hostOf(url), kind: p.kind, title: '', desc: '', siteName: '', image: null, meta: {}, status: 'loading', inboxAt: null, unimp: null, createdAt: Date.now(), openedAt: null, clicks: 0, ...extra };
+}
+export const findSaved = (url: string) => Object.values(rows).find(r => r.url === url && !r.deleted && S.loc[r.id] && S.loc[r.id] !== 'del');
+
+/* links dragged in from another tab land where they are dropped, with no sheet */
+export function dropLinks(urls: string[], cx: number, cy: number, toInbox: boolean) {
+  let n = 0;
+  for (const u of urls) {
+    const url = normalizeUrl(u), dup = findSaved(url);
+    if (dup) { if (urls.length === 1) { revealLink(dup.id); toast(`已在「${pathOf(dup.id).join(' › ')}」`); } continue; }
+    const row = newRow(url); putLinkRow(row); LK[row.id] = toL(row);
+    if (toInbox) saveLinkTo(row.id, 'inbox'); else { placeLinkAt(row.id, cx + n * 24, cy + n * 24); n++; }
+    read(row);
+  }
+}
+
 /* the page is read in the background; whatever arrives later still lands on the card */
-async function read(row: LinkRow) {
+export async function read(row: LinkRow) {
   let u: (Unfurl & { existing?: string | null }) | null = null;
   if (mode === 'server') {
     try {
@@ -50,7 +79,8 @@ async function read(row: LinkRow) {
     else { draft = next; LK[row.id] = toL(next); bump(); }
     setSheetVer(v => v + 1);
   };
-  if (!u) { apply({ status: 'failed' }); return; }
+  /* nowhere to read it from (no server here): the address stands in for the title */
+  if (!u) { apply({ status: mode === 'server' ? 'failed' : 'ok' }); return; }
   apply({ url: normalizeUrl(u.url || row.url), host: hostOf(u.url || row.url), kind: u.kind, title: u.title, desc: u.desc, siteName: u.siteName, meta: u.meta || {}, status: u.status });
   if (u.image) { const img = await storeImage(row.id, u.image); if (img) apply({ image: img }); }
 }
@@ -68,4 +98,4 @@ export function closeSheet(silent: boolean) {
   if (draft) delete LK[draft.id];
   draft = null; setSheet(null);
 }
-export function sheetEnter() { const sg = sheetSuggest(); saveTo(sg[0] ? sg[0].id : 'inbox'); }
+export function sheetEnter() { saveTo(sheetSpots()[0].id); }

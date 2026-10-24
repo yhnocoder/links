@@ -3,8 +3,8 @@ import type { BlockRow, BoardRow, FrameRow, LinkRow, Snapshot } from '../../shar
 
 export type Tier = 'new' | 'months' | 'years';
 export const TIERS: [Tier, string][] = [['new', '十几条'], ['months', '两百多条'], ['years', '两千多条']];
-/* the link picks the library: #new, #months (default) or #years */
-export const tierNow = (): Tier => { const t = location.hash.slice(1) as Tier; return TIERS.some(x => x[0] === t) ? t : 'months'; };
+/* for debugging only: #new, #months or #years opens a sample library; otherwise the preview starts empty like a new account */
+export const tierNow = (): Tier | null => { const t = location.hash.slice(1) as Tier; return TIERS.some(x => x[0] === t) ? t : null; };
 
 type Raw = { links: (Omit<LinkRow, 'updatedAt' | 'createdAt' | 'openedAt' | 'inboxAt'> & { ago: number; opened: number | null; inbox: boolean })[]; boards: Omit<BoardRow, 'updatedAt'>[]; frames: Omit<FrameRow, 'updatedAt'>[]; blocks: Omit<BlockRow, 'updatedAt'>[] };
 const files: Record<Tier, () => Promise<{ default: Raw }>> = {
@@ -15,7 +15,9 @@ const files: Record<Tier, () => Promise<{ default: Raw }>> = {
 const DAY = 86400000;
 
 export async function seed(): Promise<Snapshot> {
-  const raw = (await files[tierNow()]()).default, now = Date.now();
+  const t = tierNow();
+  if (!t) return { links: [], boards: [], frames: [], blocks: [] };
+  const raw = (await files[t]()).default, now = Date.now();
   /* the sample pictures' small versions share one strip */
   document.documentElement.style.setProperty('--sprite', `url("${new URL('i/thumbs.jpg', location.href).href}")`);
   return {

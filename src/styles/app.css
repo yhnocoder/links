@@ -679,7 +679,7 @@ button:active{transform:scale(.97);transition:none}
 .sec.board.crop .peek .fade{background:linear-gradient(to bottom,transparent 62%,var(--card) 98%),linear-gradient(to right,transparent 78%,var(--card) 99%)}
 .msz{gap:3px;flex-wrap:nowrap}.msz button{width:31px}
 .clipw{position:absolute;inset:0;pointer-events:none;will-change:clip-path}
-#map.glass,#inbox.glass{background:color-mix(in srgb,var(--glass-solid) 93%,transparent)}
+#map.glass,#inbox.glass{background:var(--glass-solid)}
 /* review fixes */
 .szt{top:-30px;translate:-50% 0;box-shadow:var(--float)}
 .sec.sel .lbl b{color:inherit}
@@ -762,3 +762,18 @@ button:active{transform:scale(.97);transition:none}
 .lbl .fd:hover{background:var(--press);color:var(--ink)}
 .stage.dragging .lbl .fd{opacity:0!important}
 
+
+/* ---------- a board with nothing on it ---------- */
+.empty{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:none;animation:fadein .4s ease-out both}
+.empty > *{pointer-events:auto}
+.ein{display:flex;align-items:center;gap:10px;width:min(380px,calc(100% - 48px));height:48px;padding:0 16px;border-radius:16px;color:var(--ink3);cursor:text}
+.ein svg{width:16px;height:16px;flex:none}
+.ein input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);outline:none}
+.ein input::placeholder{color:var(--ink3)}
+.ein:focus-within{box-shadow:0 0 0 1px var(--line2),0 10px 30px rgba(20,30,50,.10)}
+.eimp{display:flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:10px;font-size:13px;color:var(--ink2)}
+.eimp svg{width:14px;height:14px}
+.eimp:hover{background:var(--hover)}
+.eimp:active{background:var(--press);scale:.97}
+.hud,.fab{transition:opacity .3s ease,scale .12s,background-color .12s}
+.hud.idle{opacity:0;pointer-events:none}
