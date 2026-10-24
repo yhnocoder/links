@@ -11,7 +11,7 @@ export interface Env {
   IMAGES: R2Bucket;
   ASSETS: Fetcher;
   GITHUB_TOKEN?: string;
-  /* set both to require Cloudflare Access on the API (the browser and the extension's service token both pass it) */
+  /* required in production: without both the API answers 503 except on localhost (the browser and the extension's service token both pass Access) */
   ACCESS_TEAM?: string; // e.g. "linda" for linda.cloudflareaccess.com
   ACCESS_AUD?: string;
 }
@@ -20,7 +20,7 @@ const app = new Hono<{ Bindings: Env }>().basePath('/api');
 
 /* Cloudflare Access sits in front of the whole site; the API checks the token it adds, so nothing else can reach the data */
 app.use('*', async (c, next) => {
-  if (!c.env.ACCESS_TEAM || !c.env.ACCESS_AUD) return next();
+  if (!c.env.ACCESS_TEAM || !c.env.ACCESS_AUD) return new URL(c.req.url).hostname === 'localhost' ? next() : c.text('Access not configured', 503);
   return jwk({
     jwks_uri: `https://${c.env.ACCESS_TEAM}.cloudflareaccess.com/cdn-cgi/access/certs`,
     headerName: 'Cf-Access-Jwt-Assertion',
