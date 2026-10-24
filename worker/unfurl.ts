@@ -29,9 +29,10 @@ export async function unfurl(input: string, env: Env): Promise<Unfurl> {
       case 'paper': return await arxiv(url, p);
       default: return await page(url, p.kind);
     }
-  } catch {
+  } catch (e) {
     /* a platform API that refuses still leaves the page's own tags */
-    try { return await page(url, p.kind); } catch { return blank(url, p.kind); }
+    console.warn('unfurl api', p.kind, url, String(e));
+    try { return await page(url, p.kind); } catch (e2) { console.warn('unfurl page', url, String(e2)); return blank(url, p.kind); }
   }
 }
 
@@ -82,7 +83,8 @@ async function youtube(url: string, p: Parsed): Promise<Unfurl> {
 async function bilibili(url: string, p: Parsed): Promise<Unfurl> {
   if (!p.bvid) return page(url, 'bili');
   const q = /^av\d+$/i.test(p.bvid) ? `aid=${p.bvid.slice(2)}` : `bvid=${p.bvid}`;
-  const r = await get(`https://api.bilibili.com/x/web-interface/view?${q}`, { headers: { referer: 'https://www.bilibili.com/' } });
+  const r = await get(`https://api.bilibili.com/x/web-interface/view?${q}`, { headers: { referer: 'https://www.bilibili.com/', cookie: `buvid3=${crypto.randomUUID()}infoc` } });
+  /* without a visitor cookie the API answers with a risk-control HTML page */
   const j = await r.json<any>();
   if (j.code !== 0 || !j.data) throw new Error('bili ' + j.code);
   const d = j.data, part = p.part && d.pages ? d.pages[p.part - 1] : null;

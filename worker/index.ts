@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { jwk } from 'hono/jwk';
+import { getCookie, setCookie } from 'hono/cookie';
 import * as v from 'valibot';
 import { TABLES, type Snapshot } from '../shared/types';
 import { normalizeUrl } from '../shared/url';
@@ -11,12 +12,46 @@ export interface Env {
   IMAGES: R2Bucket;
   ASSETS: Fetcher;
   GITHUB_TOKEN?: string;
+  /* the passphrase that opens the app (a Worker secret); without it the API stays shut */
+  APP_TOKEN?: string;
   /* set both to require Cloudflare Access on the API (the browser and the extension's service token both pass it) */
   ACCESS_TEAM?: string; // e.g. "linda" for linda.cloudflareaccess.com
   ACCESS_AUD?: string;
 }
 
 const app = new Hono<{ Bindings: Env }>().basePath('/api');
+
+/* ---------- passphrase: entered once per browser and kept as a cookie; the extension sends it as a bearer token ---------- */
+const COOKIE = 'links_key';
+const enc = new TextEncoder();
+const same = (a: string, b: string) => {
+  const x = enc.encode(a), y = enc.encode(b);
+  return x.byteLength === y.byteLength && crypto.subtle.timingSafeEqual(x, y);
+};
+const local = (url: string) => ['localhost', '127.0.0.1'].includes(new URL(url).hostname);
+
+const UNLOCK = (wrong: boolean) => `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Links</title>
+<style>:root{color-scheme:light dark;--bg:#eceef2;--fg:#16181d;--card:#fff;--line:#d9dce3;--err:#d33}@media (prefers-color-scheme:dark){:root{--bg:#16181d;--fg:#eceef2;--card:#22252c;--line:#3a3e48}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:15px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC",system-ui,sans-serif}
+form{display:flex;gap:6px;padding:6px;border-radius:16px;background:var(--card);box-shadow:0 1px 2px #0001,0 8px 24px #0001}
+input{width:240px;border:1px solid ${wrong ? 'var(--err)' : 'var(--line)'};border-radius:10px;padding:10px 12px;font:inherit;background:transparent;color:inherit;outline:none}
+input:focus{border-color:var(--fg)}button{border:0;border-radius:10px;padding:0 16px;font:inherit;background:var(--fg);color:var(--bg);cursor:pointer}</style></head>
+<body><form method="post" action="/api/unlock"><input type="password" name="key" placeholder="口令" autocomplete="current-password" autofocus required><button>进入</button></form></body></html>`;
+
+app.get('/unlock', c => c.html(UNLOCK(false)));
+app.post('/unlock', async c => {
+  const key = String((await c.req.parseBody())['key'] || '');
+  if (!c.env.APP_TOKEN || !same(key, c.env.APP_TOKEN)) return c.html(UNLOCK(true), 401);
+  setCookie(c, COOKIE, key, { path: '/', httpOnly: true, secure: true, sameSite: 'Lax', maxAge: 400 * 86400 });
+  return c.redirect('/', 303);
+});
+
+app.use('*', async (c, next) => {
+  if (local(c.req.url)) return next();
+  const key = getCookie(c, COOKIE) || c.req.header('authorization')?.replace(/^Bearer\s+/i, '') || '';
+  if (!c.env.APP_TOKEN || !same(key, c.env.APP_TOKEN)) return c.json({ error: 'locked' }, 401);
+  return next();
+});
 
 /* Cloudflare Access sits in front of the whole site; the API checks the token it adds, so nothing else can reach the data */
 app.use('*', async (c, next) => {

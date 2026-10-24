@@ -94,6 +94,13 @@ export function persist(S: State) {
   if (mode === 'server') { clearTimeout(flushT); flushT = window.setTimeout(flush, 500); }
 }
 
+/* this browser has no passphrase yet (or it changed): ask for it */
+function locked(r: Response) {
+  if (r.status !== 401) return false;
+  location.replace('/api/unlock');
+  return true;
+}
+
 async function flush() {
   if (flushing) { clearTimeout(flushT); flushT = window.setTimeout(flush, 300); return; }
   const body: Partial<Snapshot> = {}; let n = 0;
@@ -103,6 +110,7 @@ async function flush() {
   flushing = true;
   try {
     const r = await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    locked(r);
     if (!r.ok) throw new Error('push ' + r.status);
     const j = await r.json() as { rev: number };
     /* a row changed again while in flight stays queued */
@@ -133,6 +141,7 @@ export async function boot(seed?: () => Snapshot | Promise<Snapshot>): Promise<S
   let server: (Snapshot & { rev: number }) | null = null, reachable = mode === 'server';
   if (reachable) try {
     const r = await fetch('/api/state', { headers: { accept: 'application/json' } });
+    if (locked(r)) return new Promise<never>(() => {});
     if (r.ok && (r.headers.get('content-type') || '').includes('json')) server = await r.json();
     else reachable = false;
   } catch { reachable = false; }
@@ -167,6 +176,7 @@ export async function pull(): Promise<Snapshot | null> {
   if (mode !== 'server') return null;
   try {
     const r = await fetch(`/api/changes?since=${rev}`);
+    if (locked(r)) return null;
     if (!r.ok) return null;
     const j = await r.json() as Snapshot & { rev: number };
     let n = 0;
