@@ -3,7 +3,8 @@ import type { BlockRow, BoardRow, FrameRow, LinkRow, Snapshot } from '../../shar
 
 export type Tier = 'new' | 'months' | 'years';
 export const TIERS: [Tier, string][] = [['new', '十几条'], ['months', '两百多条'], ['years', '两千多条']];
-export const tierNow = (): Tier => { try { const t = localStorage.getItem('links-demo-tier') as Tier; return TIERS.some(x => x[0] === t) ? t : 'months'; } catch { return 'months'; } };
+/* the link picks the library: #new, #months (default) or #years */
+export const tierNow = (): Tier => { const t = location.hash.slice(1) as Tier; return TIERS.some(x => x[0] === t) ? t : 'months'; };
 
 type Raw = { links: (Omit<LinkRow, 'updatedAt' | 'createdAt' | 'openedAt' | 'inboxAt'> & { ago: number; opened: number | null; inbox: boolean })[]; boards: Omit<BoardRow, 'updatedAt'>[]; frames: Omit<FrameRow, 'updatedAt'>[]; blocks: Omit<BlockRow, 'updatedAt'>[] };
 const files: Record<Tier, () => Promise<{ default: Raw }>> = {

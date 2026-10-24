@@ -13,7 +13,6 @@ import Palette from './ui/Palette';
 import Sheet from './ui/Sheet';
 import Toast from './ui/Toast';
 import Tooltip from './ui/Tooltip';
-import DemoBar from './demo/DemoBar';
 import { tierNow } from './demo/seed';
 
 const DEMO = import.meta.env.VITE_DEMO === '1';
@@ -43,7 +42,6 @@ export default function App() {
   });
   return (
     <div class="shell" id="shell">
-      {DEMO && <DemoBar />}
       <div class="app" id="app" ref={app}>
         <div class="stage" id="stage" ref={stage}>
           <div class="dots" id="dots" ref={dots} />
