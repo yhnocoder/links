@@ -1,0 +1,10 @@
+/* the preview's control bar: outside the product, and plainly not part of it */
+.demo{flex:none;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;min-height:36px;padding:5px max(12px,env(safe-area-inset-right)) 5px max(12px,env(safe-area-inset-left));background:#16181c;color:#b9bfc8;font:11.5px/1 ui-monospace,"SF Mono",Menlo,monospace;border-bottom:1px solid #2a2e35;z-index:100}
+.demo .tag{color:#eef0f3;white-space:nowrap}
+.demo .grow{flex:1}
+.demo .seg{display:inline-flex;border:1px solid #2a2e35;border-radius:7px;padding:1px}
+.demo button{font:inherit;height:24px;padding:0 9px;border-radius:6px;color:#b9bfc8;white-space:nowrap}
+.demo > button{border:1px solid #2a2e35}
+.demo button:hover{background:#262a31;color:#fff}
+.demo .seg button.on{background:#e8ebef;color:#111}
+:fullscreen .demo{display:none}

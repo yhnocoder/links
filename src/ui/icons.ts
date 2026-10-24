@@ -1,0 +1,28 @@
+/* The app's own line icons: one 16px grid, one stroke. Cards use the site marks in cards/render instead. */
+export const IC: Record<string, string> = {
+  blank: '', expand: '<path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/>', check: '<path d="M3.5 8.5l3 3 6-7"/>',
+  more: '<path d="M4 8h.01M8 8h.01M12 8h.01" stroke-width="2.2"/>',
+  open: '<path d="M6.5 3.5H3.5v9h9v-3M9 3h4v4M13 3 7.5 8.5"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/>',
+  inbox: '<path d="M2 9.5 3.8 3.5h8.4L14 9.5v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M2 9.5h3.4l1 1.6h3.2l1-1.6H14"/>',
+  fold: '<path d="M4 6l4 4 4-4"/>', unfold: '<path d="M6 4l4 4-4 4"/>',
+  pen: '<path d="M10.5 3.2 12.8 5.5 6 12.3l-3 .7.7-3z"/>',
+  board: '<rect x="2.5" y="3" width="11" height="10" rx="2.2"/><path d="M2.5 6.5h11"/>',
+  sec: '<rect x="2.5" y="3.5" width="11" height="9" rx="2.2"/>',
+  smart: '<path d="M7 2.5l1.2 3.3 3.3 1.2-3.3 1.2L7 11.5 5.8 8.2 2.5 7l3.3-1.2z" stroke-linejoin="round"/><path d="M12 10.5v3.5M10.25 12.25h3.5"/>',
+  note: '<path d="M3.5 3.5h9v6l-3 3h-6z"/><path d="M9.5 12.5v-3h3"/>',
+  link: '<path d="M7 9a2.5 2.5 0 0 0 3.5 0l2-2A2.5 2.5 0 0 0 9 3.5l-.7.7M9 7a2.5 2.5 0 0 0-3.5 0l-2 2A2.5 2.5 0 0 0 7 12.5l.7-.7"/>',
+  locate: '<circle cx="8" cy="8" r="4.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2"/>',
+  x: '<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',
+  chev: '<path d="M6 4l4 4-4 4"/>',
+  up: '<path d="M4 10l4-4 4 4"/>',
+  fit: '<path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/>',
+  search: '<circle cx="7" cy="7" r="4.5"/><path d="m10.4 10.4 3.1 3.1"/>',
+  split: '<rect x="2.5" y="3" width="4.5" height="10" rx="1.5"/><rect x="9" y="3" width="4.5" height="10" rx="1.5"/>',
+  plus: '<path d="M8 3v10M3 8h10"/>', minus: '<path d="M4 8h8"/>', zin: '<path d="M8 4v8M4 8h8"/>',
+  sliders: '<path d="M2.5 5h6M11.5 5h2M2.5 11h2M7.5 11h6"/><circle cx="10" cy="5" r="1.5"/><circle cx="6" cy="11" r="1.5"/>',
+  download: '<path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/>', upload: '<path d="M8 10.5v-8M4.5 6 8 2.5 11.5 6M3 13.5h10"/>',
+  cloud: '<path d="M4.5 12.5a3 3 0 0 1-.4-6 4 4 0 0 1 7.7 1A2.5 2.5 0 0 1 11.5 12.5z"/>',
+  cloudoff: '<path d="M4.5 12.5a3 3 0 0 1-.4-6 4 4 0 0 1 7.7 1A2.5 2.5 0 0 1 11.5 12.5z"/><path d="M2.5 2.5l11 11"/>',
+};
+export const ic = (k: string, c = '') => `<svg class="ic ${c}" viewBox="0 0 16 16" aria-hidden="true">${IC[k] ?? ''}</svg>`;
