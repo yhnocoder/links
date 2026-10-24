@@ -162,7 +162,7 @@ function web(l: L, w: number, h: number, tint?: string): Rendered {
   }
 }
 function gh(l: L, w: number, h: number): Rendered {
-  const owner = l.owner || '', repo = l.repo || l.t, showOwner = owner && owner !== repo && w >= 3;
+  const owner = l.owner || '', repo = l.repo || l.t, showOwner = owner && owner !== repo && (w >= 3 || (!l.d && w >= 2));
   const head = `<div class="gh-h" data-open>${SVG.gh}${showOwner ? `<span>${esc(owner)}/</span>` : ''}<b>${esc(repo)}</b></div>`;
   const langs: [string, string, number][] = l.lang || [];
   const lang = langs[0];
