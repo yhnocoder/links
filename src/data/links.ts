@@ -1,6 +1,7 @@
 /* A stored link turned into what a card shows: names, counts and times already worded the way the cards read them. */
 import type { LinkRow } from '../../shared/types';
 import { siteFor } from '../cards/sites';
+import { parseUrl } from '../../shared/url';
 import type { L } from '../cards/render';
 
 const DAY = 86400000;
@@ -38,15 +39,19 @@ export function toL(r: LinkRow): L {
   };
   /* the preview's sample pictures share one strip of thumbnails */
   if (m.thumbPos != null) { l.thumbPos = m.thumbPos; l.thumb = null; }
+  /* what GitHub's address already says, for links read while its API refused */
+  const gp = r.kind === 'gh' || r.kind === 'ghpr' ? parseUrl(r.url) : {} as ReturnType<typeof parseUrl>;
+  const boiler = (d?: unknown) => (typeof d === 'string' && /^Contribute to .+ development by creating an account on GitHub\.$/.test(d) ? '' : d);
   switch (r.kind) {
     case 'yt': Object.assign(l, { by: m.by, dur: fmtDur(m.dur) ?? m.durText, views: m.views != null ? num(m.views) + '次观看' : m.viewsText, av: avatar(m.by), prog: m.prog }); break;
     case 'bili': Object.assign(l, { by: m.by, dur: fmtDur(m.dur) ?? m.durText, play: num(m.play), dm: num(m.dm), part: typeof m.parts === 'number' && m.parts > 1 ? `P${m.parts}` : m.partText, prog: m.prog }); break;
     case 'xhs': Object.assign(l, { by: m.by, like: num(m.like), n: m.n || 1, av: avatar(m.by), d: m.d }); break;
-    case 'gh': Object.assign(l, { owner: m.owner, repo: m.repo, d: m.d ?? r.desc, lang: m.lang, star: num(m.star), fork: num(m.fork), up: m.pushedAt ? agoWords(m.pushedAt as number) + '更新' : m.upText, topics: m.topics, readme: m.readme }); break;
+    case 'gh': if (!m.owner && gp.owner) l.t = `${gp.owner}/${gp.repo}`; Object.assign(l, { owner: m.owner || gp.owner, repo: m.repo || gp.repo, ghPath: m.path ?? gp.ghPath, d: boiler(m.d ?? r.desc), lang: m.lang, star: num(m.star), fork: num(m.fork), up: m.pushedAt ? agoWords(m.pushedAt as number) + '更新' : m.upText, topics: m.topics, readme: m.readme }); break;
     case 'ghpr': {
-      const st = (m.state as string) || 'open', at = m.at as number | undefined;
+      const st = m.state as string | undefined, at = m.at as number | undefined;
       const up = !at ? m.upText : st === 'merged' ? dateWords(at) + '合并' : st === 'closed' ? dateWords(at) + '关闭' : agoWords(at) + '更新';
-      Object.assign(l, { owner: m.owner, repo: m.repo, num: m.num, prState: st, diff: m.add != null ? [`+${num(m.add)}`, `−${num(m.del)}`] : m.diff || null, cm: m.cm, up, body: m.body });
+      if (!m.owner) l.t = l.t.replace(/ · (Pull Request|Issue|Discussion) #\d+ · .*$/, '').replace(/ by [\w-]+$/, '');
+      Object.assign(l, { owner: m.owner || gp.owner, repo: m.repo || gp.repo, num: m.num || gp.num, prState: st, diff: m.add != null ? [`+${num(m.add)}`, `−${num(m.del)}`] : m.diff || null, cm: m.cm, up, body: m.body });
       break;
     }
     case 'paper': Object.assign(l, { aid: m.aid, au: m.au, ab: m.ab ?? r.desc }); break;

@@ -164,6 +164,10 @@ function web(l: L, w: number, h: number, tint?: string): Rendered {
 function gh(l: L, w: number, h: number): Rendered {
   const owner = l.owner || '', repo = l.repo || l.t, showOwner = owner && owner !== repo && w >= 3;
   const head = `<div class="gh-h" data-open>${SVG.gh}${showOwner ? `<span>${esc(owner)}/</span>` : ''}<b>${esc(repo)}</b></div>`;
+  /* a folder or file inside the repo says more than the repo's own description */
+  /* the end of a long path says where it points; the branch in front of it matters less */
+  const tail = (q: string, max: number) => { if (q.length <= max) return q; const seg = q.split('/'); let out = seg.pop()!; while (seg.length && out.length + seg[seg.length - 1].length + 1 <= max - 2) out = seg.pop() + '/' + out; return '…/' + out; };
+  const dsg = (d: string | undefined, n: number, fs?: number) => (l.ghPath ? `<div class="ds gp" style="--l:2">${esc(tail(l.ghPath, w * 18))}</div>` : ds(d, n, fs));
   const langs: [string, string, number][] = l.lang || [];
   const lang = langs[0];
   const star = has(l.star) ? `<span>${SVG.star}${esc(l.star)}</span>` : '';
@@ -171,10 +175,10 @@ function gh(l: L, w: number, h: number): Rendered {
   const bar = langs.length ? `<div class="lbar">${langs.map(x => `<i style="width:${x[2] * 100}%;background:${x[1]}"></i>`).join('')}</div>` : '';
   switch (w + 'x' + h) {
     case '1x1': return { cls: 'pad', html: `<div class="tx" style="gap:5px">${SVG.gh}<b class="rn" data-open>${esc(repo)}</b><div class="gf">${star}</div></div>${bar}` };
-    case '2x1': return { cls: 'pad', html: `<div class="tx" style="gap:4px">${head}${ds(l.d, 1)}${foot()}</div>${bar}` };
-    case '3x1': return { cls: 'pad', html: `<div class="tx" style="gap:4px">${head}${ds(l.d, 1)}${foot(true)}</div>${bar}` };
-    case '2x2': return { cls: 'pad', html: `<div class="tx" style="gap:7px">${head}${ds(l.d, 3, 12.5)}${dsf(l.readme, 11.5)}${foot()}</div>${bar}` };
-    default: return { cls: 'pad', html: `<div class="tx" style="gap:7px">${head}${ds(l.d, 2, 12.5)}${dsf(l.readme, 11.5)}${(l.topics || []).length ? `<div class="tops">${l.topics.map((t: string) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}${foot(true)}</div>${bar}` };
+    case '2x1': return { cls: 'pad', html: `<div class="tx" style="gap:4px">${head}${dsg(l.d, 1)}${foot()}</div>${bar}` };
+    case '3x1': return { cls: 'pad', html: `<div class="tx" style="gap:4px">${head}${dsg(l.d, 1)}${foot(true)}</div>${bar}` };
+    case '2x2': return { cls: 'pad', html: `<div class="tx" style="gap:7px">${head}${dsg(l.d, 3, 12.5)}${dsf(l.readme, 11.5)}${foot()}</div>${bar}` };
+    default: return { cls: 'pad', html: `<div class="tx" style="gap:7px">${head}${dsg(l.d, 2, 12.5)}${dsf(l.readme, 11.5)}${(l.topics || []).length ? `<div class="tops">${l.topics.map((t: string) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}${foot(true)}</div>${bar}` };
   }
 }
 function paper(l: L, w: number, h: number): Rendered {
@@ -218,9 +222,9 @@ function pending(l: L, w: number, h: number, st: string): Rendered {
   return { cls: 'pad', html: `<div class="tx" style="gap:5px">${top}${tt(title, 1, 13.5)}${url}</div>` };
 }
 function ghpr(l: L, w: number, h: number): Rendered {
-  const S = ({ merged: [SVG.merge, '#8250df'], open: [SVG.pr, '#1a7f37'], draft: [SVG.prdraft, 'var(--ink3)'], closed: [SVG.prclosed, '#cf222e'], issue: [SVG.issue, '#1a7f37'], disc: [SVG.disc, 'var(--ink3)'] } as Record<string, string[]>)[l.prState || 'open'];
-  const st = `<span class="pst" style="color:${S[1]}">${S[0]}</span>`;
-  const diff = l.diff ? `<span style="color:#1a7f37">${esc(l.diff[0])}</span><span style="color:#cf222e">${esc(l.diff[1])}</span>` : `<span>${l.cm || 0} 条评论</span>`;
+  const S = l.prState && ({ merged: [SVG.merge, '#8250df'], open: [SVG.pr, '#1a7f37'], draft: [SVG.prdraft, 'var(--ink3)'], closed: [SVG.prclosed, '#cf222e'], issue: [SVG.issue, '#1a7f37'], disc: [SVG.disc, 'var(--ink3)'] } as Record<string, string[]>)[l.prState];
+  const st = S ? `<span class="pst" style="color:${S[1]}">${S[0]}</span>` : '';
+  const diff = l.diff ? `<span style="color:#1a7f37">${esc(l.diff[0])}</span><span style="color:#cf222e">${esc(l.diff[1])}</span>` : l.cm ? `<span>${l.cm} 条评论</span>` : '';
   const row = (repo: string) => `<div class="gf">${SVG.gh}${repo ? `<span>${repo} #${l.num}</span>` : ''}${st}</div>`;
   const up = l.up ? `<span>${esc(l.up)}</span>` : '';
   switch (w + 'x' + h) {
@@ -240,7 +244,7 @@ function note(b: Block, w: number, h: number): Rendered {
 const brandOf = (l: L) => brandKey(l) || null;
 export const siteName = (l: L) => siteOf(l).n;
 export const rowMeta = (l: L) => ((l.k === 'yt' || l.k === 'bili') && has(l.dur) ? l.dur : l.k === 'xhs' && has(l.like) ? `♡ ${l.like}` : l.k === 'gh' && has(l.star) ? `★ ${l.star}` : siteOf(l).n);
-export const titleOf = (l: L) => (l.t || (l.k === 'gh' ? `${l.owner}/${l.repo}` : l.host) || '').replace(/^【[^】]*】\s*/, '');
+export const titleOf = (l: L) => (l.k === 'gh' && l.owner ? `${l.owner}/${l.repo}${l.ghPath ? ' / ' + l.ghPath : ''}` : l.t || l.host || '').replace(/^【[^】]*】\s*/, '');
 export const tileOf = (l: L) => {
   if (l.img || l.thumb || l.thumbPos != null) return T(l);
   const bt = brandOf(l), s = siteOf(l);

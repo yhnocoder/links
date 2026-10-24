@@ -24,8 +24,8 @@ export async function unfurl(input: string, env: Env): Promise<Unfurl> {
     switch (p.kind) {
       case 'yt': return await youtube(url, p);
       case 'bili': return await bilibili(url, p);
-      case 'gh': return await github(url, p, env);
-      case 'ghpr': return await githubItem(url, p, env);
+      case 'gh': return await github(url, p, env).catch(e => { console.warn('unfurl api', url, String(e)); return githubPage(url, p); });
+      case 'ghpr': return await githubItem(url, p, env).catch(e => { console.warn('unfurl api', url, String(e)); return githubPage(url, p); });
       case 'paper': return await arxiv(url, p);
       default: return await page(url, p.kind);
     }
@@ -109,9 +109,20 @@ async function github(url: string, p: Parsed, env: Env): Promise<Unfurl> {
   if (!lang.length && d.language) lang = [[d.language, LANG[d.language] || '#8b949e', 1]];
   return {
     url, kind: 'gh', title: d.full_name, desc: d.description || '', siteName: 'GitHub', image: null,
-    meta: { owner: d.owner?.login || p.owner, repo: d.name || p.repo, d: d.description || '', lang, star: d.stargazers_count, fork: d.forks_count, pushedAt: Date.parse(d.pushed_at) || null, topics: (d.topics || []).slice(0, 4) },
+    meta: { owner: d.owner?.login || p.owner, repo: d.name || p.repo, path: p.ghPath, d: d.description || '', lang, star: d.stargazers_count, fork: d.forks_count, pushedAt: Date.parse(d.pushed_at) || null, topics: (d.topics || []).slice(0, 4) },
     status: 'ok',
   };
+}
+
+/* the API refused (rate limit, private repo): the address names the repo, the page may still have its words */
+async function githubPage(url: string, p: Parsed): Promise<Unfurl> {
+  const u = await page(url, p.kind).catch(() => blank(url, p.kind));
+  /* GitHub's stand-in description for repos that have none */
+  const desc = /^Contribute to .+ development by creating an account on GitHub\.$/.test(u.desc) ? '' : u.desc;
+  if (p.kind === 'gh') return { ...u, kind: 'gh', title: `${p.owner}/${p.repo}`, desc, siteName: 'GitHub', image: null, meta: { owner: p.owner, repo: p.repo, d: desc, path: p.ghPath }, status: 'ok' };
+  /* "Title by someone · Pull Request #63 · owner/repo" */
+  const title = u.title.replace(/ · (Pull Request|Issue|Discussion) #\d+ · .*$/, '').replace(/ by [\w-]+$/, '');
+  return { ...u, kind: 'ghpr', title: title || `${p.owner}/${p.repo} #${p.num}`, desc: '', siteName: 'GitHub', image: null, meta: { owner: p.owner, repo: p.repo, num: p.num, state: p.ghType === 'discussions' ? 'disc' : undefined }, status: 'ok' };
 }
 
 async function githubItem(url: string, p: Parsed, env: Env): Promise<Unfurl> {

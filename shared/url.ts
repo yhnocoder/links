@@ -33,6 +33,7 @@ export interface Parsed {
   repo?: string;
   num?: number;
   ghType?: 'pull' | 'issues' | 'discussions';
+  ghPath?: string; // a folder or file inside the repo
   arxiv?: string;
 }
 
@@ -53,7 +54,7 @@ export function parseUrl(url: string): Parsed {
   if (h === 'github.com' && seg.length >= 2 && !GH_RESERVED.has(seg[0])) {
     const [owner, repo] = seg;
     if ((seg[2] === 'pull' || seg[2] === 'issues' || seg[2] === 'discussions') && /^\d+$/.test(seg[3] || '')) return { kind: 'ghpr', owner, repo, num: +seg[3], ghType: seg[2] as Parsed['ghType'] };
-    if (seg.length === 2 || seg[2] === 'tree' || seg[2] === 'blob') return { kind: 'gh', owner, repo };
+    if (seg.length === 2 || seg[2] === 'tree' || seg[2] === 'blob') return { kind: 'gh', owner, repo, ...(seg.length > 3 ? { ghPath: decodeURIComponent(seg.slice(3).join('/')) } : {}) };
   }
   if (h === 'arxiv.org' && (seg[0] === 'abs' || seg[0] === 'pdf') && seg[1]) return { kind: 'paper', arxiv: seg[1].replace(/\.pdf$/, '').replace(/v\d+$/, '') };
   if ((h === 'chatgpt.com' || h === 'chat.openai.com' || h === 'claude.ai' || h === 'gemini.google.com' || h === 'g.co') && seg.includes('share')) return { kind: 'chat' };
