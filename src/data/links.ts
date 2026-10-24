@@ -1,6 +1,5 @@
 /* A stored link turned into what a card shows: names, counts and times already worded the way the cards read them. */
 import type { LinkRow } from '../../shared/types';
-import { parseUrl } from '../../shared/url';
 import { siteFor } from '../cards/sites';
 import type { L } from '../cards/render';
 
@@ -28,10 +27,7 @@ const avatar = (name?: unknown): [string, string] | undefined => (typeof name ==
 export const imgSrc = (key: string) => (key.startsWith('demo/') ? key.slice(5) : `/api/images/${encodeURIComponent(key)}`);
 
 export function toL(r: LinkRow): L {
-  const site = siteFor(r.host, r.siteName || undefined);
-  /* a repository saved before its page was read still knows its owner and name from the address */
-  let m = r.meta || {};
-  if ((r.kind === 'gh' || r.kind === 'ghpr') && !m.owner) { const p = parseUrl(r.url); if (p.owner) m = { owner: p.owner, repo: p.repo, num: p.num, ...m }; }
+  const site = siteFor(r.host, r.siteName || undefined), m = r.meta || {};
   const l: L = {
     id: r.id, k: r.kind, site: site.key, sn: site.n, host: r.host, url: r.url, path: r.url.replace(/^https?:\/\/(www\.)?/, ''),
     t: r.title, ex: r.desc,
