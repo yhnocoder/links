@@ -46,7 +46,7 @@ export function toL(r: LinkRow): L {
     case 'yt': Object.assign(l, { by: m.by, dur: fmtDur(m.dur) ?? m.durText, views: m.views != null ? num(m.views) + '次观看' : m.viewsText, av: avatar(m.by), prog: m.prog }); break;
     case 'bili': Object.assign(l, { by: m.by, dur: fmtDur(m.dur) ?? m.durText, play: num(m.play), dm: num(m.dm), part: typeof m.parts === 'number' && m.parts > 1 ? `P${m.parts}` : m.partText, prog: m.prog }); break;
     case 'xhs': Object.assign(l, { by: m.by, like: num(m.like), n: m.n || 1, av: avatar(m.by), d: m.d }); break;
-    case 'gh': if (!m.owner && gp.owner) l.t = `${gp.owner}/${gp.repo}`; Object.assign(l, { owner: m.owner || gp.owner, repo: m.repo || gp.repo, ghPath: m.path ?? gp.ghPath, d: boiler(m.d ?? r.desc), lang: m.lang, star: num(m.star), fork: num(m.fork), up: m.pushedAt ? agoWords(m.pushedAt as number) + '更新' : m.upText, topics: m.topics, readme: m.readme }); break;
+    case 'gh': if (!m.owner && gp.owner) l.t = `${gp.owner}/${gp.repo}`; Object.assign(l, { owner: m.owner || gp.owner, repo: m.repo || gp.repo, ghPath: m.path ?? gp.ghPath, d: boiler(m.d ?? r.desc), lang: m.lang, star: m.star ? num(m.star) : undefined, fork: m.fork ? num(m.fork) : undefined, up: m.pushedAt ? agoWords(m.pushedAt as number) + '更新' : m.upText, topics: m.topics, readme: m.readme }); break;
     case 'ghpr': {
       const st = m.state as string | undefined, at = m.at as number | undefined;
       const up = !at ? m.upText : st === 'merged' ? dateWords(at) + '合并' : st === 'closed' ? dateWords(at) + '关闭' : agoWords(at) + '更新';

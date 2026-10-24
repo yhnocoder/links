@@ -167,7 +167,7 @@ function gh(l: L, w: number, h: number): Rendered {
   /* a folder or file inside the repo says more than the repo's own description */
   /* the end of a long path says where it points; the branch in front of it matters less */
   const tail = (q: string, max: number) => { if (q.length <= max) return q; const seg = q.split('/'); let out = seg.pop()!; while (seg.length && out.length + seg[seg.length - 1].length + 1 <= max - 2) out = seg.pop() + '/' + out; return '…/' + out; };
-  const dsg = (d: string | undefined, n: number, fs?: number) => (l.ghPath ? `<div class="ds gp" style="--l:2">${esc(tail(l.ghPath, w * 18))}</div>` : ds(d, n, fs));
+  const dsg = (d: string | undefined, n: number, fs?: number) => (l.ghPath ? `<div class="ds gp" style="--l:${h > 1 ? 2 : 1}">${esc(tail(l.ghPath, (h > 1 ? 2 : 1) * w * 9))}</div>` : ds(d, n, fs));
   const langs: [string, string, number][] = l.lang || [];
   const lang = langs[0];
   const star = has(l.star) ? `<span>${SVG.star}${esc(l.star)}</span>` : '';
@@ -229,7 +229,7 @@ function ghpr(l: L, w: number, h: number): Rendered {
   const up = l.up ? `<span>${esc(l.up)}</span>` : '';
   switch (w + 'x' + h) {
     case '1x1': return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row('')}${tt(l.t, 3, 12)}</div>` };
-    case '2x1': return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row(esc(l.repo))}${tt(l.t, 2, 12.5)}</div>` };
+    case '2x1': return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row(esc(l.repo))}${tt(l.t, l.diff ? 1 : 2, 12.5)}${l.diff ? `<div class="gf" style="margin-top:auto">${diff}</div>` : ''}</div>` };
     case '3x1': return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row(`${esc(l.owner)}/${esc(l.repo)}`)}${tt(l.t, 1, 12.5)}<div class="gf" style="margin-top:auto">${diff}${up}</div></div>` };
     case '1x2': return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row('')}${tt(l.t, 5, 12.5)}<div class="gf" style="margin-top:auto">${diff}</div></div>` };
     default: return { cls: 'pad', html: `<div class="tx" style="gap:6px">${row(esc(l.repo))}${tt(l.t, 2, 12.5)}${dsf(l.body, 11.5)}<div class="gf" style="margin-top:auto">${diff}${up}</div></div>` };
